@@ -10,6 +10,7 @@
 #define __BOARD_COM_API_H__
 
 #include "tuya_cloud_types.h"
+#include "board_audio_mux_api.h"
 
 #ifdef __cplusplus
 extern "C" {

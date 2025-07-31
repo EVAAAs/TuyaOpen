@@ -8,12 +8,14 @@
 
 #include "tuya_cloud_types.h"
 
+#include "tkl_pinmux.h"
 #include "tal_api.h"
-
 #include "tdd_audio.h"
 #include "tdd_led_gpio.h"
 #include "tdd_button_gpio.h"
 #include "tdd_disp_st7305.h" // Add LCD driver header
+#include "board_audio_mux_api.h" // Add audio mux API header
+#include "board_bmi270_api.h" // Add BMI270 sensor API header
 
 /***********************************************************
 ************************macro define************************
@@ -26,6 +28,17 @@
 
 #define BOARD_LED_PIN                TUYA_GPIO_NUM_28
 #define BOARD_LED_ACTIVE_LV          TUYA_GPIO_LEVEL_HIGH
+
+
+// Audio Mux Router: Controls signal routing to the MIC2 input of the codec.
+//   - SEL = Low  : Route 1 (Microphone input to MIC2)
+//   - SEL = High : Route 2 (Speaker loopback to MIC2)
+// The SEL pin determines whether MIC2 receives audio from the microphone or from the speaker loopback.
+#define BOARD_AUDIO_MUX_SEL_PIN TUYA_GPIO_NUM_23
+#define BOARD_AUDIO_MUX_SEL_MIC_LV TUYA_GPIO_LEVEL_LOW
+#define BOARD_AUDIO_MUX_SEL_LOOPBACK_LV TUYA_GPIO_LEVEL_HIGH
+
+
 
 #if defined(TUYA_T5AI_POCKET_LCD)
 #define BOARD_LCD_BL_TYPE            TUYA_DISP_BL_TP_NONE 
@@ -40,6 +53,7 @@
 #define BOARD_LCD_SPI_CS_PIN         TUYA_GPIO_NUM_45
 #define BOARD_LCD_SPI_DC_PIN         TUYA_GPIO_NUM_47
 #define BOARD_LCD_SPI_RST_PIN        TUYA_GPIO_NUM_43
+#define BOARD_LCD_SPI_MISO_PIN       TUYA_GPIO_NUM_46
 
 #define BOARD_LCD_POWER_PIN          TUYA_GPIO_NUM_MAX
 #endif
@@ -127,6 +141,12 @@ static OPERATE_RET __board_register_display(void)
     OPERATE_RET rt = OPRT_OK;
 
 #if defined(DISPLAY_NAME)
+
+    // Composite Pinout from chip internal, muxing set the actual pinout for SPI0 interface
+    tkl_io_pinmux_config(BOARD_LCD_SPI_CS_PIN, TUYA_SPI0_CS);
+    tkl_io_pinmux_config(TUYA_GPIO_NUM_44, TUYA_SPI0_CLK);
+    tkl_io_pinmux_config(TUYA_GPIO_NUM_46, TUYA_SPI0_MOSI);
+
     DISP_SPI_DEVICE_CFG_T display_cfg;
 
     memset(&display_cfg, 0, sizeof(DISP_SPI_DEVICE_CFG_T));
@@ -151,6 +171,34 @@ static OPERATE_RET __board_register_display(void)
     return rt;
 }
 
+
+static OPERATE_RET __board_register_audio_mux_router(void)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    // Initialize the audio multiplexer with default microphone route
+    rt = board_audio_mux_init();
+    if (OPRT_OK != rt) {
+        return rt;
+    }
+
+    return rt;
+}
+
+static OPERATE_RET __board_register_bmi270_sensor(void)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    // Register BMI270 sensor
+    rt = board_bmi270_register();
+    if (OPRT_OK != rt) {
+        PR_ERR("BMI270 sensor registration failed: %d", rt);
+        return rt;
+    }
+
+    return rt;
+}
+
 /**
  * @brief Registers all the hardware peripherals (audio, button, LED, display) on the board.
  *
@@ -164,6 +212,8 @@ OPERATE_RET board_register_hardware(void)
     TUYA_CALL_ERR_LOG(__board_register_button());
     TUYA_CALL_ERR_LOG(__board_register_led());
     TUYA_CALL_ERR_LOG(__board_register_display());
+    TUYA_CALL_ERR_LOG(__board_register_audio_mux_router());
+    TUYA_CALL_ERR_LOG(__board_register_bmi270_sensor());
 
     return rt;
 }
