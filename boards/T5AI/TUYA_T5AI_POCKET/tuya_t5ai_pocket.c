@@ -199,6 +199,31 @@ static OPERATE_RET __board_register_bmi270_sensor(void)
 
 static OPERATE_RET __board_register_axp2101(void)
 {
+
+    /* AXP2101 Power supply configuration for T5 Pocket
+    ----- VBUS -----
+    - 5V 500mA (Charging)
+    ----- BAT Specs -----
+    - 3V7 525mAh
+    ----- VSYS Domain -----
+    - 3V-4.2V (Charging/Discharging)
+    ----- DCDC -----
+    - DCDC1/LX1: VDD3V3 MCU
+    - DCDC2/LX2: None
+    - DCDC3/LX3: None
+    - DCDC4/LX4: None
+    ----- LDO -----
+    - BLDO1: 2V8 Camera AVDD
+    - BLDO2: 1V1 Camera 
+    ----- ALDO -----
+    - ALDO1: None
+    - ALDO2: None
+    - ALDO3: 2V8 Camera VDDCAM
+    - ALDO4: 3V3 SD Card
+    - DLOO1: None
+    -----END-----
+    */
+
     OPERATE_RET rt = OPRT_OK;
 
     // Initialize AXP2101 power management IC
