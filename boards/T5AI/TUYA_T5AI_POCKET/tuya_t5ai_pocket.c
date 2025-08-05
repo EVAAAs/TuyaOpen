@@ -45,7 +45,6 @@
 #define BOARD_AUDIO_MUX_SEL_MIC_LV      TUYA_GPIO_LEVEL_LOW
 #define BOARD_AUDIO_MUX_SEL_LOOPBACK_LV TUYA_GPIO_LEVEL_HIGH
 
-#if defined(TUYA_T5AI_POCKET_LCD)
 #define BOARD_LCD_BL_TYPE            TUYA_DISP_BL_TP_NONE 
 
 #define BOARD_LCD_WIDTH              168
@@ -61,7 +60,6 @@
 #define BOARD_LCD_SPI_MISO_PIN       TUYA_GPIO_NUM_46
 
 #define BOARD_LCD_POWER_PIN          TUYA_GPIO_NUM_MAX
-#endif
 
 /***********************************************************
 ***********************typedef define***********************
