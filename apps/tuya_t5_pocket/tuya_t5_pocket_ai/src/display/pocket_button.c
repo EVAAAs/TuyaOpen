@@ -67,7 +67,7 @@ void pocket_pet_button_init(void)
                                    .long_keep_timer = 1000,
                                    .button_debounce_time = 50,
                                    .button_repeat_valid_count = 2,
-                                   .button_repeat_valid_time = 300};
+                                   .button_repeat_valid_time = 500};
     TDL_BUTTON_HANDLE button_hdl = NULL;
 
     for(uint32_t i=0; i<CNTSOF(button_code_map); i++) {
