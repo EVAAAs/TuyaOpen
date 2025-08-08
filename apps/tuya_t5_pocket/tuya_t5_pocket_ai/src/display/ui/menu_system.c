@@ -179,6 +179,9 @@ lv_obj_t* menu_system_create_sub_menu(lv_obj_t *parent)
     lv_obj_add_flag(data->sub_menu_list, LV_OBJ_FLAG_SCROLLABLE);
     lv_obj_set_scroll_dir(data->sub_menu_list, LV_DIR_VER);
 
+    lv_obj_set_style_border_color(data->sub_menu_list, lv_color_black(), 0);
+    lv_obj_set_style_border_width(data->sub_menu_list, 2, 0);
+
     // Initially hide sub menu
     lv_obj_add_flag(data->sub_menu, LV_OBJ_FLAG_HIDDEN);
 
