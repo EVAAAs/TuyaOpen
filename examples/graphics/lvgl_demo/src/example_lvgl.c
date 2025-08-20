@@ -64,7 +64,7 @@ void user_main(void)
     lv_demo_widgets();
     // lv_demo_benchmark();
 
-    lv_vendor_start();
+    lv_vendor_start(5, 1024*8);
 }
 
 /**

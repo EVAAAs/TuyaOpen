@@ -59,11 +59,6 @@ void user_main(void)
     /*hardware register*/
     board_register_hardware();
 
-
-    TDL_AUDIO_HANDLE_T audio_hdl = NULL;
-    tdl_audio_find(AUDIO_CODEC_NAME, &audio_hdl);
-    tdl_audio_open(audio_hdl, NULL);
-
     lv_vendor_init(DISPLAY_NAME);
 
     LV_IMG_DECLARE(tuya_gif2);
@@ -73,7 +68,7 @@ void user_main(void)
     lv_gif_set_src(img, &tuya_gif2);
     lv_obj_align(img, LV_ALIGN_CENTER, 0, 0);
 
-    lv_vendor_start();
+    lv_vendor_start(5, 1024*8);
 }
 
 /**

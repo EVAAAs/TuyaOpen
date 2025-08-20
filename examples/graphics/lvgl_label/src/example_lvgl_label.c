@@ -68,7 +68,7 @@ void user_main(void)
     lv_obj_set_style_text_color(lv_screen_active(), lv_color_black(), LV_PART_MAIN);
     lv_obj_align(label, LV_ALIGN_CENTER, 0, 0); 
 
-    lv_vendor_start();
+    lv_vendor_start(5, 1024*8);
 }
 
 /**
