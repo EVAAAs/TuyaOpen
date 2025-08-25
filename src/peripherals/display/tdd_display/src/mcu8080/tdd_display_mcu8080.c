@@ -295,11 +295,12 @@ OPERATE_RET tdd_disp_mcu8080_device_register(char *name, TDD_DISP_MCU8080_CFG_T 
     tdd_8080->cmd_ramwr = mcu8080->cmd_ramwr;
     tdd_8080->cmd_ramwrc = mcu8080->cmd_ramwrc;
 
-    mcu8080_dev_info.type = TUYA_DISPLAY_8080;
-    mcu8080_dev_info.width = mcu8080->cfg.width;
-    mcu8080_dev_info.height = mcu8080->cfg.height;
-    mcu8080_dev_info.fmt = mcu8080->cfg.pixel_fmt;
+    mcu8080_dev_info.type     = TUYA_DISPLAY_8080;
+    mcu8080_dev_info.width    = mcu8080->cfg.width;
+    mcu8080_dev_info.height   = mcu8080->cfg.height;
+    mcu8080_dev_info.fmt      = mcu8080->cfg.pixel_fmt;
     mcu8080_dev_info.rotation = mcu8080->rotation;
+    mcu8080_dev_info.is_swap  = mcu8080->is_swap;
 
     memcpy(&mcu8080_dev_info.bl, &mcu8080->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));
     memcpy(&mcu8080_dev_info.power, &mcu8080->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));

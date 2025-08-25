@@ -36,7 +36,8 @@ static TDD_DISP_SPI_CFG_T sg_disp_spi_cfg = {
             .cmd_raset = ILI9341_RASET,
             .cmd_ramwr = ILI9341_RAMWR,
         },
-
+        
+    .is_swap = true,
     .init_seq = cILI9341_INIT_SEQ,
     .set_window_cb = NULL, // Default callback to set window
 };

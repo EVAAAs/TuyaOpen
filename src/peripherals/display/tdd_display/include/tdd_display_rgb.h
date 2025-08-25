@@ -15,6 +15,8 @@
 #include "tuya_cloud_types.h"
 #include "tdl_display_driver.h"
 
+#if defined(ENABLE_RGB) && (ENABLE_RGB == 1)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,6 +35,7 @@ typedef struct {
     TUYA_DISPLAY_IO_CTRL_T      power;
     TDD_DISPLAY_SEQ_INIT_CB     init_cb; 
     TUYA_DISPLAY_ROTATION_E     rotation;
+    bool                        is_swap; 
 }TDD_DISP_RGB_CFG_T;
 
 /***********************************************************
@@ -53,6 +56,8 @@ OPERATE_RET tdd_disp_rgb_device_register(char *name, TDD_DISP_RGB_CFG_T *rgb);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif /* __TDD_DISPLAY_RGB_H__ */

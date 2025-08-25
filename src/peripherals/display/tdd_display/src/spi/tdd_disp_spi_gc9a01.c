@@ -78,6 +78,7 @@ static TDD_DISP_SPI_CFG_T sg_disp_spi_cfg = {
             .cmd_ramwr = GC9A01_RAMWR,
         },
 
+    .is_swap = true,
     .init_seq = cGC9A01_INIT_SEQ,
     .set_window_cb = NULL, // Default callback to set window
 };

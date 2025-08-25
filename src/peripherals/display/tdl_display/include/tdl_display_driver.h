@@ -58,13 +58,14 @@ typedef void*  TDD_DISP_DEV_HANDLE_T;
 typedef OPERATE_RET (*TDD_DISPLAY_SEQ_INIT_CB)(void);
 
 typedef struct {
-    TUYA_DISPLAY_TYPE_E type;
-    uint16_t width;
-    uint16_t height;
-    TUYA_DISPLAY_PIXEL_FMT_E fmt;
-    TUYA_DISPLAY_ROTATION_E rotation;
-    TUYA_DISPLAY_BL_CTRL_T bl;
-    TUYA_DISPLAY_IO_CTRL_T power;
+    TUYA_DISPLAY_TYPE_E       type;
+    uint16_t                  width;
+    uint16_t                  height;
+    bool                      is_swap;
+    TUYA_DISPLAY_PIXEL_FMT_E  fmt;
+    TUYA_DISPLAY_ROTATION_E   rotation;
+    TUYA_DISPLAY_BL_CTRL_T    bl;
+    TUYA_DISPLAY_IO_CTRL_T    power;
 } TDD_DISP_DEV_INFO_T;
 
 typedef struct {

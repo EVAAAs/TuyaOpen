@@ -55,7 +55,7 @@ static uint32_t __disp_get_random_color(uint32_t range)
     return tal_system_get_random(range);
 }
 
-static void __disp_fill_color(TDL_DISP_FRAME_BUFF_T *fb, uint32_t color)
+static void __disp_fill_color(TDL_DISP_FRAME_BUFF_T *fb, uint32_t color, bool is_swap)
 {
     uint8_t bytes_per_pixel = 0, pixels_per_byte = 0, bpp = 0;
     uint32_t pixel_count =0, i=0;
@@ -85,6 +85,9 @@ static void __disp_fill_color(TDL_DISP_FRAME_BUFF_T *fb, uint32_t color)
 
     for (uint32_t i = 0; i < pixel_count; i++) {
         if (bpp == 16) {
+            if(is_swap == true) {
+                color = ((color & 0xFF00) >> 8) | ((color & 0x00FF) << 8); // Swap bytes for RGB565
+            }
             ((uint16_t *)fb->frame)[i] = (uint16_t)color; // RGB565
         } else if (bpp == 24) {
             ((uint8_t *)fb->frame)[i * 3] = (color >> 16) & 0xFF; // R
@@ -163,7 +166,7 @@ void user_main(void)
     sg_p_display_fb->height = sg_display_info.height;
 
     while(1) {
-        __disp_fill_color(sg_p_display_fb, __disp_get_random_color(0xFFFFFFFF));
+        __disp_fill_color(sg_p_display_fb, __disp_get_random_color(0xFFFFFFFF), sg_display_info.is_swap);
 
         tdl_disp_dev_flush(sg_tdl_disp_hdl, sg_p_display_fb);
 

@@ -85,6 +85,7 @@ OPERATE_RET tdd_disp_mcu8080_st7796s_register(char *name, DISP_MCU8080_DEVICE_CF
     sg_disp_mcu8080_cfg.rotation = dev_cfg->rotation;
     sg_disp_mcu8080_cfg.te_pin = dev_cfg->te_pin;
     sg_disp_mcu8080_cfg.te_mode = dev_cfg->te_mode;
+    sg_disp_mcu8080_cfg.is_swap = false;
 
     memcpy(&sg_disp_mcu8080_cfg.power, &dev_cfg->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));
     memcpy(&sg_disp_mcu8080_cfg.bl, &dev_cfg->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));

@@ -24,10 +24,6 @@ if (ENABLE_LIBLVGL)
             select ENABLE_ENCODER
             default n
 
-        config LVGL_COLOR_16_SWAP
-            bool "swap color bytes"
-            default n
-
         choice
             prompt "the proportion of the draw buffer size"
 

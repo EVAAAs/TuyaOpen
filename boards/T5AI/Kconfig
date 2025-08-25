@@ -62,6 +62,13 @@ choice
             rsource "./ATK_T5AI_MINI_BOARD/Kconfig"
         endif
 
+
+    config BOARD_CHOICE_WAVESHARE_T5AI_TOUCH_AMOLED_1_75
+        bool "WAVESHARE_T5AI_TOUCH_AMOLED_1_75"
+        if (BOARD_CHOICE_WAVESHARE_T5AI_TOUCH_AMOLED_1_75)
+            rsource "./WAVESHARE_T5AI_TOUCH_AMOLED_1_75/Kconfig"
+        endif
+
 # <new-board-add: This line cannot be deleted or modified>
 
 endchoice

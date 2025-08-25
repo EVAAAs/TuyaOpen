@@ -222,23 +222,24 @@ OPERATE_RET tdd_disp_spi_mono_st7305_register(char *name, DISP_SPI_DEVICE_CFG_T 
 
     disp_spi_dev->caset_xs = caset_xs;
 
-    disp_spi_dev->cfg.width = dev_cfg->width;
-    disp_spi_dev->cfg.height = dev_cfg->height;
+    disp_spi_dev->cfg.width     = dev_cfg->width;
+    disp_spi_dev->cfg.height    = dev_cfg->height;
     disp_spi_dev->cfg.pixel_fmt = TUYA_PIXEL_FMT_MONOCHROME;
-    disp_spi_dev->cfg.port = dev_cfg->port;
-    disp_spi_dev->cfg.spi_clk = dev_cfg->spi_clk;
-    disp_spi_dev->cfg.cs_pin = dev_cfg->cs_pin;
-    disp_spi_dev->cfg.dc_pin = dev_cfg->dc_pin;
-    disp_spi_dev->cfg.rst_pin = dev_cfg->rst_pin;
+    disp_spi_dev->cfg.port      = dev_cfg->port;
+    disp_spi_dev->cfg.spi_clk   = dev_cfg->spi_clk;
+    disp_spi_dev->cfg.cs_pin    = dev_cfg->cs_pin;
+    disp_spi_dev->cfg.dc_pin    = dev_cfg->dc_pin;
+    disp_spi_dev->cfg.rst_pin   = dev_cfg->rst_pin;
     disp_spi_dev->cfg.cmd_caset = ST7305_CASET; // Column Address
     disp_spi_dev->cfg.cmd_raset = ST7305_RASET; // Row Address
     disp_spi_dev->cfg.cmd_ramwr = ST7305_RAMWR; // Memory Write
 
-    disp_spi_dev_info.type = TUYA_DISPLAY_SPI;
-    disp_spi_dev_info.width = dev_cfg->width;
-    disp_spi_dev_info.height = dev_cfg->height;
-    disp_spi_dev_info.fmt = TUYA_PIXEL_FMT_MONOCHROME;
-    disp_spi_dev_info.rotation = dev_cfg->rotation;
+    disp_spi_dev_info.type      = TUYA_DISPLAY_SPI;
+    disp_spi_dev_info.width     = dev_cfg->width;
+    disp_spi_dev_info.height    = dev_cfg->height;
+    disp_spi_dev_info.fmt       = TUYA_PIXEL_FMT_MONOCHROME;
+    disp_spi_dev_info.rotation  = dev_cfg->rotation;
+    disp_spi_dev_info.is_swap   = false;
 
     memcpy(&disp_spi_dev_info.power, &dev_cfg->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));
     memcpy(&disp_spi_dev_info.bl, &dev_cfg->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));

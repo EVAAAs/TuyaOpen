@@ -445,9 +445,9 @@ static void __disp_fill_display_framebuffer(const lv_area_t * area, uint8_t * px
         }
     }else {
         if(LV_COLOR_FORMAT_RGB565 == cf) {
-            #if defined(LVGL_COLOR_16_SWAP) && (LVGL_COLOR_16_SWAP == 1)
-            lv_draw_sw_rgb565_swap(px_map, lv_area_get_width(area) * lv_area_get_height(area));
-            #endif
+            if(sg_display_info.is_swap) {
+                lv_draw_sw_rgb565_swap(px_map, lv_area_get_width(area) * lv_area_get_height(area));
+            }
         }
 
 #if defined(ENABLE_DMA2D) && (ENABLE_DMA2D == 1)

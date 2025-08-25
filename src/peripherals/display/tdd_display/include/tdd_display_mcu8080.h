@@ -15,6 +15,8 @@
 #include "tuya_cloud_types.h"
 #include "tdl_display_driver.h"
 
+#if defined(ENABLE_MCU8080) && (ENABLE_MCU8080 == 1)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -32,6 +34,7 @@ typedef struct {
     TUYA_DISPLAY_BL_CTRL_T      bl;
     TUYA_DISPLAY_IO_CTRL_T      power;
     TUYA_DISPLAY_ROTATION_E     rotation;
+    bool                        is_swap; 
     TUYA_GPIO_NUM_E             te_pin;
     TUYA_GPIO_IRQ_E             te_mode;
     uint8_t                     cmd_caset;
@@ -59,6 +62,8 @@ OPERATE_RET tdd_disp_mcu8080_device_register(char *name, TDD_DISP_MCU8080_CFG_T 
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif /* __TDD_DISPLAY_MCU8080_H__ */

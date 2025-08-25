@@ -235,6 +235,7 @@ OPERATE_RET tdd_disp_spi_i2_st7306_register(char *name, DISP_SPI_DEVICE_CFG_T *d
     disp_spi_dev_info.height     = dev_cfg->height;
     disp_spi_dev_info.fmt        = TUYA_PIXEL_FMT_I2;
     disp_spi_dev_info.rotation   = dev_cfg->rotation;
+    disp_spi_dev_info.is_swap    = false;
 
     memcpy(&disp_spi_dev_info.power, &dev_cfg->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));
     memcpy(&disp_spi_dev_info.bl, &dev_cfg->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));

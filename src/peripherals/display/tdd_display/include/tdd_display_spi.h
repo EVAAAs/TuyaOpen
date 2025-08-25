@@ -15,6 +15,8 @@
 #include "tuya_cloud_types.h"
 #include "tdl_display_driver.h"
 
+#if defined(ENABLE_SPI) && (ENABLE_SPI == 1)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,17 +30,17 @@ extern "C" {
 ***********************typedef define***********************
 ***********************************************************/
 typedef struct {
-    uint16_t width;
-    uint16_t height;
+    uint16_t                 width;
+    uint16_t                 height;
     TUYA_DISPLAY_PIXEL_FMT_E pixel_fmt;
-    TUYA_GPIO_NUM_E cs_pin;
-    TUYA_GPIO_NUM_E dc_pin;
-    TUYA_GPIO_NUM_E rst_pin;
-    TUYA_SPI_NUM_E port;
-    uint32_t spi_clk;
-    uint8_t cmd_caset;
-    uint8_t cmd_raset;
-    uint8_t cmd_ramwr;
+    TUYA_GPIO_NUM_E          cs_pin;
+    TUYA_GPIO_NUM_E          dc_pin;
+    TUYA_GPIO_NUM_E          rst_pin;
+    TUYA_SPI_NUM_E           port;
+    uint32_t                 spi_clk;
+    uint8_t                  cmd_caset;
+    uint8_t                  cmd_raset;
+    uint8_t                  cmd_ramwr;
 } DISP_SPI_BASE_CFG_T;
 
 typedef void (*TDD_DISP_SPI_SET_WINDOW_CB)(DISP_SPI_BASE_CFG_T *p_cfg, uint16_t x_start, uint16_t y_start,\
@@ -49,6 +51,7 @@ typedef struct {
     TUYA_DISPLAY_BL_CTRL_T      bl;
     TUYA_DISPLAY_IO_CTRL_T      power;
     TUYA_DISPLAY_ROTATION_E     rotation;
+    bool                        is_swap; 
     const uint8_t              *init_seq;      // Initialization commands for the display
     TDD_DISP_SPI_SET_WINDOW_CB  set_window_cb; // Callback to set the display window
 }TDD_DISP_SPI_CFG_T;
@@ -138,6 +141,8 @@ void tdd_disp_modify_init_seq_param(uint8_t *init_seq, uint8_t init_cmd, uint8_t
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif
 
 #endif /* __TDD_DISPLAY_SPI_H__ */

@@ -51,7 +51,8 @@ static TDD_DISP_SPI_CFG_T sg_disp_spi_cfg = {
             .cmd_raset = ST7789_RASET,
             .cmd_ramwr = ST7789_RAMWR,
         },
-
+         
+    .is_swap = true,
     .init_seq = cST7789_INIT_SEQ,
     .set_window_cb = NULL, // Default callback to set window
 };
