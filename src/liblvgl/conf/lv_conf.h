@@ -44,6 +44,8 @@
 #define LV_COLOR_16_SWAP    1
 #endif
 
+// #define LV_FONT_FMT_TXT_LARGE 1
+
 /*=========================
    STDLIB WRAPPER SETTINGS
  *=========================*/
