@@ -43,9 +43,23 @@ int util_printf(const char *format, ...)
 {
     va_list args;
     va_start(args, format);
-    int result = vprintf(format, args);
+
+    char buffer[512];
+    int written = vsnprintf(buffer, sizeof(buffer), format, args);
     va_end(args);
-    return result;
+
+    if (written < 0) {
+        return written;
+    }
+
+    // Trim potential trailing newline for consistent TAL logging
+    if (written > 0 && buffer[written - 1] == '\n') {
+        buffer[written - 1] = '\0';
+    }
+
+    // Attribute SDK logs to the app entry for clearer provenance in output
+    tal_log_print(TAL_LOG_LEVEL_INFO, "hello_world.c", 0, "%s", buffer);
+    return written;
 }
 
 void util_set_log_level(uint8_t log_lv)

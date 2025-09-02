@@ -30,9 +30,23 @@
  */
 int32_t util_storage_erase(void)
 {
+    UTIL_LOG_D("Attempting to erase storage with key: %s", ALIYUN_SDK_STORAGE_KEY);
+
     int ret = tal_kv_del(ALIYUN_SDK_STORAGE_KEY);
     if (ret != OPRT_OK) {
         UTIL_LOG_E("Failed to erase storage: %d", ret);
+        // Add more detailed error information
+        switch (ret) {
+        case OPRT_INVALID_PARM:
+            UTIL_LOG_E("Invalid parameter error");
+            break;
+        case OPRT_COM_ERROR:
+            UTIL_LOG_E("Communication error - flash operation failed");
+            break;
+        default:
+            UTIL_LOG_E("Unknown error code: %d", ret);
+            break;
+        }
         return UTIL_ERR_IO;
     }
 
@@ -59,9 +73,26 @@ int32_t util_storage_storage(uint8_t *data, uint32_t size)
         return UTIL_ERR_INVALID_PARAM;
     }
 
+    UTIL_LOG_D("Attempting to store data with key: %s, size: %u", ALIYUN_SDK_STORAGE_KEY, size);
+
     int ret = tal_kv_set(ALIYUN_SDK_STORAGE_KEY, data, (size_t)size);
     if (ret != OPRT_OK) {
         UTIL_LOG_E("Failed to store data: %d", ret);
+        // Add more detailed error information
+        switch (ret) {
+        case OPRT_INVALID_PARM:
+            UTIL_LOG_E("Invalid parameter error");
+            break;
+        case OPRT_MALLOC_FAILED:
+            UTIL_LOG_E("Memory allocation failed");
+            break;
+        case OPRT_KVS_WR_FAIL:
+            UTIL_LOG_E("Key-value storage write failed");
+            break;
+        default:
+            UTIL_LOG_E("Unknown error code: %d", ret);
+            break;
+        }
         return UTIL_ERR_IO;
     }
 
@@ -88,12 +119,32 @@ int32_t util_storage_load(uint8_t *data, uint32_t size)
         return UTIL_ERR_INVALID_PARAM;
     }
 
+    UTIL_LOG_D("Attempting to load data with key: %s, buffer size: %u", ALIYUN_SDK_STORAGE_KEY, size);
+
     uint8_t *loaded_data = NULL;
     size_t loaded_size = 0;
 
     int ret = tal_kv_get(ALIYUN_SDK_STORAGE_KEY, &loaded_data, &loaded_size);
     if (ret != OPRT_OK) {
         UTIL_LOG_E("Failed to load data: %d", ret);
+        // Add more detailed error information
+        switch (ret) {
+        case OPRT_INVALID_PARM:
+            UTIL_LOG_E("Invalid parameter error");
+            break;
+        case OPRT_MALLOC_FAILED:
+            UTIL_LOG_E("Memory allocation failed");
+            break;
+        case OPRT_KVS_RD_FAIL:
+            UTIL_LOG_E("Key-value storage read failed");
+            break;
+        case OPRT_BUFFER_NOT_ENOUGH:
+            UTIL_LOG_E("Buffer not enough");
+            break;
+        default:
+            UTIL_LOG_E("Unknown error code: %d", ret);
+            break;
+        }
         return UTIL_ERR_IO;
     }
 

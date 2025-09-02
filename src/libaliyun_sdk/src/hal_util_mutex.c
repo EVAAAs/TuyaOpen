@@ -1,12 +1,12 @@
 /*
  * Copyright 2025 Alibaba Group Holding Ltd.
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
-
+ *
  *     http: *www.apache.org/licenses/LICENSE-2.0
-
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,8 +15,9 @@
  */
 
 #include "c_utils.h"
-#include "tal_mutex.h"
+#include "tkl_mutex.h"
 #include "tal_memory.h"
+#include "tal_system.h"
 
 #define MUTEX_WAIT_FOREVER 0x7FFFFFFF
 
@@ -37,15 +38,15 @@ util_mutex_t *util_mutex_create(void)
         return NULL;
     }
 
-    MUTEX_HANDLE tal_mutex_handle;
-    OPERATE_RET ret = tal_mutex_create_init(&tal_mutex_handle);
+    TKL_MUTEX_HANDLE tkl_mutex_handle;
+    OPERATE_RET ret = tkl_mutex_create_init(&tkl_mutex_handle);
     if (ret != OPRT_OK) {
         UTIL_LOG_E("Failed to create mutex: %d", ret);
         util_free(mutex);
         return NULL;
     }
 
-    mutex->mutex_handle = (void *)tal_mutex_handle;
+    mutex->mutex_handle = (void *)tkl_mutex_handle;
     UTIL_LOG_D("Mutex created successfully");
     return mutex;
 }
@@ -64,7 +65,7 @@ void util_mutex_delete(util_mutex_t *mutex)
     }
 
     if (mutex->mutex_handle != NULL) {
-        tal_mutex_release((MUTEX_HANDLE)mutex->mutex_handle);
+        tkl_mutex_release((TKL_MUTEX_HANDLE)mutex->mutex_handle);
     }
 
     util_free(mutex);
@@ -88,13 +89,45 @@ int32_t util_mutex_lock(util_mutex_t *mutex, int32_t timeout)
         return UTIL_ERR_INVALID_PARAM;
     }
 
-    OPERATE_RET ret = tal_mutex_lock((MUTEX_HANDLE)mutex->mutex_handle);
-    if (ret != OPRT_OK) {
+    OPERATE_RET ret;
+    if (timeout == MUTEX_WAIT_FOREVER) {
+        ret = tkl_mutex_lock((TKL_MUTEX_HANDLE)mutex->mutex_handle);
+    } else if (timeout <= 0) {
+        // Try lock, return immediately if not available
+        ret = tkl_mutex_trylock((TKL_MUTEX_HANDLE)mutex->mutex_handle);
+    } else {
+        // For timeout > 0, we need to implement a polling mechanism since TKL doesn't support timed locks
+        // Try to lock with a small delay between attempts
+        uint32_t start_time = tal_system_get_millisecond();
+        uint32_t elapsed_time = 0;
+
+        while (elapsed_time < (uint32_t)timeout) {
+            ret = tkl_mutex_trylock((TKL_MUTEX_HANDLE)mutex->mutex_handle);
+            if (ret == OPRT_OK) {
+                break;
+            }
+
+            // Small delay to avoid busy waiting
+            tal_system_sleep(1);
+            elapsed_time = tal_system_get_millisecond() - start_time;
+        }
+
+        // If we didn't get the lock within timeout, return timeout error
+        if (ret != OPRT_OK) {
+            UTIL_LOG_W("Mutex lock timeout after %d ms", timeout);
+            return UTIL_ERR_TIMEOUT;
+        }
+    }
+
+    if (ret == OPRT_OK) {
+        return UTIL_SUCCESS;
+    } else if (ret == OPRT_TIMEOUT) {
+        UTIL_LOG_W("Mutex lock timeout after %d ms", timeout);
+        return UTIL_ERR_TIMEOUT;
+    } else {
         UTIL_LOG_E("Failed to lock mutex: %d", ret);
         return UTIL_ERR_FAIL;
     }
-
-    return UTIL_SUCCESS;
 }
 
 /*****************************************************
@@ -113,7 +146,7 @@ int32_t util_mutex_unlock(util_mutex_t *mutex)
         return UTIL_ERR_INVALID_PARAM;
     }
 
-    OPERATE_RET ret = tal_mutex_unlock((MUTEX_HANDLE)mutex->mutex_handle);
+    OPERATE_RET ret = tkl_mutex_unlock((TKL_MUTEX_HANDLE)mutex->mutex_handle);
     if (ret != OPRT_OK) {
         UTIL_LOG_E("Failed to unlock mutex: %d", ret);
         return UTIL_ERR_FAIL;

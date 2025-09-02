@@ -1,12 +1,12 @@
 /*
  * Copyright 2025 Alibaba Group Holding Ltd.
-
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
-
+ *
  *     http: *www.apache.org/licenses/LICENSE-2.0
-
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,9 +16,12 @@
 
 #include "c_utils.h"
 #include "tal_system.h"
+#include <stdlib.h>
+#include <time.h>
 
-// Static variable to track initialization state
+// Static variable to track initialization state and seed
 static uint8_t s_random_initialized = 0;
+static uint32_t s_random_seed = 0;
 
 /**
  * 初始化随机数生成器
@@ -32,8 +35,9 @@ static uint8_t s_random_initialized = 0;
  */
 int32_t util_random_init(uint32_t seed)
 {
-    // TuyaOpen TAL system random function doesn't require explicit initialization
-    // The seed parameter is ignored as the system provides hardware-based randomness
+    // Use the provided seed to initialize the C library PRNG
+    srandom(seed);
+    s_random_seed = seed;
     s_random_initialized = 1;
 
     UTIL_LOG_D("Random number generator initialized (seed: %u)", seed);
@@ -51,13 +55,14 @@ int32_t util_random_init(uint32_t seed)
 uint32_t util_random(void)
 {
     if (!s_random_initialized) {
-        // Auto-initialize if not already done
-        util_random_init(0);
+        // Auto-initialize with a time-based seed if not already done
+        uint32_t auto_seed = (uint32_t)time(NULL);
+        util_random_init(auto_seed);
+        UTIL_LOG_W("Random generator auto-initialized with seed: %u", auto_seed);
     }
 
-    // Use TuyaOpen TAL system random function
-    // Generate a random number in the range [0, UINT32_MAX]
-    uint32_t random_value = tal_system_get_random(UINT32_MAX);
+    // Use the standard C library random function to ensure deterministic output for the same seed
+    uint32_t random_value = (uint32_t)random();
 
     return random_value;
 }

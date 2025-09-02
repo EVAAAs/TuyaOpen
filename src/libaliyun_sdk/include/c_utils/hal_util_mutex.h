@@ -22,12 +22,14 @@ extern "C" {
 #endif
 
 #include "c_utils/c_utils.h"
+#include <stdbool.h>
 
 #define MUTEX_WAIT_FOREVER 0x7FFFFFFF
 
 /* 互斥锁结构体定义 */
 typedef struct _util_mutex_t {
     void *mutex_handle; /* 互斥锁句柄，具体实现依赖于平台 */
+    bool is_locked;     /* 标记当前互斥锁是否被锁定 */
 } util_mutex_t;
 
 /*****************************************************

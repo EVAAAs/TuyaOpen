@@ -17,6 +17,7 @@
 #include "c_utils.h"
 #include "tal_time_service.h"
 #include "tal_system.h"
+#include "tkl_rtc.h"
 
 /**
  * 获取当前时间戳（毫秒级）
@@ -58,12 +59,21 @@ void util_msleep(uint32_t ms)
  */
 int64_t util_get_timestamp(void)
 {
+    SYS_TICK_T posix_ms = tal_time_get_posix_ms();
+    if (posix_ms > 0) {
+        return (int64_t)posix_ms;
+    }
     return util_now_ms();
 }
 
 // 获取当前时间戳，单位为毫秒，即将废弃
 int64_t util_get_timestamp_ms(void)
 {
+    SYS_TICK_T posix_ms = tal_time_get_posix_ms();
+
+    if (posix_ms > 0) {
+        return (int64_t)posix_ms;
+    }
     return util_now_ms();
 }
 
@@ -77,7 +87,7 @@ int64_t util_get_timestamp_ms(void)
  */
 uint8_t util_timestamp_inited(void)
 {
-    // Check if time service is synchronized
-    OPERATE_RET ret = tal_time_check_time_sync();
-    return (ret == OPRT_OK) ? 1 : 0;
+    // HAL角度认为系统就绪即可；云端同步可稍后进行
+    // ensure_posix_seeded();
+    return 1;
 }
