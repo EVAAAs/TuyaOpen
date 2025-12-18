@@ -3,6 +3,11 @@
  * @author Tuya Inc.
  * @brief Header file for common board-level hardware registration APIs.
  *
+ * This board supports:
+ * - E-Ink Display: UC8276 400x300 (SPI interface)
+ * - Touch Panel: FT6336 (I2C interface)
+ * - Audio, Buttons, LED, SD Card, Power Domains
+ *
  * @copyright Copyright (c) 2021-2025 Tuya Inc. All Rights Reserved.
  */
 
@@ -28,6 +33,22 @@ extern "C" {
 #define BOARD_BUTTON_NAME_RIGHT  "btn_right"
 
 #define BOARD_LED_NAME "user_led"
+
+// E-Ink Display (UC8276 400x300) pin assignments
+// SPI Interface:
+//   - SCLK: P44
+//   - SDI (MOSI): P46
+//   - CS: P45
+//   - D/C: P47
+//   - RST: P43
+//   - Backlight: P33
+//
+// Touch Panel (FT6336) pin assignments
+// I2C Interface:
+//   - SDA: P21
+//   - SCK: P20
+//   - RST: P37
+//   - INT: P36
 
 /***********************************************************
 ********************function declaration********************
@@ -59,7 +80,16 @@ OPERATE_RET board_battery_read(uint32_t *voltage_mv, uint8_t *percentage);
 OPERATE_RET board_sdcard_init(void);
 
 /**
- * @brief Registers all the hardware peripherals (audio, button, SD card) on the board.
+ * @brief Registers all the hardware peripherals (audio, button, LED, SD card, display, TP) on the board.
+ *
+ * This function initializes and registers:
+ * - Power domains (EINK 3V3, SD card 3V3)
+ * - Audio codec
+ * - Buttons (UP, DOWN, ENTER, RETURN, LEFT, RIGHT)
+ * - User LED
+ * - E-Ink display (UC8276 400x300 via SPI)
+ * - Touch panel (FT6336 via I2C)
+ * - SDIO interface for SD card
  *
  * @return Returns OPERATE_RET_OK on success, or an appropriate error code on failure.
  */

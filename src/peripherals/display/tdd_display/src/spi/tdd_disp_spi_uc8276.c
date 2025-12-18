@@ -1,0 +1,308 @@
+/**
+ * @file tdd_disp_spi_uc8276.c
+ * @brief UC8276 E-Ink display driver (400x300, 4.2" V2)
+ *
+ * Based on Waveshare epd4in2_V2 reference implementation.
+ * BUSY: HIGH=busy, LOW=idle | Reset: HIGH(100ms)->LOW(2ms)->HIGH(100ms)
+ *
+ * @copyright Copyright (c) 2021-2025 Tuya Inc. All Rights Reserved.
+ */
+#include "tuya_cloud_types.h"
+#include "tal_log.h"
+#include "tal_memory.h"
+#include "tal_system.h"
+#include "tkl_gpio.h"
+
+#include "tdd_display_spi.h"
+#include "tdd_disp_uc8276.h"
+
+#define EPD_WIDTH  400
+#define EPD_HEIGHT 300
+
+typedef struct {
+    DISP_SPI_BASE_CFG_T cfg;
+    TUYA_GPIO_NUM_E     busy_pin;
+} DISP_UC8276_DEV_T;
+
+/*****************************************************************************
+ * Low-level EPD functions
+ *****************************************************************************/
+
+/* Reverse bits in a byte (LSB<->MSB) for LVGL compatibility */
+static inline uint8_t __reverse_bits(uint8_t b)
+{
+    b = (b & 0xF0) >> 4 | (b & 0x0F) << 4;
+    b = (b & 0xCC) >> 2 | (b & 0x33) << 2;
+    b = (b & 0xAA) >> 1 | (b & 0x55) << 1;
+    return b;
+}
+
+static inline void __delay_ms(uint32_t ms)
+{
+    tal_system_sleep(ms);
+}
+
+static inline void __send_cmd(DISP_UC8276_DEV_T *dev, uint8_t cmd)
+{
+    tdd_disp_spi_send_cmd(&dev->cfg, cmd);
+}
+
+static inline void __send_data(DISP_UC8276_DEV_T *dev, uint8_t data)
+{
+    tdd_disp_spi_send_data(&dev->cfg, &data, 1);
+}
+
+/* Wait for BUSY pin to go LOW (idle) with timeout */
+static void __wait_busy(DISP_UC8276_DEV_T *dev)
+{
+    TUYA_GPIO_LEVEL_E level;
+    uint32_t          timeout = 0;
+
+    if (dev->busy_pin >= TUYA_GPIO_NUM_MAX) {
+        __delay_ms(3000);
+        return;
+    }
+
+    while (timeout < 60000) {
+        tkl_gpio_read(dev->busy_pin, &level);
+        if (level == TUYA_GPIO_LEVEL_LOW) {
+            return;
+        }
+        __delay_ms(10);
+        timeout += 10;
+    }
+    PR_ERR("EPD: BUSY timeout");
+}
+
+/* Hardware reset sequence */
+static void __reset(DISP_UC8276_DEV_T *dev)
+{
+    if (dev->cfg.rst_pin < TUYA_GPIO_NUM_MAX) {
+        tkl_gpio_write(dev->cfg.rst_pin, TUYA_GPIO_LEVEL_HIGH);
+        __delay_ms(100);
+        tkl_gpio_write(dev->cfg.rst_pin, TUYA_GPIO_LEVEL_LOW);
+        __delay_ms(2);
+        tkl_gpio_write(dev->cfg.rst_pin, TUYA_GPIO_LEVEL_HIGH);
+        __delay_ms(100);
+    }
+}
+
+/* Trigger display update and wait for completion */
+static void __update_display(DISP_UC8276_DEV_T *dev)
+{
+    __send_cmd(dev, 0x22);
+    __send_data(dev, 0xF7);
+    __send_cmd(dev, 0x20);
+    __wait_busy(dev);
+}
+
+/*****************************************************************************
+ * EPD operations
+ *****************************************************************************/
+
+static void __epd_init(DISP_UC8276_DEV_T *dev)
+{
+    __reset(dev);
+    __wait_busy(dev);
+
+    __send_cmd(dev, 0x12); // Software reset
+    __wait_busy(dev);
+
+    __send_cmd(dev, 0x21); // Display update control
+    __send_data(dev, 0x40);
+    __send_data(dev, 0x00);
+
+    __send_cmd(dev, 0x3C); // Border waveform
+    __send_data(dev, 0x05);
+
+    __send_cmd(dev, 0x11); // Data entry mode: X+, Y+
+    __send_data(dev, 0x03);
+
+    __send_cmd(dev, 0x44); // RAM X range: 0-49 (50 bytes = 400 pixels)
+    __send_data(dev, 0x00);
+    __send_data(dev, 0x31);
+
+    __send_cmd(dev, 0x45); // RAM Y range: 0-299
+    __send_data(dev, 0x00);
+    __send_data(dev, 0x00);
+    __send_data(dev, 0x2B);
+    __send_data(dev, 0x01);
+
+    __send_cmd(dev, 0x4E); // RAM X counter
+    __send_data(dev, 0x00);
+
+    __send_cmd(dev, 0x4F); // RAM Y counter
+    __send_data(dev, 0x00);
+    __send_data(dev, 0x00);
+
+    __wait_busy(dev);
+}
+
+static void __epd_clear(DISP_UC8276_DEV_T *dev)
+{
+    const uint32_t size = (EPD_WIDTH / 8) * EPD_HEIGHT;
+
+    __send_cmd(dev, 0x24);
+    for (uint32_t i = 0; i < size; i++) {
+        __send_data(dev, 0xFF);
+    }
+
+    __send_cmd(dev, 0x26);
+    for (uint32_t i = 0; i < size; i++) {
+        __send_data(dev, 0xFF);
+    }
+
+    __update_display(dev);
+}
+
+static void __epd_display(DISP_UC8276_DEV_T *dev, const uint8_t *data, uint32_t len)
+{
+    const uint32_t size = (EPD_WIDTH / 8) * EPD_HEIGHT;
+
+    /* Send to both RAM buffers (0x24 and 0x26) for full refresh */
+    /* Invert (~) because LVGL: 1=black, EPD: 0=black */
+    __send_cmd(dev, 0x24);
+    for (uint32_t i = 0; i < size; i++) {
+        __send_data(dev, (i < len) ? ~__reverse_bits(data[i]) : 0xFF);
+    }
+
+    __send_cmd(dev, 0x26);
+    for (uint32_t i = 0; i < size; i++) {
+        __send_data(dev, (i < len) ? ~__reverse_bits(data[i]) : 0xFF);
+    }
+
+    __update_display(dev);
+}
+
+static void __epd_sleep(DISP_UC8276_DEV_T *dev)
+{
+    __send_cmd(dev, 0x10);
+    __send_data(dev, 0x01);
+    __delay_ms(100);
+}
+
+/*****************************************************************************
+ * TDD Driver Interface
+ *****************************************************************************/
+
+static OPERATE_RET __tdd_disp_open(TDD_DISP_DEV_HANDLE_T device)
+{
+    DISP_UC8276_DEV_T *dev = (DISP_UC8276_DEV_T *)device;
+
+    if (NULL == device) {
+        return OPRT_INVALID_PARM;
+    }
+
+    /* Initialize SPI and control pins */
+    tdd_disp_spi_init(&dev->cfg);
+    __delay_ms(100);
+
+    /* Initialize BUSY pin as input with pull-up */
+    if (dev->busy_pin < TUYA_GPIO_NUM_MAX) {
+        TUYA_GPIO_BASE_CFG_T gpio_cfg = {
+            .mode   = TUYA_GPIO_PULLUP,
+            .direct = TUYA_GPIO_INPUT,
+            .level  = TUYA_GPIO_LEVEL_HIGH,
+        };
+        tkl_gpio_init(dev->busy_pin, &gpio_cfg);
+    }
+
+    __epd_init(dev);
+    __epd_clear(dev);
+
+    PR_NOTICE("EPD: initialized");
+    return OPRT_OK;
+}
+
+static OPERATE_RET __tdd_disp_flush(TDD_DISP_DEV_HANDLE_T device, TDL_DISP_FRAME_BUFF_T *frame_buff)
+{
+    DISP_UC8276_DEV_T *dev = (DISP_UC8276_DEV_T *)device;
+
+    if (NULL == device || NULL == frame_buff) {
+        return OPRT_INVALID_PARM;
+    }
+
+    __epd_display(dev, frame_buff->frame, frame_buff->len);
+
+    if (frame_buff->free_cb) {
+        frame_buff->free_cb(frame_buff);
+    }
+
+    return OPRT_OK;
+}
+
+static OPERATE_RET __tdd_disp_close(TDD_DISP_DEV_HANDLE_T device)
+{
+    DISP_UC8276_DEV_T *dev = (DISP_UC8276_DEV_T *)device;
+
+    if (NULL == device) {
+        return OPRT_INVALID_PARM;
+    }
+
+    __epd_sleep(dev);
+    return OPRT_OK;
+}
+
+/*****************************************************************************
+ * Public API
+ *****************************************************************************/
+
+OPERATE_RET tdd_disp_spi_mono_uc8276_register(char *name, DISP_EINK_UC8276_CFG_T *dev_cfg)
+{
+    OPERATE_RET        rt       = OPRT_OK;
+    DISP_UC8276_DEV_T *disp_dev = NULL;
+
+    if (NULL == name || NULL == dev_cfg) {
+        return OPRT_INVALID_PARM;
+    }
+
+    disp_dev = (DISP_UC8276_DEV_T *)tal_malloc(sizeof(DISP_UC8276_DEV_T));
+    if (NULL == disp_dev) {
+        return OPRT_MALLOC_FAILED;
+    }
+    memset(disp_dev, 0, sizeof(DISP_UC8276_DEV_T));
+
+    /* Configure device */
+    disp_dev->cfg.width     = dev_cfg->width;
+    disp_dev->cfg.height    = dev_cfg->height;
+    disp_dev->cfg.x_offset  = 0;
+    disp_dev->cfg.y_offset  = 0;
+    disp_dev->cfg.pixel_fmt = TUYA_PIXEL_FMT_MONOCHROME;
+    disp_dev->cfg.port      = dev_cfg->port;
+    disp_dev->cfg.spi_clk   = dev_cfg->spi_clk;
+    disp_dev->cfg.cs_pin    = dev_cfg->cs_pin;
+    disp_dev->cfg.dc_pin    = dev_cfg->dc_pin;
+    disp_dev->cfg.rst_pin   = dev_cfg->rst_pin;
+    disp_dev->busy_pin      = dev_cfg->busy_pin;
+
+    /* Fill device info */
+    TDD_DISP_DEV_INFO_T disp_dev_info = {
+        .type     = TUYA_DISPLAY_SPI,
+        .width    = dev_cfg->width,
+        .height   = dev_cfg->height,
+        .fmt      = TUYA_PIXEL_FMT_MONOCHROME,
+        .rotation = dev_cfg->rotation,
+        .is_swap  = false,
+        .has_vram = true,
+    };
+    disp_dev_info.power.pin   = TUYA_GPIO_NUM_MAX;
+    disp_dev_info.bl.gpio.pin = TUYA_GPIO_NUM_MAX;
+    memcpy(&disp_dev_info.power, &dev_cfg->power, sizeof(TUYA_DISPLAY_IO_CTRL_T));
+    memcpy(&disp_dev_info.bl, &dev_cfg->bl, sizeof(TUYA_DISPLAY_BL_CTRL_T));
+
+    TDD_DISP_INTFS_T disp_intfs = {
+        .open  = __tdd_disp_open,
+        .flush = __tdd_disp_flush,
+        .close = __tdd_disp_close,
+    };
+
+    TUYA_CALL_ERR_GOTO(tdl_disp_device_register(name, (TDD_DISP_DEV_HANDLE_T)disp_dev, &disp_intfs, &disp_dev_info),
+                       err_exit);
+
+    PR_NOTICE("EPD: %s registered (%dx%d)", name, dev_cfg->width, dev_cfg->height);
+    return OPRT_OK;
+
+err_exit:
+    tal_free(disp_dev);
+    return rt;
+}

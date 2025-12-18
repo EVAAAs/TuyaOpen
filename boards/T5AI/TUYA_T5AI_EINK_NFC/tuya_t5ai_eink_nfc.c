@@ -9,13 +9,17 @@
 #include "tuya_cloud_types.h"
 
 #include "tkl_pinmux.h"
+#include "tkl_gpio.h"
 #include "tal_api.h"
 #include "tdd_audio.h"
 #include "tdd_led_gpio.h"
 #include "tdd_button_gpio.h"
+#include "tdd_disp_uc8276.h"
+#include "tdd_tp_ft6336.h"
 #include "board_power_domain_api.h"
 #include "board_charge_detect_api.h"
 #include "tkl_fs.h"
+#include "tal_log.h"
 
 /***********************************************************
 ************************macro define************************
@@ -50,6 +54,28 @@
 #define BOARD_LED_PIN       TUYA_GPIO_NUM_9
 #define BOARD_LED_ACTIVE_LV TUYA_GPIO_LEVEL_HIGH
 
+// E-Ink Display pin definitions (UC8276 400x300)
+#define BOARD_EINK_WIDTH       400
+#define BOARD_EINK_HEIGHT      300
+#define BOARD_EINK_SPI_PORT    TUYA_SPI_NUM_0
+#define BOARD_EINK_SPI_CLK     4000000 // 4MHz for E-Ink
+#define BOARD_EINK_SPI_CS_PIN  TUYA_GPIO_NUM_45
+#define BOARD_EINK_SPI_DC_PIN  TUYA_GPIO_NUM_47
+#define BOARD_EINK_SPI_RST_PIN TUYA_GPIO_NUM_43
+// #define BOARD_EINK_SPI_RST_PIN  TUYA_GPIO_NUM_7
+#define BOARD_EINK_SPI_SCLK_PIN TUYA_GPIO_NUM_44
+#define BOARD_EINK_SPI_SDI_PIN  TUYA_GPIO_NUM_46
+#define BOARD_EINK_SPI_BUSY_PIN TUYA_GPIO_NUM_13
+#define BOARD_EINK_BL_PIN       TUYA_GPIO_NUM_33 // Backlight/front light
+#define BOARD_EINK_BL_ACTIVE_LV TUYA_GPIO_LEVEL_HIGH
+
+// Touch Panel pin definitions (FT6336)
+#define BOARD_TP_I2C_PORT    TUYA_I2C_NUM_0
+#define BOARD_TP_I2C_SCL_PIN TUYA_GPIO_NUM_20
+#define BOARD_TP_I2C_SDA_PIN TUYA_GPIO_NUM_21
+#define BOARD_TP_RST_PIN     TUYA_GPIO_NUM_37
+#define BOARD_TP_INTR_PIN    TUYA_GPIO_NUM_36
+
 /***********************************************************
 ***********************typedef define***********************
 ***********************************************************/
@@ -70,6 +96,7 @@ OPERATE_RET __board_register_audio(void)
     OPERATE_RET rt = OPRT_OK;
 
 #if defined(AUDIO_CODEC_NAME)
+
     TDD_AUDIO_T5AI_T cfg = {0};
     memset(&cfg, 0, sizeof(TDD_AUDIO_T5AI_T));
 
@@ -162,6 +189,80 @@ static OPERATE_RET __board_register_led(void)
     return rt;
 }
 
+static OPERATE_RET __board_register_display(void)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    // Initialize E-Ink backlight GPIO and set to LOW (off)
+    TUYA_GPIO_BASE_CFG_T bl_gpio_cfg = {0};
+    bl_gpio_cfg.mode                 = TUYA_GPIO_PUSH_PULL;
+    bl_gpio_cfg.direct               = TUYA_GPIO_OUTPUT;
+    bl_gpio_cfg.level                = TUYA_GPIO_LEVEL_LOW;
+    tkl_gpio_init(BOARD_EINK_BL_PIN, &bl_gpio_cfg);
+    tkl_gpio_write(BOARD_EINK_BL_PIN, TUYA_GPIO_LEVEL_LOW);
+
+#if defined(DISPLAY_NAME)
+    // Ensure E-Ink power domain is enabled and stable
+    board_power_domain_eink_3v3_enable();
+    tal_system_sleep(50); // Wait for power stabilization
+
+    // Configure SPI pinmux for E-Ink display (CS is GPIO controlled, not SPI peripheral)
+    tkl_io_pinmux_config(BOARD_EINK_SPI_SCLK_PIN, TUYA_SPI0_CLK);
+    tkl_io_pinmux_config(BOARD_EINK_SPI_SDI_PIN, TUYA_SPI0_MOSI);
+
+    // Configure E-Ink display (UC8276 400x300)
+    DISP_EINK_UC8276_CFG_T eink_cfg;
+    memset(&eink_cfg, 0, sizeof(DISP_EINK_UC8276_CFG_T));
+
+    eink_cfg.width    = BOARD_EINK_WIDTH;
+    eink_cfg.height   = BOARD_EINK_HEIGHT;
+    eink_cfg.rotation = TUYA_DISPLAY_ROTATION_0;
+
+    eink_cfg.port     = BOARD_EINK_SPI_PORT;
+    eink_cfg.spi_clk  = BOARD_EINK_SPI_CLK;
+    eink_cfg.cs_pin   = BOARD_EINK_SPI_CS_PIN;
+    eink_cfg.dc_pin   = BOARD_EINK_SPI_DC_PIN;
+    eink_cfg.rst_pin  = BOARD_EINK_SPI_RST_PIN;
+    eink_cfg.busy_pin = BOARD_EINK_SPI_BUSY_PIN; // No busy pin connected
+
+    // Set power pin to MAX to indicate no power control (prevents GPIO 0 init)
+    eink_cfg.power.pin = TUYA_GPIO_NUM_MAX;
+
+    // Set backlight pin to MAX to indicate no backlight control
+    eink_cfg.bl.gpio.pin = TUYA_GPIO_NUM_MAX;
+
+    TUYA_CALL_ERR_RETURN(tdd_disp_spi_mono_uc8276_register(DISPLAY_NAME, &eink_cfg));
+
+    // Configure Touch Panel (FT6336)
+    TDD_TP_FT6336_INFO_T ft6336_info = {
+        .rst_pin  = BOARD_TP_RST_PIN,
+        .intr_pin = BOARD_TP_INTR_PIN,
+        .i2c_cfg =
+            {
+                .port    = BOARD_TP_I2C_PORT,
+                .scl_pin = BOARD_TP_I2C_SCL_PIN,
+                .sda_pin = BOARD_TP_I2C_SDA_PIN,
+            },
+        .tp_cfg =
+            {
+                .x_max = BOARD_EINK_WIDTH,
+                .y_max = BOARD_EINK_HEIGHT,
+                .flags =
+                    {
+                        .mirror_x = 0,
+                        .mirror_y = 0,
+                        .swap_xy  = 0,
+                    },
+            },
+    };
+
+    TUYA_CALL_ERR_RETURN(tdd_tp_i2c_ft6336_register(DISPLAY_NAME, &ft6336_info));
+#endif
+
+    PR_NOTICE("Initialized E-Ink display OK");
+    return rt;
+}
+
 static OPERATE_RET __board_register_power_domains(void)
 {
     OPERATE_RET rt = OPRT_OK;
@@ -245,7 +346,7 @@ OPERATE_RET board_sdcard_init(void)
 }
 
 /**
- * @brief Registers all the hardware peripherals (audio, button, LED, SD card, power domains) on the board.
+ * @brief Registers all the hardware peripherals (audio, button, LED, SD card, power domains, display, TP) on the board.
  *
  * @return Returns OPERATE_RET_OK on success, or an appropriate error code on failure.
  */
@@ -257,6 +358,7 @@ OPERATE_RET board_register_hardware(void)
     TUYA_CALL_ERR_LOG(__board_register_audio());
     TUYA_CALL_ERR_LOG(__board_register_button());
     TUYA_CALL_ERR_LOG(__board_register_led());
+    TUYA_CALL_ERR_LOG(__board_register_display());
     // Charge detection may fail if interrupt mode not supported - make it non-fatal
     rt = __board_register_charge_detect();
     if (OPRT_OK != rt) {
