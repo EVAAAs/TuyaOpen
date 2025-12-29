@@ -1,0 +1,5 @@
+
+menu "configure ai components"
+    rsource "ai_audio/Kconfig"
+    rsource "ai_video/Kconfig"
+endmenu

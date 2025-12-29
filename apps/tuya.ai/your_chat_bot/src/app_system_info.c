@@ -6,7 +6,6 @@
  */
 
 #include "app_system_info.h"
-#include "ai_audio_player.h"
 
 #include "app_display.h"
 #include "app_chat_bot.h"
@@ -103,23 +102,6 @@ static void __app_display_net_status_update(void)
         system_info.last_net_status = wifi_status;
 #if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
         app_display_send_msg(TY_DISPLAY_TP_NETWORK, (uint8_t *)&wifi_status, sizeof(UI_WIFI_STATUS_E));
-#endif
-    }
-}
-
-static __attribute__((unused)) void __app_display_status_time_update(uint8_t force_update)
-{
-    POSIX_TM_S tm = {0};
-    tal_time_get_local_time_custom(0, &tm);
-
-    if (tm.tm_hour != system_info.hour || tm.tm_min != system_info.min || force_update) {
-        system_info.hour = tm.tm_hour;
-        system_info.min = tm.tm_min;
-
-        char tm_str[10] = {0};
-        snprintf(tm_str, sizeof(tm_str), "%02d:%02d", system_info.hour, system_info.min);
-#if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
-        app_display_send_msg(TY_DISPLAY_TP_STATUS, (uint8_t *)tm_str, strlen(tm_str));
 #endif
     }
 }

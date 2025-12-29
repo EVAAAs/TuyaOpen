@@ -29,7 +29,7 @@
 ***********************************************************/
 #define MAX_MASSAGE_NUM           20
 #define STREAM_BUFF_MAX_LEN       1024
-#define STREAM_TEXT_SHOW_WORD_NUM 5
+#define STREAM_TEXT_SHOW_WORD_NUM 10
 #define ONE_WORD_MAX_LEN          4
 
 /***********************************************************

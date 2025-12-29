@@ -12,14 +12,10 @@ get_filename_component(APP_NAME ${APP_PATH} NAME)
 # APP_SRCS
 aux_source_directory(${APP_PATH}/src APP_SRCS)
 
-list(APPEND media_srcs "${APP_PATH}/src/media")
-
-list(APPEND APP_SRCS ${media_srcs})
 
 set(APP_INC 
             ${APP_PATH}/assets
             ${APP_PATH}/include
-            ${APP_PATH}/include/media
 )
 
 list(APPEND APP_INC "${APP_PATH}/assets")
@@ -102,16 +98,16 @@ if (CONFIG_ENABLE_CHAT_DISPLAY2 STREQUAL "y")
     add_subdirectory(${APP_PATH}/src/display2)
 endif()
 
-if (CONFIG_ENABLE_EX_MODULE_CAMERA STREQUAL "y")
-    add_subdirectory(${APP_PATH}/src/camera)
-endif()
-
 if (CONFIG_ENABLE_BATTERY STREQUAL "y")
     add_subdirectory(${APP_PATH}/src/battery)
 endif()
 
-# Add mcp subdirectory
-add_subdirectory(${APP_PATH}/src/mcp)
-
+add_subdirectory(${APP_PATH}/../ai_components/ai_agent)
 add_subdirectory(${APP_PATH}/../ai_components/ai_audio)
-target_include_directories(${EXAMPLE_LIB} PRIVATE ${APP_PATH}/../ai_components/ai_audio)
+add_subdirectory(${APP_PATH}/../ai_components/ai_main)
+add_subdirectory(${APP_PATH}/../ai_components/ai_mcp) 
+add_subdirectory(${APP_PATH}/../ai_components/ai_mode)
+add_subdirectory(${APP_PATH}/../ai_components/ai_skills)
+add_subdirectory(${APP_PATH}/../ai_components/ai_video)
+add_subdirectory(${APP_PATH}/../ai_components/assets)
+add_subdirectory(${APP_PATH}/../ai_components/utility) 

@@ -176,3 +176,77 @@ OPERATE_RET app_display_send_msg(TY_DISPLAY_TYPE_E type, uint8_t *data, int len)
 
     return OPRT_OK;
 }
+
+
+#include "tdl_display_manage.h"
+#include "lvgl.h"
+#include "lv_port_disp.h"
+
+static TDL_DISP_DEV_INFO_T sg_disp_info = {0}; 
+static TDL_DISP_HANDLE_T sg_disp_handle = NULL;
+static TDL_FB_MANAGE_HANDLE_T sg_fb_manage = NULL;
+static bool sg_is_disp_start = false;
+OPERATE_RET app_display_camera_start(uint16_t width, uint16_t height)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    if(0 == width || 0 == height) {
+        PR_ERR("invalid width or height");
+        return OPRT_INVALID_PARM;
+    }
+
+    sg_disp_handle = tdl_disp_find_dev(DISPLAY_NAME);
+    tdl_disp_dev_get_info(sg_disp_handle, &sg_disp_info);
+
+    if(NULL == sg_fb_manage) {
+        TUYA_CALL_ERR_RETURN(tdl_disp_fb_manage_init(&sg_fb_manage));
+    }
+
+    for(uint8_t i=0; i<2; i++) {
+        TUYA_CALL_ERR_RETURN(tdl_disp_fb_manage_add(sg_fb_manage, sg_disp_info.fmt, \
+                                                    width, height));
+    } 
+
+    /*disable lvgl display*/
+    disp_disable_update();
+
+    sg_is_disp_start = true;
+
+    return rt;
+}
+
+OPERATE_RET app_display_camera_flush(uint8_t *data, uint16_t width, uint16_t height)
+{
+    OPERATE_RET rt = OPRT_OK;
+    TDL_DISP_FRAME_BUFF_T *convert_fb = NULL;
+
+    if(false == sg_is_disp_start) {
+        return OPRT_COM_ERROR;
+    }
+
+    convert_fb = tdl_disp_get_free_fb(sg_fb_manage);
+    TUYA_CHECK_NULL_RETURN(convert_fb, OPRT_COM_ERROR);
+
+    TUYA_CALL_ERR_LOG(tdl_disp_convert_yuv422_to_framebuffer(data,
+                                                             width,
+                                                             height, 
+                                                             convert_fb));
+
+    tdl_disp_dev_flush(sg_disp_handle, convert_fb);
+
+    return rt;
+}
+
+OPERATE_RET app_display_camera_end(void)
+{
+    sg_is_disp_start = false;
+
+    /*enable lvgl display*/
+    disp_enable_update();
+
+    tdl_disp_fb_manage_release(&sg_fb_manage);
+
+    PR_NOTICE("app display camera end success");
+
+    return OPRT_OK;
+}

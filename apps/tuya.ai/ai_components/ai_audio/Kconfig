@@ -1,0 +1,21 @@
+config ENABLE_COMP_AI_AUDIO
+    select ENABLE_AUDIO_CODECS
+    bool "enable ai audio input/output"
+    default y
+
+if (ENABLE_COMP_AI_AUDIO)
+    choice
+        prompt "select ai audio input codec"
+        default ENABLE_COMP_AI_AUDIO_CODEC_PCM
+
+    config ENABLE_COMP_AI_AUDIO_CODEC_PCM
+        bool "enable ai audio pcm codec"
+
+    config ENABLE_COMP_AI_AUDIO_CODEC_OPUS
+        bool "enable ai audio opus codec"
+
+    config ENABLE_COMP_AI_AUDIO_CODEC_SPEEX
+        bool "enable ai audio speex codec"
+
+    endchoice
+endif

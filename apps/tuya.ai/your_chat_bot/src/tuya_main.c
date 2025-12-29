@@ -46,7 +46,6 @@
 #include "board_com_api.h"
 
 #include "app_chat_bot.h"
-#include "ai_audio.h"
 #include "reset_netcfg.h"
 #include "app_system_info.h"
 
@@ -113,7 +112,7 @@ OPERATE_RET audio_dp_obj_proc(dp_obj_recv_t *dpobj)
         case DPID_VOLUME: {
             uint8_t volume = dp->value.dp_value;
             PR_DEBUG("volume:%d", volume);
-            ai_audio_set_volume(volume);
+            ai_chat_set_volume(volume);
 #if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
             char volume_str[20] = {0};
             snprintf(volume_str, sizeof(volume_str), "%s%d", VOLUME, volume);
@@ -139,7 +138,7 @@ OPERATE_RET ai_audio_volume_upload(void)
     tuya_iot_client_t *client = tuya_iot_client_get();
     dp_obj_t dp_obj = {0};
 
-    uint8_t volume = ai_audio_get_volume();
+    uint8_t volume = ai_chat_get_volume();
 
     dp_obj.id = DPID_VOLUME;
     dp_obj.type = PROP_VALUE;
@@ -170,7 +169,10 @@ void user_event_handler_on(tuya_iot_client_t *client, tuya_event_msg_t *event)
             tal_system_reset();
         }
 
-        ai_audio_player_play_alert(AI_AUDIO_ALERT_NETWORK_CFG);
+        #if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
+        ai_audio_player_alert(AI_AUDIO_ALERT_NETWORK_CFG);
+        #endif
+        
         break;
 
     /* Print the QRCode for Tuya APP bind */
@@ -285,9 +287,10 @@ void user_main(void)
     //! open iot development kit runtim init
 #if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
     cJSON_InitHooks(&(cJSON_Hooks){.malloc_fn = tal_psram_malloc, .free_fn = tal_psram_free});
-#else
+#else 
     cJSON_InitHooks(&(cJSON_Hooks){.malloc_fn = tal_malloc, .free_fn = tal_free});
 #endif
+
     tal_log_init(TAL_LOG_LEVEL_DEBUG, 1024, (TAL_LOG_OUTPUT_CB)tkl_log_output);
 
     PR_NOTICE("Application information:");

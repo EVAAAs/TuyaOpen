@@ -88,6 +88,12 @@ OPERATE_RET app_display_init(void);
  */
 OPERATE_RET app_display_send_msg(TY_DISPLAY_TYPE_E tp, uint8_t *data, int len);
 
+OPERATE_RET app_display_camera_start(uint16_t width, uint16_t height);
+
+OPERATE_RET app_display_camera_flush(uint8_t *data, uint16_t width, uint16_t height);
+
+OPERATE_RET app_display_camera_end(void);
+
 #ifdef __cplusplus
 }
 #endif
