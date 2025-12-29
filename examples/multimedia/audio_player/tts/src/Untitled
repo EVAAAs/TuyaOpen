@@ -1,0 +1,30 @@
+OPERATE_RET ai_audio_player_init(void)
+{
+    OPERATE_RET rt = OPRT_OK;
+    
+    // player init
+    AI_PLAYER_CFG_T cfg = {.sample = 16000, .datebits = 16, .channel = 1};
+    TUYA_CALL_ERR_GOTO(tuya_ai_player_service_init(&cfg), __error);
+
+    //! tts player
+    TUYA_CALL_ERR_GOTO(tuya_ai_player_create(AI_PLAYER_MODE_FOREGROUND, &__s_tone_player), __error);
+
+    AI_PLAYLIST_CFG_T ton_cfg = {.auto_play = true,.capacity = 2};
+    TUYA_CALL_ERR_GOTO(tuya_ai_playlist_create(__s_tone_player, &ton_cfg, &__s_tone_playlist), __error);
+
+    //! music player
+    TUYA_CALL_ERR_GOTO(tuya_ai_player_create(AI_PLAYER_MODE_BACKGROUND, &__s_music_player), __error);
+
+    AI_PLAYLIST_CFG_T misc_cfg = {.auto_play = true,.capacity = 32};
+    TUYA_CALL_ERR_GOTO(tuya_ai_playlist_create(__s_music_player, &misc_cfg, &__s_music_playlist), __error);
+
+    //! player stat
+    TUYA_CALL_ERR_GOTO(tal_event_subscribe(EVENT_AI_PLAYER_STATE, "ai_player", __player_event, SUBSCRIBE_TYPE_NORMAL), __error);
+
+    return rt;
+
+__error:
+    ai_audio_player_deinit();
+
+    return rt;
+}
