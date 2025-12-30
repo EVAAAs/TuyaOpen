@@ -39,3 +39,8 @@ target_compile_options(${EXAMPLE_LIB}
         ${APP_OPTIONS}
     )
 
+########################################
+# Add subdirectory
+########################################
+
+add_subdirectory(${APP_PATH}/app_ui)

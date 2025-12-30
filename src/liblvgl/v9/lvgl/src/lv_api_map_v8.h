@@ -280,7 +280,7 @@ static inline void lv_obj_move_background(lv_obj_t * obj)
  **********************/
 /** Use this macro to declare an image in a C file*/
 // Modified by TUYA Start
-#define LV_IMG_DECLARE(var_name) extern lv_image_dsc_t var_name;
+#define LV_IMG_DECLARE(var_name) extern const lv_image_dsc_t var_name;
 // Modified by TUYA End
 
 /**********************

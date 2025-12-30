@@ -28,7 +28,7 @@ static app_sdcard_demo_result_cb_t   sg_result_cb   = NULL;
 /**
  * @brief Set callback function for SD card status updates
  */
-void app_sdcard_demo_set_status_callback(app_sdcard_demo_status_cb_t cb)
+__attribute__((unused)) void app_sdcard_demo_set_status_callback(app_sdcard_demo_status_cb_t cb)
 {
     sg_status_cb = cb;
 }
@@ -36,7 +36,7 @@ void app_sdcard_demo_set_status_callback(app_sdcard_demo_status_cb_t cb)
 /**
  * @brief Set callback function for SD card test progress updates
  */
-void app_sdcard_demo_set_progress_callback(app_sdcard_demo_progress_cb_t cb)
+__attribute__((unused)) void app_sdcard_demo_set_progress_callback(app_sdcard_demo_progress_cb_t cb)
 {
     sg_progress_cb = cb;
 }
@@ -44,7 +44,7 @@ void app_sdcard_demo_set_progress_callback(app_sdcard_demo_progress_cb_t cb)
 /**
  * @brief Set callback function for SD card test results
  */
-void app_sdcard_demo_set_result_callback(app_sdcard_demo_result_cb_t cb)
+__attribute__((unused)) void app_sdcard_demo_set_result_callback(app_sdcard_demo_result_cb_t cb)
 {
     sg_result_cb = cb;
 }
@@ -54,7 +54,7 @@ void app_sdcard_demo_set_result_callback(app_sdcard_demo_result_cb_t cb)
  *
  * Note: Kept for direct use even though primarily called via app_sdcard_demo_run_all()
  */
-OPERATE_RET app_sdcard_demo_write_file(void)
+__attribute__((unused)) OPERATE_RET app_sdcard_demo_write_file(void)
 {
     OPERATE_RET rt = OPRT_OK;
     TUYA_FILE   file_hdl;
@@ -117,7 +117,7 @@ OPERATE_RET app_sdcard_demo_write_file(void)
  *
  * Note: Kept for direct use even though primarily called via app_sdcard_demo_run_all()
  */
-OPERATE_RET app_sdcard_demo_list_dir(const char *path)
+__attribute__((unused)) OPERATE_RET app_sdcard_demo_list_dir(const char *path)
 {
     TUYA_DIR      dir;
     TUYA_FILEINFO info;
@@ -178,7 +178,7 @@ OPERATE_RET app_sdcard_demo_list_dir(const char *path)
  *
  * Note: Kept for direct use even though primarily called via app_sdcard_demo_run_all()
  */
-OPERATE_RET app_sdcard_demo_list_dir_recursive(const char *path, int depth)
+__attribute__((unused)) OPERATE_RET app_sdcard_demo_list_dir_recursive(const char *path, int depth)
 {
     TUYA_DIR      dir;
     TUYA_FILEINFO info;
@@ -259,7 +259,7 @@ OPERATE_RET app_sdcard_demo_list_dir_recursive(const char *path, int depth)
  *
  * Note: Kept for direct use even though primarily called via app_sdcard_demo_run_all()
  */
-OPERATE_RET app_sdcard_demo_speed_test(void)
+__attribute__((unused)) OPERATE_RET app_sdcard_demo_speed_test(void)
 {
     OPERATE_RET rt = OPRT_OK;
     TUYA_FILE   file_hdl;
@@ -473,7 +473,7 @@ OPERATE_RET app_sdcard_demo_speed_test(void)
 /**
  * @brief Run all SD card demo functions
  */
-OPERATE_RET app_sdcard_demo_run_all(void)
+__attribute__((unused)) OPERATE_RET app_sdcard_demo_run_all(void)
 {
     OPERATE_RET rt         = OPRT_OK;
     const char *mount_path = NULL;
@@ -492,39 +492,39 @@ OPERATE_RET app_sdcard_demo_run_all(void)
     mount_path = app_sdcard_get_mount_path();
     PR_NOTICE("SD card mounted at: %s", mount_path);
 
-    // Update UI status
-    if (sg_status_cb != NULL) {
-        char status[128];
-        snprintf(status, sizeof(status), "SD Card: %s", mount_path);
-        sg_status_cb(status);
-    }
+    // // Update UI status
+    // if (sg_status_cb != NULL) {
+    //     char status[128];
+    //     snprintf(status, sizeof(status), "SD Card: %s", mount_path);
+    //     sg_status_cb(status);
+    // }
 
     // Wait a bit for SD card to be ready
     tal_system_sleep(200);
 
-    // Write hello world file
-    PR_NOTICE("\n--- Step 1: Write Hello World File ---");
-    if (sg_progress_cb != NULL) {
-        sg_progress_cb("Step 1: Write File", 0);
-    }
-    rt = app_sdcard_demo_write_file();
-    if (OPRT_OK != rt) {
-        PR_ERR("Failed to write hello world file: %d", rt);
-        return rt;
-    }
-    tal_system_sleep(200);
+    // // Write hello world file
+    // PR_NOTICE("\n--- Step 1: Write Hello World File ---");
+    // if (sg_progress_cb != NULL) {
+    //     sg_progress_cb("Step 1: Write File", 0);
+    // }
+    // rt = app_sdcard_demo_write_file();
+    // if (OPRT_OK != rt) {
+    //     PR_ERR("Failed to write hello world file: %d", rt);
+    //     return rt;
+    // }
+    // tal_system_sleep(200);
 
-    // List root directory
-    PR_NOTICE("\n--- Step 2: List Root Directory ---");
-    if (sg_progress_cb != NULL) {
-        sg_progress_cb("Step 2: List Dir", 25);
-    }
-    rt = app_sdcard_demo_list_dir(mount_path);
-    if (OPRT_OK != rt) {
-        PR_ERR("Failed to list directory: %d", rt);
-        return rt;
-    }
-    tal_system_sleep(200);
+    // // List root directory
+    // PR_NOTICE("\n--- Step 2: List Root Directory ---");
+    // if (sg_progress_cb != NULL) {
+    //     sg_progress_cb("Step 2: List Dir", 25);
+    // }
+    // rt = app_sdcard_demo_list_dir(mount_path);
+    // if (OPRT_OK != rt) {
+    //     PR_ERR("Failed to list directory: %d", rt);
+    //     return rt;
+    // }
+    // tal_system_sleep(200);
 
     // Recursively list all directories
     PR_NOTICE("\n--- Step 3: Recursive Directory Listing ---");
@@ -538,27 +538,27 @@ OPERATE_RET app_sdcard_demo_run_all(void)
     }
     tal_system_sleep(500);
 
-    // Speed test: Write and read 128MB
-    PR_NOTICE("\n--- Step 4: 128MB Speed Test ---");
-    PR_NOTICE("Starting SD card speed test (this may take several minutes)...");
-    if (sg_progress_cb != NULL) {
-        sg_progress_cb("Step 4: Speed Test", 75);
-    }
-    rt = app_sdcard_demo_speed_test();
-    if (OPRT_OK != rt) {
-        PR_ERR("Speed test failed: %d", rt);
-        return rt;
-    }
+    // // Speed test: Write and read 128MB
+    // PR_NOTICE("\n--- Step 4: 128MB Speed Test ---");
+    // PR_NOTICE("Starting SD card speed test (this may take several minutes)...");
+    // if (sg_progress_cb != NULL) {
+    //     sg_progress_cb("Step 4: Speed Test", 75);
+    // }
+    // rt = app_sdcard_demo_speed_test();
+    // if (OPRT_OK != rt) {
+    //     PR_ERR("Speed test failed: %d", rt);
+    //     return rt;
+    // }
 
-    PR_NOTICE("\n=== SD Card Demo: All Tests Completed ===");
+    // PR_NOTICE("\n=== SD Card Demo: All Tests Completed ===");
 
-    // Update UI status
-    if (sg_status_cb != NULL) {
-        sg_status_cb("All tests completed!");
-    }
-    if (sg_progress_cb != NULL) {
-        sg_progress_cb("Complete", 100);
-    }
+    // // Update UI status
+    // if (sg_status_cb != NULL) {
+    //     sg_status_cb("All tests completed!");
+    // }
+    // if (sg_progress_cb != NULL) {
+    //     sg_progress_cb("Complete", 100);
+    // }
 
     return OPRT_OK;
 }
