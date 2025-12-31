@@ -131,6 +131,17 @@ static void parse_badge_item(cJSON *item_json, ui_fs_badge_item_t *badge_item)
         if (cJSON_IsString(image_QR)) {
             safe_strcpy(badge_item->image_QR, cJSON_GetStringValue(image_QR), UI_FS_BADGE_STRING_MAX_LEN);
         }
+
+        // Parse NFC data type and NFC data
+        cJSON *nfc_data_type = cJSON_GetObjectItem(item_json, "nfc_data_type");
+        if (cJSON_IsString(nfc_data_type)) {
+            safe_strcpy(badge_item->nfc_data_type, cJSON_GetStringValue(nfc_data_type), UI_FS_BADGE_STRING_MAX_LEN);
+        }
+
+        cJSON *nfc_data = cJSON_GetObjectItem(item_json, "nfc_data");
+        if (cJSON_IsString(nfc_data)) {
+            safe_strcpy(badge_item->nfc_data, cJSON_GetStringValue(nfc_data), UI_FS_BADGE_STRING_MAX_LEN);
+        }
     }
     // Parse fields for "badge_image" type
     else if (badge_item->type == UI_FS_BADGE_TYPE_BADGE_IMAGE) {
