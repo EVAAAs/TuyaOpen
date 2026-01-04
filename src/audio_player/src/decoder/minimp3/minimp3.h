@@ -42,7 +42,6 @@ void mp3dec_f32_to_s16(const float *in, int16_t *out, int num_samples);
 #endif /* MINIMP3_FLOAT_OUTPUT */
 int mp3dec_decode_frame(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, mp3d_sample_t *pcm,
                         mp3dec_frame_info_t *info);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
@@ -53,6 +52,8 @@ int mp3dec_decode_frame(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, mp3d_s
 
 #include <stdlib.h>
 #include <string.h>
+
+#define MINIMP3_ONLY_MP3 1
 
 #define MAX_FREE_FORMAT_FRAME_SIZE 2304 /* more than ISO spec's */
 #ifndef MAX_FRAME_SYNC_MATCHES
@@ -1315,13 +1316,20 @@ static void L3_save_reservoir(mp3dec_t *h, mp3dec_scratch_t *s)
 
 static int L3_restore_reservoir(mp3dec_t *h, bs_t *bs, mp3dec_scratch_t *s, int main_data_begin)
 {
+    // Early check: if reservoir doesn't have enough data, return failure immediately
+    if (h->reserv < main_data_begin) {
+        PR_ERR("L3_restore_reservoir: h->reserv:%d < main_data_begin:%d", h->reserv, main_data_begin);
+        return 0;
+    }
+
     int frame_bytes = (bs->limit - bs->pos) / 8;
     int bytes_have = MINIMP3_MIN(h->reserv, main_data_begin);
     memcpy(s->maindata, h->reserv_buf + MINIMP3_MAX(0, h->reserv - main_data_begin),
            MINIMP3_MIN(h->reserv, main_data_begin));
     memcpy(s->maindata + bytes_have, bs->buf + bs->pos / 8, frame_bytes);
     bs_init(&s->bs, s->maindata, bytes_have + frame_bytes);
-    return h->reserv >= main_data_begin;
+
+    return 1; // Success
 }
 
 static void L3_decode(mp3dec_t *h, mp3dec_scratch_t *s, L3_gr_info_t *gr_info, int nch)
@@ -1853,7 +1861,9 @@ int mp3dec_decode_frame(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, mp3d_s
         }
     }
     if (!frame_size) {
-        memset(dec, 0, sizeof(mp3dec_t));
+        // memset(dec, 0, sizeof(mp3dec_t));
+        dec->header[0] = 0;
+        dec->free_format_bytes = 0;
         i = mp3d_find_frame(mp3, mp3_bytes, &dec->free_format_bytes, &frame_size);
         if (!frame_size || i + frame_size > mp3_bytes) {
             /* check if mp3d_find_frame found a header but not enough data */
@@ -1908,8 +1918,10 @@ int mp3dec_decode_frame(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, mp3d_s
                 L3_decode(dec, scratch, scratch->gr_info + igr * info->channels, info->channels);
                 mp3d_synth_granule(dec->qmf_state, scratch->grbuf[0], 18, info->channels, pcm, scratch->syn[0]);
             }
-        }
+        } 
+        // Save reservoir after successful decoding
         L3_save_reservoir(dec, scratch);
+
     } else {
 #ifdef MINIMP3_ONLY_MP3
         return 0;
@@ -1960,7 +1972,8 @@ int mp3dec_decode_frame(mp3dec_t *dec, const uint8_t *mp3, int mp3_bytes, mp3d_s
         MP3_FREE(scratch);
         scratch = NULL;
     }
-    return success * hdr_frame_samples(dec->header);
+
+    return success *  hdr_frame_samples(dec->header);
 }
 
 #ifdef MINIMP3_FLOAT_OUTPUT

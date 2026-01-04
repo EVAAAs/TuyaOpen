@@ -133,11 +133,11 @@ int decoder_mp3_process(void* handle, uint8_t *in_buf, int in_len, uint8_t *out_
 DECODE_MORE:
     // Check buffer validity before decoding
     if (!in_buf || in_len <= 0) {
-        return temp_len;
+        return 0;
     }
 
     if (!pcm_buf || pcm_buf_samples <= 0) {
-        return temp_len;
+        return 0;
     }
 
     // mp3dec_decode_frame automatically finds sync word and decodes one frame
@@ -148,20 +148,8 @@ DECODE_MORE:
             // Need more data - frame_bytes=0 means no valid frame found, need more input
             return temp_len;
         } else {
-            // Some bytes were consumed but no samples decoded
-            // This might be ID3 tag or other non-MP3 data, skip it
-            // Validate frame_bytes before using it
-            if (frame_info.frame_bytes > in_len || frame_info.frame_bytes < 0) {
-                PR_ERR("decoder_mp3_process: invalid frame_bytes=%d, in_len=%d", frame_info.frame_bytes, in_len);
-                return temp_len;
-            }
-            in_buf += frame_info.frame_bytes;
-            in_len -= frame_info.frame_bytes;
-            if(in_len > 2) {
-                temp_len = in_len;
-                goto DECODE_MORE;
-            }
-            return temp_len;
+            PR_ERR("decoder_mp3_process: invalid frame_bytes=%d, in_len=%d", frame_info.frame_bytes, in_len);
+            return 0;
         }
     }
 
