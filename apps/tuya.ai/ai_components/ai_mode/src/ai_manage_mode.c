@@ -182,6 +182,42 @@ AI_MODE_STATE_E ai_mode_get_state(void)
     return state;
 }
 
+/**
+@brief Run client callback for current mode
+@param data Client data pointer
+@return OPERATE_RET Operation result
+*/
+OPERATE_RET ai_mode_client_run(void *data)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    if(sg_curr_mode_ctrl && sg_curr_mode_ctrl->handle.client_run) {
+        TUYA_CALL_ERR_RETURN(sg_curr_mode_ctrl->handle.client_run(data));
+    }
+
+    return rt;
+}
+
+#if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
+/**
+@brief Handle VAD (Voice Activity Detection) state change for current mode
+@param vad_state VAD state value
+@return OPERATE_RET Operation result
+*/
+OPERATE_RET ai_mode_vad_change(AI_AUDIO_VAD_STATE_E vad_state)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    if(sg_curr_mode_ctrl && sg_curr_mode_ctrl->handle.vad_change) {
+        TUYA_CALL_ERR_RETURN(sg_curr_mode_ctrl->handle.vad_change(vad_state));
+    }
+
+    return rt;
+}
+#endif
+
+
+
 #if defined(ENABLE_BUTTON) && (ENABLE_BUTTON == 1)
 /**
 @brief Handle button key event

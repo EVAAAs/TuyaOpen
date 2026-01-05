@@ -211,6 +211,25 @@ static int __ai_audio_output(uint8_t *data, uint16_t datalen)
 
     return rt;
 }
+
+/**
+@brief Handle VAD (Voice Activity Detection) state change event callback
+@param data Pointer to VAD state value (AI_AUDIO_VAD_STATE_E)
+@return OPERATE_RET Operation result
+*/
+int __ai_vad_change_evt(void *data)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    TUYA_CHECK_NULL_RETURN(data, OPRT_INVALID_PARM);
+
+    AI_AUDIO_VAD_STATE_E vad_flag = (AI_AUDIO_VAD_STATE_E)data;
+
+    TUYA_CALL_ERR_RETURN(ai_mode_vad_change(vad_flag));
+
+    return rt;
+}
+
 #endif
 
 #if defined(ENABLE_BUTTON) && (ENABLE_BUTTON == 1)
@@ -373,6 +392,7 @@ OPERATE_RET ai_chat_init(AI_CHAT_MODE_CFG_T *cfg)
     ai_user_event_notify_register(__ai_handle_event);
 
     TUYA_CALL_ERR_RETURN(tal_event_subscribe(EVENT_MQTT_CONNECTED, "ai_agent_init", __ai_mqtt_connected_evt, SUBSCRIBE_TYPE_NORMAL));
+    TUYA_CALL_ERR_RETURN(tal_event_subscribe(EVENT_AI_CLIENT_RUN, "client_run", ai_mode_client_run, SUBSCRIBE_TYPE_NORMAL));
 
 #if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
     AI_AUDIO_INPUT_CFG_T input_cfg= {
@@ -389,6 +409,8 @@ OPERATE_RET ai_chat_init(AI_CHAT_MODE_CFG_T *cfg)
     TUYA_CALL_ERR_RETURN(tkl_asr_init());
 
     TUYA_CALL_ERR_LOG(ai_audio_player_set_vol(vol));
+
+    TUYA_CALL_ERR_RETURN(tal_event_subscribe(EVENT_AUDIO_VAD, "vad_change", __ai_vad_change_evt, SUBSCRIBE_TYPE_NORMAL));
 #endif
 
     THREAD_CFG_T thrd_cfg = {

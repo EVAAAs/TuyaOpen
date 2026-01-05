@@ -109,37 +109,6 @@ static void __ai_mode_enter_speak(void)
     tal_sw_timer_stop(sg_enter_idle_timer);
 }
 
-static OPERATE_RET __ai_mode_client_run(void *data)
-{
-    PR_NOTICE("connected to server");
-
-    MODE_STATE_CHANGE(sg_mode_set_state, AI_MODE_STATE_IDLE);
-
-    return OPRT_OK;
-}
-
-static OPERATE_RET __ai_mode_vad_change(void *data)
-{
-    if(false == sg_is_wakeup) {
-        return OPRT_OK;
-    }
-
-    TUYA_CHECK_NULL_RETURN(data, OPRT_INVALID_PARM);
-
-    AI_AUDIO_VAD_STATE_E vad_flag = (AI_AUDIO_VAD_STATE_E)data;
-
-    PR_DEBUG("[====ai_oneshot] vad: [%d]", vad_flag); 
-
-    if (AI_AUDIO_VAD_START == vad_flag) {
-        tuya_ai_agent_set_scode(AI_AGENT_SCODE_DEFAULT);
-        tuya_ai_input_start(false);
-    } else {
-        tuya_ai_input_stop();
-    }
-
-    return OPRT_OK;
-}
-
 static void __ai_mode_enter_idle_time_cb(TIMER_ID timer_id, void *arg)
 {
     if (ai_audio_player_is_playing()) {
@@ -163,9 +132,6 @@ static OPERATE_RET __ai_mode_oneshot_init(void)
 
     //set vad mode
     ai_audio_input_wakeup_mode_set(AI_AUDIO_VAD_AUTO);
-
-    tal_event_subscribe(EVENT_AI_CLIENT_RUN, "oneshot_mode", __ai_mode_client_run, SUBSCRIBE_TYPE_NORMAL);
-    tal_event_subscribe(EVENT_AUDIO_VAD, "oneshot_mode", __ai_mode_vad_change, SUBSCRIBE_TYPE_NORMAL);
 
     //create idle timer
     TIMER_ID sg_enter_idle_timer = NULL;
@@ -228,7 +194,9 @@ static OPERATE_RET __ai_mode_oneshot_handle_event(AI_NOTIFY_EVENT_T *event)
 {
     TUYA_CHECK_NULL_RETURN(event, OPRT_INVALID_PARM);
 
-    // PR_DEBUG("[====ai_oneshot] event type: %d", event->type);
+    if(event->type != AI_USER_EVT_MIC_DATA) {
+        PR_DEBUG("[====ai_oneshot] event type: %d", event->type);
+    }
 
     switch (event->type) {
         case AI_USER_EVT_ASR_EMPTY:
@@ -263,6 +231,33 @@ static OPERATE_RET __ai_mode_oneshot_handle_event(AI_NOTIFY_EVENT_T *event)
 static AI_MODE_STATE_E __ai_mode_oneshot_get_state(void)
 {
     return sg_mode_set_state;
+}
+
+static OPERATE_RET __ai_mode_oneshot_client_run(void *data)
+{
+    PR_NOTICE("connected to server");
+
+    MODE_STATE_CHANGE(sg_mode_set_state, AI_MODE_STATE_IDLE);
+
+    return OPRT_OK;
+}
+
+static OPERATE_RET __ai_mode_oneshot_vad_change(AI_AUDIO_VAD_STATE_E vad_flag)
+{
+    if(false == sg_is_wakeup) {
+        return OPRT_OK;
+    }
+
+    PR_DEBUG("[====ai_oneshot] vad: [%d]", vad_flag); 
+
+    if (AI_AUDIO_VAD_START == vad_flag) {
+        tuya_ai_agent_set_scode(AI_AGENT_SCODE_DEFAULT);
+        tuya_ai_input_start(false);
+    } else {
+        tuya_ai_input_stop();
+    }
+
+    return OPRT_OK;
 }
 
 #if defined(ENABLE_BUTTON) && (ENABLE_BUTTON == 1)
@@ -303,7 +298,9 @@ OPERATE_RET ai_mode_oneshot_register(void)
     handle.deinit       = __ai_mode_oneshot_deinit;
     handle.task         = __ai_mode_oneshot_task;
     handle.handle_event = __ai_mode_oneshot_handle_event;
-    handle.get_state    = __ai_mode_oneshot_get_state;  
+    handle.get_state    = __ai_mode_oneshot_get_state;
+    handle.client_run   = __ai_mode_oneshot_client_run;
+    handle.vad_change   = __ai_mode_oneshot_vad_change; 
     
 #if defined(ENABLE_BUTTON) && (ENABLE_BUTTON == 1)
     handle.handle_key   = __ai_mode_oneshot_handle_key;

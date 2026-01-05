@@ -14,6 +14,10 @@
 
 #include "tuya_cloud_types.h"
 
+#if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
+#include "ai_audio_input.h"
+#endif
+
 #if defined(ENABLE_BUTTON) && (ENABLE_BUTTON == 1)
 #include "tdl_button_manage.h"
 #endif
@@ -59,6 +63,11 @@ typedef struct {
     OPERATE_RET     (*task)         (void *args);
     OPERATE_RET     (*handle_event) (AI_NOTIFY_EVENT_T *event);
     AI_MODE_STATE_E (*get_state)    (void);
+    OPERATE_RET     (*client_run)   (void *data);
+
+#if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
+    OPERATE_RET     (*vad_change)   (AI_AUDIO_VAD_STATE_E vad_state);
+#endif
 
 #if defined(ENABLE_BUTTON) && (ENABLE_BUTTON == 1)
     OPERATE_RET   (*handle_key)  (TDL_BUTTON_TOUCH_EVENT_E event, void *arg);
@@ -109,6 +118,24 @@ OPERATE_RET ai_mode_handle_event(AI_NOTIFY_EVENT_T *event);
 @return AI_MODE_STATE_E Current mode state
 */
 AI_MODE_STATE_E ai_mode_get_state(void);
+
+/**
+@brief Run client callback for current mode
+@param data Client data pointer
+@return OPERATE_RET Operation result
+*/
+OPERATE_RET ai_mode_client_run(void *data);
+
+#if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
+
+/**
+@brief Handle VAD (Voice Activity Detection) state change for current mode
+@param vad_state VAD state value
+@return OPERATE_RET Operation result
+*/
+OPERATE_RET ai_mode_vad_change(AI_AUDIO_VAD_STATE_E vad_state);
+#endif
+
 
 #if defined(ENABLE_BUTTON) && (ENABLE_BUTTON == 1)
 /**
