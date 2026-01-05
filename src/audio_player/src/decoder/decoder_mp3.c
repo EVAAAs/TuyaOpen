@@ -174,7 +174,6 @@ DECODE_MORE:
         pcm_buf += total_samples;
         pcm_buf_samples -= total_samples;
         out_size -= used_size;
-        // bk_printf("decoder_mp3_process: samples=%d, pcm_buf_samples=%d, out_size=%d, used_size=%d\n\r", samples, pcm_buf_samples, out_size, used_size);
 
         // Try to decode more frames if there's space and data
         if((out_size > used_size) && (in_len > 2)) { // at least 2 bytes for next frame
