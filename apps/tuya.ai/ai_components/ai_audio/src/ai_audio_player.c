@@ -46,16 +46,109 @@ static AI_PLAYER_HANDLE __s_tone_player = NULL;
 static AI_PLAYLIST_HANDLE __s_tone_playlist = NULL;
 static AI_PLAYER_HANDLE __s_music_player = NULL;
 static AI_PLAYLIST_HANDLE __s_music_playlist = NULL;
-
+static AI_PLAYER_ALERT_CUSTOM_CB __s_alert_custom_cb = NULL;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
+#if defined(AI_PLAYER_ALERT_SOURCE_LOCAL) && (AI_PLAYER_ALERT_SOURCE_LOCAL == 1)
+
+OPERATE_RET __player_local_alert(AI_AUDIO_ALERT_TYPE_E type)
+{
+    OPERATE_RET rt = OPRT_OK;
+    uint8_t *audio_data = NULL;
+    uint32_t audio_size = 0;
+
+    switch(type) {
+    case AI_AUDIO_ALERT_POWER_ON:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_POWER_ON;
+        audio_size = sizeof(LOCAL_ALERT_SRC_POWER_ON);
+    break;
+    case AI_AUDIO_ALERT_NOT_ACTIVE:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_NOT_ACTIVE;
+        audio_size = sizeof(LOCAL_ALERT_SRC_NOT_ACTIVE);
+    break;
+    case AI_AUDIO_ALERT_NETWORK_CFG:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_NET_CFG;
+        audio_size = sizeof(LOCAL_ALERT_SRC_NET_CFG);
+    break;
+    case AI_AUDIO_ALERT_NETWORK_FAIL:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_NET_FAILED;
+        audio_size = sizeof(LOCAL_ALERT_SRC_NET_FAILED);
+    break;
+    case AI_AUDIO_ALERT_NETWORK_DISCONNECT:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_NET_DISCONNECT;
+        audio_size = sizeof(LOCAL_ALERT_SRC_NET_DISCONNECT);
+    break;
+    case AI_AUDIO_ALERT_NETWORK_CONNECTED:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_NET_CONNECTED;
+        audio_size = sizeof(LOCAL_ALERT_SRC_NET_CONNECTED);
+    break;
+    case AI_AUDIO_ALERT_BATTERY_LOW:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_LOW_BATTERY;
+        audio_size = sizeof(LOCAL_ALERT_SRC_LOW_BATTERY);
+    break;
+    case AI_AUDIO_ALERT_PLEASE_AGAIN:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_PLEASE_AGAIN;
+        audio_size = sizeof(LOCAL_ALERT_SRC_PLEASE_AGAIN);
+    break;
+    case AI_AUDIO_ALERT_LONG_KEY_TALK:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_LONG_KEY_TALK;
+        audio_size = sizeof(LOCAL_ALERT_SRC_LONG_KEY_TALK);
+    break;
+    case AI_AUDIO_ALERT_KEY_TALK:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_KEY_TALK;
+        audio_size = sizeof(LOCAL_ALERT_SRC_KEY_TALK);
+    break;
+    case AI_AUDIO_ALERT_WAKEUP_TALK:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_WAKEUP_TALK;
+        audio_size = sizeof(LOCAL_ALERT_SRC_WAKEUP_TALK);
+    break;
+    case AI_AUDIO_ALERT_RANDOM_TALK:
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_FREE_TALK;
+        audio_size = sizeof(LOCAL_ALERT_SRC_FREE_TALK);
+    break;
+    case AI_AUDIO_ALERT_WAKEUP: 
+        audio_data = (uint8_t*)LOCAL_ALERT_SRC_WAKEUP;
+        audio_size = sizeof(LOCAL_ALERT_SRC_WAKEUP);
+    break;
+    default:
+        PR_NOTICE("audio player -> local alert type: %d not support", type);
+        break;
+    }
+
+    if(audio_data && audio_size) {
+        TUYA_CALL_ERR_LOG(ai_audio_play_data(AI_AUDIO_CODEC_MP3, audio_data, audio_size));
+    }
+
+    return rt;
+}
+
+#endif
+
+#if defined(AI_AGENT_ENABLE_CLOUD_ALERT) && (AI_AGENT_ENABLE_CLOUD_ALERT == 1)
+OPERATE_RET __player_cloud_alert(AI_AUDIO_ALERT_TYPE_E type)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    rt = ai_agent_cloud_alert(type);
+    if(rt != OPRT_OK) {
+        TUYA_CALL_ERR_LOG(ai_audio_play_data(AI_AUDIO_CODEC_MP3, \
+                        (uint8_t*)media_src_dingdong, \
+                        sizeof(media_src_dingdong)));
+    }
+
+    return rt;
+}
+
+#endif
+
+
 /**
 @brief Player event callback function
 @param data Pointer to player event data
 @return OPERATE_RET Operation result
 */
-OPERATE_RET __player_event(void *data)
+static OPERATE_RET __player_event(void *data)
 {
     TUYA_CHECK_NULL_RETURN(data, OPRT_OK);    
 
@@ -347,35 +440,24 @@ OPERATE_RET ai_audio_player_stop(void)
 OPERATE_RET ai_audio_player_alert(AI_AUDIO_ALERT_TYPE_E type)
 {
     OPERATE_RET rt = OPRT_OK;
-    uint8_t *audio_data = NULL;
-    uint32_t audio_size = 0;
 
     PR_NOTICE("audio player -> play alert type=%d", type);
 
-    switch (type) {
-    case AI_AUDIO_ALERT_POWER_ON:
-    case AI_AUDIO_ALERT_NETWORK_CONNECTED:
-    case AI_AUDIO_ALERT_BATTERY_LOW:
-    case AI_AUDIO_ALERT_PLEASE_AGAIN:
-    case AI_AUDIO_ALERT_LONG_KEY_TALK:
-    case AI_AUDIO_ALERT_KEY_TALK:
-    case AI_AUDIO_ALERT_WAKEUP_TALK:
-    case AI_AUDIO_ALERT_RANDOM_TALK:
-    case AI_AUDIO_ALERT_WAKEUP:     
-        if (OPRT_OK == ai_agent_cloud_alert(type)) {
-            break;
-        }
-    case AI_AUDIO_ALERT_NOT_ACTIVE:
-    case AI_AUDIO_ALERT_NETWORK_CFG:
-    case AI_AUDIO_ALERT_NETWORK_FAIL:
-    case AI_AUDIO_ALERT_NETWORK_DISCONNECT:      
-    default:
-        audio_data = (uint8_t*)media_src_dingdong_zh;
-        audio_size = sizeof(media_src_dingdong_zh);   
-        break;
+#if defined(AI_PLAYER_ALERT_SOURCE_LOCAL) && (AI_PLAYER_ALERT_SOURCE_LOCAL == 1)
+    __player_local_alert(type);
+
+#elif defined(AI_AGENT_ENABLE_CLOUD_ALERT) && (AI_AGENT_ENABLE_CLOUD_ALERT == 1)
+    __player_cloud_alert(type);
+
+#elif defined(AI_PLAYER_ALERT_SOURCE_CUSTOM) && (AI_PLAYER_ALERT_SOURCE_CUSTOM == 1)
+    if(__s_alert_custom_cb) {
+       rt = __s_alert_custom_cb(type);
+    }else {
+        PR_ERR("audio player -> alert custom cb is NULL");
+        rt = OPRT_NOT_SUPPORTED;
     }
 
-    TUYA_CALL_ERR_LOG(ai_audio_play_data(AI_AUDIO_CODEC_MP3, audio_data, audio_size));
+#endif
 
     return rt;
 }
@@ -402,3 +484,9 @@ OPERATE_RET ai_audio_player_get_vol(int *vol)
     return tuya_ai_player_get_volume(__s_tone_player, vol);
 }
 
+OPERATE_RET ai_audio_player_reg_alert_cb(AI_PLAYER_ALERT_CUSTOM_CB cb)
+{
+    __s_alert_custom_cb = cb;
+
+    return OPRT_OK;
+}

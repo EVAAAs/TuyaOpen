@@ -18,4 +18,20 @@ if (ENABLE_COMP_AI_AUDIO)
         bool "enable ai audio speex codec"
 
     endchoice
+
+    choice 
+        prompt "select player alert source"
+        default AI_PLAYER_ALERT_SOURCE_LOCAL
+
+    config AI_PLAYER_ALERT_SOURCE_LOCAL
+        bool "use local alert source"
+
+    config AI_PLAYER_ALERT_SOURCE_CLOUD
+        bool "use cloud alert source"
+
+    config AI_PLAYER_ALERT_SOURCE_CUSTOM
+        bool "use custom alert source"
+
+    endchoice
+
 endif

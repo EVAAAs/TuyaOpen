@@ -14,6 +14,7 @@
 #define __AI_AGENT_H__
 
 #include "tuya_cloud_types.h"
+#include "tuya_ai_output.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -71,7 +72,7 @@ OPERATE_RET ai_agent_send_image(uint8_t *data, uint32_t len);
 @param type Alert type
 @return OPERATE_RET Operation result
 */
-OPERATE_RET ai_agent_cloud_alert(int type);
+OPERATE_RET ai_agent_cloud_alert(AI_ALERT_TYPE_E type);
 
 /**
 @brief Switch AI agent role

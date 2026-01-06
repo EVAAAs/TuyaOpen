@@ -106,6 +106,8 @@ typedef struct {
     AI_AUDIO_TTS_T      bg_music;
 }AI_AUDIO_PLAY_TTS_T;
 
+typedef OPERATE_RET (*AI_PLAYER_ALERT_CUSTOM_CB)(AI_AUDIO_ALERT_TYPE_E type);
+
 /***********************************************************
 ********************function declaration********************
 ***********************************************************/
@@ -199,6 +201,12 @@ OPERATE_RET ai_audio_player_set_vol(int vol);
 @return OPERATE_RET Operation result
 */
 OPERATE_RET ai_audio_player_get_vol(int *vol);
+
+#if defined(AI_PLAYER_ALERT_SOURCE_CUSTOM) && (AI_PLAYER_ALERT_SOURCE_CUSTOM == 1)
+
+
+OPERATE_RET ai_audio_player_reg_alert_cb(AI_PLAYER_ALERT_CUSTOM_CB cb);
+#endif
 
 #ifdef __cplusplus
 }
