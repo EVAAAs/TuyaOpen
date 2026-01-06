@@ -29,10 +29,25 @@ config ENABLE_CIRCLE_UI_STYLE
     bool "Enable circle ui style"
     default n
 
+if(ENABLE_AI_CHAT_GUI_OLED)
+choice AI_CHAT_GUI_OLED_SIZE
+    prompt "choose oled ui size"
+    default AI_CHAT_GUI_OLED_SIZE_128_64
+
+    config AI_CHAT_GUI_OLED_SIZE_128_64
+        bool "OLED size 128x64" 
+
+    config AI_CHAT_GUI_OLED_SIZE_128_32
+        bool "OLED size 128x32"
+endchoice
+endif
+
+
 if(!ENABLE_AI_CHAT_GUI_CUSTOM)
 choice 
     prompt "choose text font size"
-    default FONT_TEXT_SIZE_18_2
+    default FONT_TEXT_SIZE_14_1 if(ENABLE_AI_CHAT_GUI_OLED)
+    default FONT_TEXT_SIZE_18_2 if(!ENABLE_AI_CHAT_GUI_OLED)
 
     config FONT_TEXT_SIZE_14_1
         bool "Text font size 14"
@@ -49,7 +64,8 @@ endchoice
 
 choice 
     prompt "choose icon font size"
-    default FONT_ICON_SIZE_16_4 
+    default FONT_ICON_SIZE_14_1 if(ENABLE_AI_CHAT_GUI_OLED)
+    default FONT_ICON_SIZE_16_4 if(!ENABLE_AI_CHAT_GUI_OLED)
 
     config FONT_ICON_SIZE_14_1
         bool "Icon font size 14"
@@ -68,6 +84,7 @@ choice
     prompt "choose emo font type"
     default FONT_EMOJI_SIZE_32 if(ENABLE_AI_CHAT_GUI_WECHAT)
     default FONT_EMOJI_SIZE_64 if(ENABLE_AI_CHAT_GUI_CHATBOT)
+    default FONT_EMO_AWESOME   if(ENABLE_AI_CHAT_GUI_OLED)
 
     config FONT_EMOJI_SIZE_32
         bool "Emoji font size 32"

@@ -7,6 +7,7 @@
 
 #include "tal_api.h"
 
+#if defined(ENABLE_AI_CHAT_GUI_CHATBOT) && (ENABLE_AI_CHAT_GUI_CHATBOT == 1)
 #include "lvgl.h"
 #include "lv_vendor.h"
 
@@ -383,3 +384,4 @@ OPERATE_RET ai_ui_chat_chatbot_register(void)
 
     return ai_ui_register(&intfs);
 }
+#endif

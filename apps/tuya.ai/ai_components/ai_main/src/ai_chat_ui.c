@@ -1,5 +1,5 @@
 /**
- * @file ai_chat_display.c
+ * @file ai_chat_ui.c
  * @version 0.1
  * @copyright Copyright (c) 2021-2025 Tuya Inc. All Rights Reserved.
  */
@@ -15,7 +15,7 @@
 #elif defined(ENABLE_AI_CHAT_GUI_CHATBOT) && (ENABLE_AI_CHAT_GUI_CHATBOT == 1)
 #include "ai_ui_chat_chatbot.h"
 #elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
-
+#include "ai_ui_chat_oled.h"
 #endif
 
 #include "ai_chat_main.h"
@@ -157,7 +157,7 @@ OPERATE_RET ai_chat_ui_init(void)
 #elif defined(ENABLE_AI_CHAT_GUI_CHATBOT) && (ENABLE_AI_CHAT_GUI_CHATBOT == 1)
     TUYA_CALL_ERR_RETURN(ai_ui_chat_chatbot_register());
 #elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
-
+    TUYA_CALL_ERR_RETURN(ai_ui_chat_oled_register());
 #else
     PR_NOTICE("use custom ai chat ui, need register ui by user");
 #endif
