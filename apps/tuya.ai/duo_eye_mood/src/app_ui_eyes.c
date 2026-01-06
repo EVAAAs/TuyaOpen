@@ -1,15 +1,14 @@
 /**
- * @file ui_eyes.c
+ * @file app_ui_eyes.c
  * @version 0.1
  * @date 2025-06-13
  */
-
-#include "tuya_cloud_types.h"
 #include "tal_api.h"
 
-#include "ui_display.h"
+#include "ai_ui_manage.h"
 
 #include "lvgl.h"
+#include "lv_vendor.h"
 
 /***********************************************************
 ************************macro define************************
@@ -50,6 +49,14 @@ static lv_obj_t *sg_eyes_gif;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
+static void __lvgl_init(void)
+{
+    lv_vendor_init(DISPLAY_NAME);
+
+    lv_vendor_start(5, 1024*8);
+}
+
+
 static lv_img_dsc_t *__ui_eyes_get_img(char *name)
 {
     int i = 0;
@@ -63,24 +70,31 @@ static lv_img_dsc_t *__ui_eyes_get_img(char *name)
     return NULL;
 }
 
-int ui_init(UI_FONT_T *ui_font)
+static int __ui_init(void)
 {
     lv_img_dsc_t *img = NULL;
+
+    __lvgl_init();
+
+    lv_vendor_disp_lock();
 
     sg_eyes_gif = lv_gif_create(lv_scr_act());
     img = __ui_eyes_get_img(EMOJI_NEUTRAL);
     if (NULL == img) {
         PR_ERR("invalid emotion: %s", EMOJI_NEUTRAL);
+        lv_vendor_disp_unlock();
+
         return OPRT_INVALID_PARM;
     }
 
     lv_gif_set_src(sg_eyes_gif, img);
     lv_obj_align(sg_eyes_gif, LV_ALIGN_CENTER, 0, 0);
+    lv_vendor_disp_unlock();
 
     return OPRT_OK;
 }
 
-void ui_set_emotion(const char *emotion)
+static void __ui_set_emotion(char *emotion)
 {
     lv_img_dsc_t *img = NULL;
 
@@ -90,47 +104,22 @@ void ui_set_emotion(const char *emotion)
         return;
     }
 
+    lv_vendor_disp_lock();
     lv_gif_set_src(sg_eyes_gif, img);
+    lv_vendor_disp_unlock();
 
     return;
 }
 
-void ui_set_user_msg(const char *text)
+OPERATE_RET ai_ui_eyes_register(void)
 {
-    return;
+    AI_UI_INTFS_T intfs;
+
+    memset(&intfs, 0, sizeof(AI_UI_INTFS_T));
+
+    intfs.disp_init                = __ui_init;
+    intfs.disp_emotion             = __ui_set_emotion;
+
+    return ai_ui_register(&intfs);
 }
 
-void ui_set_assistant_msg(const char *text)
-{
-    return;
-}
-
-void ui_set_system_msg(const char *text)
-{
-    return;
-}
-
-void ui_set_status(const char *status)
-{
-    return;
-}
-
-void ui_set_notification(const char *notification)
-{
-    return;
-}
-
-void ui_set_network(char *wifi_icon)
-{
-    return;
-}
-
-void ui_set_chat_mode(const char *chat_mode)
-{
-    return;
-}
-
-void ui_set_status_bar_pad(int32_t value)
-{
-    return;
-}
