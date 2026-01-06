@@ -65,11 +65,12 @@ static void __disp_frame_buff_free(TDL_DISP_FRAME_BUFF_T *frame_buff)
 
     for (uint8_t i = 0; i < fb_manage->num; i++) {
         if(fb_manage->arr[i].fb == frame_buff) {
+            fb_manage->arr[i].is_used = false;
             if(fb_manage->is_wait_free) {
                 fb_manage->is_wait_free = false;
                 tal_semaphore_post(fb_manage->free_sem);
             }
-            fb_manage->arr[i].is_used = false;
+
             return;
         }
     }
