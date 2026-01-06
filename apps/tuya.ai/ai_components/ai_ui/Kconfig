@@ -42,59 +42,62 @@ choice AI_CHAT_GUI_OLED_SIZE
 endchoice
 endif
 
+menuconfig ENABLE_AI_UI_ICON_FONT
+    bool "enable ai ui icon font"
+    default y
 
-if(!ENABLE_AI_CHAT_GUI_CUSTOM)
-choice 
-    prompt "choose text font size"
-    default FONT_TEXT_SIZE_14_1 if(ENABLE_AI_CHAT_GUI_OLED)
-    default FONT_TEXT_SIZE_18_2 if(!ENABLE_AI_CHAT_GUI_OLED)
+if(ENABLE_AI_UI_ICON_FONT)
+    choice 
+        prompt "choose text font size"
+        default FONT_TEXT_SIZE_14_1 if(ENABLE_AI_CHAT_GUI_OLED)
+        default FONT_TEXT_SIZE_18_2 if(!ENABLE_AI_CHAT_GUI_OLED)
 
-    config FONT_TEXT_SIZE_14_1
-        bool "Text font size 14"
+        config FONT_TEXT_SIZE_14_1
+            bool "Text font size 14"
 
-    config FONT_TEXT_SIZE_18_2
-        bool "Text font size 18"
+        config FONT_TEXT_SIZE_18_2
+            bool "Text font size 18"
 
-    config FONT_TEXT_SIZE_20_4
-        bool "Text font size 20"
+        config FONT_TEXT_SIZE_20_4
+            bool "Text font size 20"
 
-    config FONT_TEXT_SIZE_30_4
-        bool "Text font size 30"
-endchoice
+        config FONT_TEXT_SIZE_30_4
+            bool "Text font size 30"
+    endchoice
 
-choice 
-    prompt "choose icon font size"
-    default FONT_ICON_SIZE_14_1 if(ENABLE_AI_CHAT_GUI_OLED)
-    default FONT_ICON_SIZE_16_4 if(!ENABLE_AI_CHAT_GUI_OLED)
+    choice 
+        prompt "choose icon font size"
+        default FONT_ICON_SIZE_14_1 if(ENABLE_AI_CHAT_GUI_OLED)
+        default FONT_ICON_SIZE_16_4 if(!ENABLE_AI_CHAT_GUI_OLED)
 
-    config FONT_ICON_SIZE_14_1
-        bool "Icon font size 14"
+        config FONT_ICON_SIZE_14_1
+            bool "Icon font size 14"
 
-    config FONT_ICON_SIZE_16_4
-        bool "Icon font size 16"
+        config FONT_ICON_SIZE_16_4
+            bool "Icon font size 16"
 
-    config FONT_ICON_SIZE_20_4
-        bool "Icon font size 20"
+        config FONT_ICON_SIZE_20_4
+            bool "Icon font size 20"
 
-    config FONT_ICON_SIZE_30_4
-        bool "Icon font size 30"
-endchoice
+        config FONT_ICON_SIZE_30_4
+            bool "Icon font size 30"
+    endchoice
 
-choice 
-    prompt "choose emo font type"
-    default FONT_EMOJI_SIZE_32 if(ENABLE_AI_CHAT_GUI_WECHAT)
-    default FONT_EMOJI_SIZE_64 if(ENABLE_AI_CHAT_GUI_CHATBOT)
-    default FONT_EMO_AWESOME   if(ENABLE_AI_CHAT_GUI_OLED)
+    choice 
+        prompt "choose emo font type"
+        default FONT_EMOJI_SIZE_32 if(ENABLE_AI_CHAT_GUI_WECHAT)
+        default FONT_EMOJI_SIZE_64 if(ENABLE_AI_CHAT_GUI_CHATBOT)
+        default FONT_EMO_AWESOME   if(ENABLE_AI_CHAT_GUI_OLED)
 
-    config FONT_EMOJI_SIZE_32
-        bool "Emoji font size 32"
+        config FONT_EMOJI_SIZE_32
+            bool "Emoji font size 32"
 
-    config FONT_EMOJI_SIZE_64
-        bool "Emoji font size 64"
+        config FONT_EMOJI_SIZE_64
+            bool "Emoji font size 64"
 
-    config FONT_EMO_AWESOME
-        bool "Emoji font awesome"
-endchoice
+        config FONT_EMO_AWESOME
+            bool "Emoji font awesome"
+    endchoice
 
 endif
 
