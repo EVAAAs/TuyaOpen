@@ -305,12 +305,12 @@ void user_main(void)
 
     reset_netconfig_start();
 
-    // if (OPRT_OK != tuya_authorize_read(&license)) {
+    if (OPRT_OK != tuya_authorize_read(&license)) {
         license.uuid = TUYA_OPENSDK_UUID;
         license.authkey = TUYA_OPENSDK_AUTHKEY;
         PR_WARN("Replace the TUYA_OPENSDK_UUID and TUYA_OPENSDK_AUTHKEY contents, otherwise the demo cannot work.\n \
                 Visit https://platform.tuya.com/purchase/index?type=6 to get the open-sdk uuid and authkey.");
-    // }
+    }
 
     /* Initialize Tuya device configuration */
     ret = tuya_iot_init(&ai_client, &(const tuya_iot_config_t){
