@@ -152,14 +152,18 @@ OPERATE_RET ai_chat_ui_init(void)
 {
     OPERATE_RET rt = OPRT_OK;
 
-#if defined(ENABLE_AI_CHAT_GUI_WECHAT) && (ENABLE_AI_CHAT_GUI_WECHAT == 1)
-    TUYA_CALL_ERR_RETURN(ai_ui_chat_wechat_register());
-#elif defined(ENABLE_AI_CHAT_GUI_CHATBOT) && (ENABLE_AI_CHAT_GUI_CHATBOT == 1)
-    TUYA_CALL_ERR_RETURN(ai_ui_chat_chatbot_register());
-#elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
-    TUYA_CALL_ERR_RETURN(ai_ui_chat_oled_register());
-#else
+#if defined(ENABLE_AI_CHAT_CUSTOM_UI) && (ENABLE_AI_CHAT_CUSTOM_UI == 1)
     PR_NOTICE("use custom ai chat ui, need register ui by user");
+#else
+    #if defined(ENABLE_AI_CHAT_GUI_WECHAT) && (ENABLE_AI_CHAT_GUI_WECHAT == 1)
+        TUYA_CALL_ERR_RETURN(ai_ui_chat_wechat_register());
+    #elif defined(ENABLE_AI_CHAT_GUI_CHATBOT) && (ENABLE_AI_CHAT_GUI_CHATBOT == 1)
+        TUYA_CALL_ERR_RETURN(ai_ui_chat_chatbot_register());
+    #elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
+        TUYA_CALL_ERR_RETURN(ai_ui_chat_oled_register());
+    #else
+        #error "please select ai chat present ui"
+    #endif
 #endif
 
     TUYA_CALL_ERR_RETURN(ai_ui_init());
