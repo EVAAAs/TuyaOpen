@@ -112,7 +112,9 @@ static void __ui_disp_msg_handle(AI_UI_MSG_T *msg_data)
         } 
         break ;
         default:
-            PR_ERR("Invalid display type: %d", msg_data->type);
+            if(sg_ui_intfs.disp_other_msg) {
+                sg_ui_intfs.disp_other_msg(msg_data->type, (uint8_t *)msg_data->data, msg_data->len);
+            }
         break;    
     }
 }

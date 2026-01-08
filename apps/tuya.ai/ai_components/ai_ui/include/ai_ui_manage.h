@@ -18,8 +18,6 @@ extern "C" {
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
-#define EMO_ICON_MAX_NUM   7
-
 #define EMOJI_NEUTRAL      "NEUTRAL"
 #define EMOJI_SAD          "SAD"
 #define EMOJI_ANGRY        "ANGRY"
@@ -31,6 +29,11 @@ extern "C" {
 #define EMOJI_FEARFUL      "FEARFUL"
 #define EMOJI_DISAPPOINTED "DISAPPOINTED"
 #define EMOJI_ANNOYED      "ANNOYED"
+#define EMOJI_SLEEP        "SLEEP"
+#define EMOJI_WAKEUP       "WAKEUP"
+#define EMOJI_LEFT         "LEFT"
+#define EMOJI_RIGHT        "RIGHT"
+#define EMOJI_WINK         "WINK"
 
 /***********************************************************
 ***********************typedef define***********************
@@ -55,7 +58,7 @@ typedef enum {
     AI_UI_DISP_NOTIFICATION,
     AI_UI_DISP_NETWORK,
     AI_UI_DISP_CHAT_MODE,
-    AI_UI_DISP_MAX
+    AI_UI_DISP_SYS_MAX,
 }AI_UI_DISP_TYPE_E;
 
 typedef struct {
@@ -71,6 +74,8 @@ typedef struct {
     void (*disp_notification)(char *string);
     void (*disp_wifi_state)(AI_UI_WIFI_STATUS_E wifi_status);
     void (*disp_ai_chat_mode)(char *string);
+    void (*disp_other_msg)(uint32_t type, uint8_t *data, int len );
+
     OPERATE_RET (*disp_camera_start)(uint16_t width, uint16_t height);
     OPERATE_RET (*disp_camera_flush)(uint8_t *data, uint16_t width, uint16_t height);
     OPERATE_RET (*disp_camera_end)(void);
