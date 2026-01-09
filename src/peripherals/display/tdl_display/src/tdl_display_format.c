@@ -56,7 +56,7 @@ static TAL_DMA2D_HANDLE_T sg_disp_dma2d_hdl = NULL;
 #endif
 
 static TDL_DISP_MONO_CFG_T sg_disp_mono_config = {
-    .method = TDL_DISP_MONO_MTH_FIXED,
+    .method = TDL_DISP_MONO_MTH_FLOYD_STEINBERG,
     .fixed_threshold = 128,
     .invert_colors = 0,
 };
@@ -363,6 +363,21 @@ OPERATE_RET tdl_disp_convert_yuv422_to_framebuffer(uint8_t *in_buf, uint16_t in_
     return rt;
 }
 
+/**
+ * @brief Set monochrome conversion parameters
+ * @param cfg Pointer to the monochrome conversion configuration structure
+ * @return OPRT_OK on success, OPRT_INVALID_PARM if cfg is NULL or method is invalid
+ */
+OPERATE_RET tdl_disp_set_mono_convert_param(TDL_DISP_MONO_CFG_T *cfg)
+{
+    if(NULL == cfg || cfg->method >= TDL_DISP_MONO_MTH_COUNT) {
+        return OPRT_INVALID_PARM;
+    }
+
+    memcpy(&sg_disp_mono_config, cfg, sizeof(TDL_DISP_MONO_CFG_T));
+
+    return OPRT_OK;
+}
 
 
 

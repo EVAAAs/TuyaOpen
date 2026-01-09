@@ -510,6 +510,8 @@ OPERATE_RET tdl_disp_format_yuv422_to_binary(uint8_t *in_buf, uint16_t in_width,
         return OPRT_INVALID_PARM;
     }
 
+    memset(out_fb->frame, 0, bitmap_size);
+
     switch (cfg->method) {
     case TDL_DISP_MONO_MTH_FIXED:
         return yuv422_to_binary_crop_threshold(in_buf, in_width, in_height,
@@ -521,14 +523,12 @@ OPERATE_RET tdl_disp_format_yuv422_to_binary(uint8_t *in_buf, uint16_t in_width,
                                                out_fb->frame, out_fb->width, out_fb->height, threshold,
                                                cfg->invert_colors);
     }
-
     case TDL_DISP_MONO_MTH_OTSU: {
         uint8_t threshold = calculate_otsu_threshold(in_buf, in_width, in_height);
         return yuv422_to_binary_crop_threshold(in_buf, in_width, in_height,
                                                out_fb->frame, out_fb->width, out_fb->height, threshold,
                                                cfg->invert_colors);
     }
-
     case TDL_DISP_MONO_MTH_BAYER4_DITHER:
         return yuv422_to_bayer4_dither(in_buf, in_width, in_height, out_fb->frame,
                                        out_fb->width, out_fb->height, cfg->invert_colors);
