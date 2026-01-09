@@ -294,6 +294,9 @@ static OPERATE_RET __disp_fb_convert_yuv422_to_rgb(uint8_t *in_buf, uint16_t in_
     out_frame.height = out_fb->height;
     out_frame.pbuf   = out_fb->frame;
 
+    in_frame.width_cp  =  (in_width <= out_fb->width) ? in_width : out_fb->width;
+    in_frame.height_cp =  (in_height <= out_fb->height) ? in_height : out_fb->height;
+    
     TUYA_CALL_ERR_RETURN(tal_dma2d_convert(sg_disp_dma2d_hdl, &in_frame, &out_frame));
 
     TUYA_CALL_ERR_RETURN(tal_dma2d_wait_finish(sg_disp_dma2d_hdl, 2000));
