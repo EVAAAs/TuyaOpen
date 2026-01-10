@@ -83,7 +83,7 @@ OPERATE_RET __link_status_cb(void *data)
                                        .path = PATH,
                                        .headers = headers,
                                        .headers_count = sizeof(headers) / sizeof(http_client_header_t),
-                                       .body = "",
+                                       .body = (const uint8_t *)"",
                                        .body_length = 0,
                                        .timeout_ms = HTTP_REQUEST_TIMEOUT},
         &http_response);
@@ -108,8 +108,6 @@ err_exit:
  */
 void user_main(void)
 {
-    OPERATE_RET rt = OPRT_OK;
-
     /* basic init */
     tal_log_init(TAL_LOG_LEVEL_DEBUG, 1024, (TAL_LOG_OUTPUT_CB)tkl_log_output);
 
