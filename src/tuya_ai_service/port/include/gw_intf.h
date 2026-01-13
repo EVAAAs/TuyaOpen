@@ -39,7 +39,7 @@ typedef struct {
  */
 typedef struct {
     /** key used by lan/mqtt/... */
-    CHAR_T local_key[LOCAL_KEY_LEN + 1];
+    char local_key[LOCAL_KEY_LEN + 1];
 } GW_ACTV_IF_S;
 
 /**
@@ -51,7 +51,7 @@ typedef struct {
 } TY_IOT_CBS_S;
 
 // gw register status
-typedef BYTE_T GW_WORK_STAT_T;
+typedef uint8_t GW_WORK_STAT_T;
 #define UNREGISTERED 0 // unregistered
 #define REGISTERED 1 // registered & activate start
 #define ACTIVATED 2 // already active

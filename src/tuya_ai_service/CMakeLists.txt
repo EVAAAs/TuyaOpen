@@ -66,13 +66,6 @@ list(APPEND LIB_SRCS ${AI_MONITOR_SRC})
 list(APPEND LIB_PUBLIC_INC ${AI_MONITOR_INC})
 # svc_ai_monitor end
 
-# wukong add start
-file(GLOB_RECURSE WUKONG_SRC "${MODULE_PATH}/wukong/*.c")
-set(WUKONG_INC ${MODULE_PATH}/wukong)
-list(APPEND LIB_SRCS ${WUKONG_SRC})
-list(APPEND LIB_PUBLIC_INC ${WUKONG_INC})
-# wukong add end
-
 ########################################
 # Target Configure
 ########################################

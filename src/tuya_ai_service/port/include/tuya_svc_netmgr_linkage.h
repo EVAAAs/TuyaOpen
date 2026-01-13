@@ -19,7 +19,7 @@ extern "C" {
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
-typedef UINT_T LINKAGE_CAP_E;
+typedef uint32_t LINKAGE_CAP_E;
 #define LINKAGE_CAP_LINK_EVENT     BIT(0)
 #define LINKAGE_CAP_ACTIVATE_TOKEN BIT(1)
 #define LINKAGE_CAP_ACTIVATE_META  BIT(2)
@@ -59,7 +59,7 @@ typedef enum {
     LINKAGE_CFG_IP,       // NW_IP_S
     LINKAGE_CFG_MAC,      // NW_MAC_S
     LINKAGE_CFG_RSSI,     // SCHAR_T
-    LINKAGE_CFG_STATUS,   // BYTE_T (linkage customized status)
+    LINKAGE_CFG_STATUS,   // uint8_t (linkage customized status)
 
     LINKAGE_CFG_MAX
 } LINKAGE_CFG_E;

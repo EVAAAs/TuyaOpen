@@ -100,7 +100,7 @@ void tuya_ai_input_stop(void);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_video_input(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, UINT_T len, UINT_T total_len);
+OPERATE_RET tuya_ai_video_input(uint64_t timestamp, uint64_t pts, uint8_t *data, uint32_t len, uint32_t total_len);
 
 /**
  * @brief ai audio input direct, no ringbuf
@@ -113,7 +113,7 @@ OPERATE_RET tuya_ai_video_input(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, 
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_audio_input_direct(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, UINT_T len, UINT_T total_len);
+OPERATE_RET tuya_ai_audio_input_direct(uint64_t timestamp, uint64_t pts, uint8_t *data, uint32_t len, uint32_t total_len);
 
 /**
  * @brief ai audio input
@@ -125,7 +125,7 @@ OPERATE_RET tuya_ai_audio_input_direct(UINT64_T timestamp, UINT64_T pts, BYTE_T 
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_audio_input(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, UINT_T len, UINT_T total_len);
+OPERATE_RET tuya_ai_audio_input(uint64_t timestamp, uint64_t pts, uint8_t *data, uint32_t len, uint32_t total_len);
 
 /**
  * @brief ai image input
@@ -137,7 +137,7 @@ OPERATE_RET tuya_ai_audio_input(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, 
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_image_input(UINT64_T timestamp, BYTE_T *data, UINT_T len, UINT_T total_len);
+OPERATE_RET tuya_ai_image_input(uint64_t timestamp, uint8_t *data, uint32_t len, uint32_t total_len);
 
 /**
  * @brief ai text input
@@ -148,7 +148,7 @@ OPERATE_RET tuya_ai_image_input(UINT64_T timestamp, BYTE_T *data, UINT_T len, UI
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_text_input(BYTE_T *data, UINT_T len, UINT_T total_len);
+OPERATE_RET tuya_ai_text_input(uint8_t *data, uint32_t len, uint32_t total_len);
 
 /**
  * @brief ai file input
@@ -159,10 +159,10 @@ OPERATE_RET tuya_ai_text_input(BYTE_T *data, UINT_T len, UINT_T total_len);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_file_input(BYTE_T *data, UINT_T len, UINT_T total_len);
+OPERATE_RET tuya_ai_file_input(uint8_t *data, uint32_t len, uint32_t total_len);
 
 /* AI cloud alert type */
-typedef INT_T AI_CLOUD_ALERT_TYPE_E;
+typedef int AI_CLOUD_ALERT_TYPE_E;
 #define AI_ALERT_PLAY_ID    "ai-alert"
 #define AI_ALERT_PLAY_ID_LEN (sizeof(AI_ALERT_PLAY_ID) - 1)
 typedef void(*AI_ALERT_FB_CB)(AI_CLOUD_ALERT_TYPE_E type);

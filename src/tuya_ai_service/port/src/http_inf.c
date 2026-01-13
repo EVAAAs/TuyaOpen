@@ -49,9 +49,9 @@
  *
  * @return NULL on error. Pointer to HTTP_URL_H_S on success
  */
-HTTP_URL_H_S *create_http_url_h(IN CONST USHORT_T buf_len, IN CONST USHORT_T param_cnt)
+HTTP_URL_H_S *create_http_url_h(IN CONST uint16_t buf_len, IN CONST uint16_t param_cnt)
 {
-    USHORT_T len;
+    uint16_t len;
 
     if (0 == buf_len) {
         len = DEF_URL_LEN;
@@ -59,7 +59,7 @@ HTTP_URL_H_S *create_http_url_h(IN CONST USHORT_T buf_len, IN CONST USHORT_T par
         len = buf_len;
     }
 
-    USHORT_T total_len = sizeof(HTTP_URL_H_S) + len + sizeof(HTTP_PARAM_H_S) + sizeof(CHAR_T *) * param_cnt;
+    uint16_t total_len = sizeof(HTTP_URL_H_S) + len + sizeof(HTTP_PARAM_H_S) + sizeof(char *) * param_cnt;
 
     HTTP_URL_H_S *hu_h = HTTP_MEMORY_MALLOC(total_len);
     if (NULL == hu_h) {
@@ -72,7 +72,7 @@ HTTP_URL_H_S *create_http_url_h(IN CONST USHORT_T buf_len, IN CONST USHORT_T par
     hu_h->param_in = hu_h->buf;
     hu_h->buf_len = len;
 
-    HTTP_PARAM_H_S *param_h = (HTTP_PARAM_H_S *)((BYTE_T *)hu_h + (sizeof(HTTP_URL_H_S) + len));
+    HTTP_PARAM_H_S *param_h = (HTTP_PARAM_H_S *)((uint8_t *)hu_h + (sizeof(HTTP_URL_H_S) + len));
     param_h->cnt = 0;
     param_h->total = param_cnt;
 
@@ -101,7 +101,7 @@ VOID del_http_url_h(IN HTTP_URL_H_S *hu_h)
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET fill_url_head(INOUT HTTP_URL_H_S *hu_h, IN CONST CHAR_T *url_h)
+OPERATE_RET fill_url_head(INOUT HTTP_URL_H_S *hu_h, IN CONST char *url_h)
 {
     if (NULL == hu_h || NULL == url_h) {
         PR_ERR("invalid param");
@@ -120,8 +120,8 @@ OPERATE_RET fill_url_head(INOUT HTTP_URL_H_S *hu_h, IN CONST CHAR_T *url_h)
 }
 
 // tuya iot http api
-OPERATE_RET iot_httpc_common_post(IN CONST CHAR_T *api_name, IN CONST CHAR_T *api_ver, IN CONST CHAR_T *uuid,
-                                  IN CONST CHAR_T *devid, IN CHAR_T *post_data, IN CONST CHAR_T *p_head_other,
+OPERATE_RET iot_httpc_common_post(IN CONST char *api_name, IN CONST char *api_ver, IN CONST char *uuid,
+                                  IN CONST char *devid, IN char *post_data, IN CONST char *p_head_other,
                                   OUT ty_cJSON **pp_result)
 {
     OPERATE_RET rt = OPRT_OK;

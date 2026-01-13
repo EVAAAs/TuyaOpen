@@ -48,27 +48,27 @@ typedef union {
 } AI_ATTR_BIZ_T;
 
 typedef struct {
-    UINT32_T bit_rate;          // bit rate in bps, default is 16000, set 48000 or 64000 to reduce latency in poor network conditions
-    UINT32_T sample_rate;       // sample rate in Hz, default is 16000
-    CONST CHAR_T *format;       // default is "mp3", set to "opus" if your player supports opus decoding
+    uint32_t bit_rate;          // bit rate in bps, default is 16000, set 48000 or 64000 to reduce latency in poor network conditions
+    uint32_t sample_rate;       // sample rate in Hz, default is 16000
+    CONST char *format;       // default is "mp3", set to "opus" if your player supports opus decoding
 } AI_AGENT_TTS_CFG_T;
 
 typedef struct {
     AI_PACKET_PT type;
-    USHORT_T id;
+    uint16_t id;
     BOOL_T first_pkt;
 } AI_AGENT_ID_T;
 typedef struct {
-    CHAR_T scode[AI_SOLUTION_CODE_LEN];
-    CHAR_T sid[AI_UUID_V4_LEN + 1];
-    CHAR_T eid[AI_UUID_V4_LEN + 1];
+    char scode[AI_SOLUTION_CODE_LEN];
+    char sid[AI_UUID_V4_LEN + 1];
+    char eid[AI_UUID_V4_LEN + 1];
     AI_AGENT_ID_T send[AI_BIZ_MAX_NUM];
     BOOL_T is_active;
 } AI_AGENT_SESSION_T;
 
 typedef struct {
     AI_ATTR_BASE_T attr;
-    CHAR_T scode[AI_SOLUTION_CODE_LEN];
+    char scode[AI_SOLUTION_CODE_LEN];
     AI_INPUT_SEND_T biz_get[AI_BIZ_MAX_NUM];
     AI_OUTPUT_CBS_T output;
     BOOL_T codec_enable; // whether to enable codec to encode audio before upload
@@ -133,7 +133,7 @@ VOID tuya_ai_agent_set_tts_cfg(AI_AGENT_TTS_CFG_T *cfg);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_agent_crt_session(CHAR_T *scode, UINT_T bizCode, UINT64_T bizTag, BYTE_T *attr, UINT_T attr_len);
+OPERATE_RET tuya_ai_agent_crt_session(char *scode, uint32_t bizCode, uint64_t bizTag, uint8_t *attr, uint32_t attr_len);
 
 /**
  * @brief ai agent del session
@@ -142,7 +142,7 @@ OPERATE_RET tuya_ai_agent_crt_session(CHAR_T *scode, UINT_T bizCode, UINT64_T bi
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_agent_del_session(CHAR_T *scode);
+OPERATE_RET tuya_ai_agent_del_session(char *scode);
 
 /**
  * @brief ai agent set solution code
@@ -150,14 +150,14 @@ OPERATE_RET tuya_ai_agent_del_session(CHAR_T *scode);
  * @param[in] scode solution code
  *
  */
-VOID tuya_ai_agent_set_scode(CHAR_T *scode);
+VOID tuya_ai_agent_set_scode(char *scode);
 
 /**
  * @brief ai agent get active solution code
  *
  * @return active solution code or default solution code
  */
-CHAR_T *tuya_ai_agent_get_active_scode(VOID);
+char *tuya_ai_agent_get_active_scode(VOID);
 
 /**
  * @brief ai agent set event id
@@ -206,7 +206,7 @@ BOOL_T tuya_ai_agent_is_internal_scode(VOID);
  *
  * @return session pointer, NULL if not found
  */
-AI_AGENT_SESSION_T* tuya_ai_agent_get_session(CHAR_T *scode);
+AI_AGENT_SESSION_T* tuya_ai_agent_get_session(char *scode);
 
 /**
  * @brief server vad control
@@ -240,6 +240,6 @@ OPERATE_RET tuya_ai_agent_mcp_set_cb(TY_AI_MCP_CB cb, VOID *user_data);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_agent_mcp_response(CHAR_T *message);
+OPERATE_RET tuya_ai_agent_mcp_response(char *message);
 
 #endif // __TUYA_AI_AGENT_H__

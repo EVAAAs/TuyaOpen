@@ -34,12 +34,12 @@
 #endif
 
 typedef struct {
-    CHAR_T *url;
+    char *url;
     AI_PACKET_PT type;
     AI_BIZ_RECV_CB cb;
 } AI_HTTP_DLD_T;
 
-STATIC OPERATE_RET __ai_http_output_media(AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, CHAR_T *data, AI_BIZ_RECV_CB cb)
+STATIC OPERATE_RET __ai_http_output_media(AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char *data, AI_BIZ_RECV_CB cb)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_PACKET_PT type = attr->type;
@@ -54,10 +54,10 @@ STATIC VOID __ai_http_dld_work(VOID *data)
 {
     OPERATE_RET rt = OPRT_OK;
     SESSION_ID http_sesion = NULL;
-    CHAR_T *buf = NULL;
+    char *buf = NULL;
     AI_HTTP_DLD_T *dld = (AI_HTTP_DLD_T *)data;
     AI_PACKET_PT type = dld->type;
-    CHAR_T *url = dld->url;
+    char *url = dld->url;
     S_HTTP_MANAGER *http_manager = NULL;
     STATIC BOOL_T first_pkt = TRUE;
     AI_BIZ_HEAD_INFO_T head = {0};
@@ -143,10 +143,10 @@ STATIC VOID __ai_http_dld_work(VOID *data)
         goto EXIT;
     }
 
-    INT_T read_len = 0, have_read_len = 0, sum_read_len = 0;
-    UINT_T total_len = resp->content_length;
-    UINT_T unit_len = AI_DL_IMAGE_UNIT_SIZE;
-    buf = (CHAR_T *)OS_MALLOC(unit_len);
+    int read_len = 0, have_read_len = 0, sum_read_len = 0;
+    uint32_t total_len = resp->content_length;
+    uint32_t unit_len = AI_DL_IMAGE_UNIT_SIZE;
+    buf = (char *)OS_MALLOC(unit_len);
     TUYA_CHECK_NULL_GOTO(buf, EXIT);
     memset(buf, 0, unit_len);
 
@@ -222,7 +222,7 @@ EXIT:
     return;
 }
 
-STATIC OPERATE_RET __ai_http_dld_media(CHAR_T *url, AI_PACKET_PT type, AI_BIZ_RECV_CB cb)
+STATIC OPERATE_RET __ai_http_dld_media(char *url, AI_PACKET_PT type, AI_BIZ_RECV_CB cb)
 {
     OPERATE_RET rt = OPRT_OK;
     TUYA_CHECK_NULL_RETURN(url, OPRT_INVALID_PARM);
@@ -247,27 +247,27 @@ STATIC OPERATE_RET __ai_http_dld_media(CHAR_T *url, AI_PACKET_PT type, AI_BIZ_RE
     return rt;
 }
 
-OPERATE_RET tuya_ai_http_dld_audio(CHAR_T *url, AI_BIZ_RECV_CB cb)
+OPERATE_RET tuya_ai_http_dld_audio(char *url, AI_BIZ_RECV_CB cb)
 {
     return __ai_http_dld_media(url, AI_PT_AUDIO, cb);
 }
 
-OPERATE_RET tuya_ai_http_dld_image(CHAR_T *url, AI_BIZ_RECV_CB cb)
+OPERATE_RET tuya_ai_http_dld_image(char *url, AI_BIZ_RECV_CB cb)
 {
     return __ai_http_dld_media(url, AI_PT_IMAGE, cb);
 }
 
-OPERATE_RET tuya_ai_http_dld_video(CHAR_T *url, AI_BIZ_RECV_CB cb)
+OPERATE_RET tuya_ai_http_dld_video(char *url, AI_BIZ_RECV_CB cb)
 {
     return __ai_http_dld_media(url, AI_PT_VIDEO, cb);
 }
 
-OPERATE_RET tuya_ai_http_dld_file(CHAR_T *url, AI_BIZ_RECV_CB cb)
+OPERATE_RET tuya_ai_http_dld_file(char *url, AI_BIZ_RECV_CB cb)
 {
     return __ai_http_dld_media(url, AI_PT_FILE, cb);
 }
 
-OPERATE_RET tuya_ai_http_dld_text(CHAR_T *url, AI_BIZ_RECV_CB cb)
+OPERATE_RET tuya_ai_http_dld_text(char *url, AI_BIZ_RECV_CB cb)
 {
     return __ai_http_dld_media(url, AI_PT_TEXT, cb);
 }

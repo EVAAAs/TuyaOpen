@@ -66,7 +66,7 @@ typedef enum {
     AI_OUTPUT_CBS_MODE_MAX
 } AI_OUTPUT_CBS_MODE_E;
 
-typedef BYTE_T AI_TEXT_TYPE_E;
+typedef uint8_t AI_TEXT_TYPE_E;
 #define AI_TEXT_ASR 0x00
 #define AI_TEXT_NLG 0x01
 #define AI_TEXT_SKILL 0x02

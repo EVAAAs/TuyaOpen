@@ -64,14 +64,14 @@ typedef struct {
 
 typedef struct {
     /** timestamp */
-    UINT64_T timestamp; //unit:ms
+    uint64_t timestamp; //unit:ms
     /** pts */
-    UINT64_T pts; //unit:us
+    uint64_t pts; //unit:us
 } AI_VIDEO_BIZ_HEAD_T, AI_AUDIO_BIZ_HEAD_T;
 
 typedef struct {
     /** timestamp */
-    UINT64_T timestamp;
+    uint64_t timestamp;
 } AI_IMAGE_BIZ_HEAD_T;
 
 typedef union {
@@ -83,7 +83,7 @@ typedef union {
     AI_IMAGE_BIZ_HEAD_T image;
 } AI_BIZ_HD_T;
 
-typedef BYTE_T AI_BIZ_DATA_TYPE;
+typedef uint8_t AI_BIZ_DATA_TYPE;
 #define AI_BIZ_DATA_TYPE_BYTE 0
 #define AI_BIZ_DATA_TYPE_JSON 1
 typedef struct {
@@ -94,9 +94,9 @@ typedef struct {
     /** data type */
     AI_BIZ_DATA_TYPE data_type;
     /** data total length */
-    UINT_T total_len;
+    uint32_t total_len;
     /** data length */
-    UINT_T len;
+    uint32_t len;
 } AI_BIZ_HEAD_INFO_T;
 
 /**
@@ -108,7 +108,7 @@ typedef struct {
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-typedef OPERATE_RET(*AI_BIZ_SEND_GET_CB)(AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, CHAR_T **data);
+typedef OPERATE_RET(*AI_BIZ_SEND_GET_CB)(AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char **data);
 
 /**
  * @brief send free
@@ -116,7 +116,7 @@ typedef OPERATE_RET(*AI_BIZ_SEND_GET_CB)(AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_I
  * @param[in] data data
  *
  */
-typedef VOID(*AI_BIZ_SEND_FREE_CB)(CHAR_T *data);
+typedef VOID(*AI_BIZ_SEND_FREE_CB)(char *data);
 
 /**
  * @brief recv biz data
@@ -141,13 +141,13 @@ typedef OPERATE_RET(*AI_BIZ_RECV_CB)(AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-typedef OPERATE_RET(*AI_BIZ_MONITOR_CB)(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, CHAR_T *data, VOID *usr_data);
+typedef OPERATE_RET(*AI_BIZ_MONITOR_CB)(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char *data, VOID *usr_data);
 
 typedef struct {
     /** send packet type */
     AI_PACKET_PT type;
     /** send channel id */
-    USHORT_T id;
+    uint16_t id;
     /** send channel get cb */
     AI_BIZ_SEND_GET_CB get_cb;
     /** send channel free cb */
@@ -158,7 +158,7 @@ typedef struct {
     /** recv packet type */
     AI_PACKET_PT type;
     /** recv channel id */
-    USHORT_T id;
+    uint16_t id;
     /** recv channel cb */
     AI_BIZ_RECV_CB cb;
     /** user data */
@@ -167,11 +167,11 @@ typedef struct {
 
 typedef struct {
     /** send channel num */
-    USHORT_T send_num;
+    uint16_t send_num;
     /** send channel data */
     AI_BIZ_SEND_DATA_T send[AI_BIZ_MAX_NUM];
     /** recv channel num */
-    USHORT_T recv_num;
+    uint16_t recv_num;
     /** recv channel data */
     AI_BIZ_RECV_DATA_T recv[AI_BIZ_MAX_NUM];
     /** event cb */
@@ -191,7 +191,7 @@ typedef struct {
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_biz_crt_session(UINT_T bizCode, UINT64_T bizTag, AI_SESSION_CFG_T *cfg, BYTE_T *attr, UINT_T attr_len, CHAR_T *token, AI_SESSION_ID id);
+OPERATE_RET tuya_ai_biz_crt_session(uint32_t bizCode, uint64_t bizTag, AI_SESSION_CFG_T *cfg, uint8_t *attr, uint32_t attr_len, char *token, AI_SESSION_ID id);
 
 /**
  * @brief delete session
@@ -214,7 +214,7 @@ OPERATE_RET tuya_ai_biz_del_session(AI_SESSION_ID id, AI_STATUS_CODE code);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_send_biz_pkt(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKET_PT type, AI_BIZ_HEAD_INFO_T *head, CHAR_T *payload);
+OPERATE_RET tuya_ai_send_biz_pkt(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKET_PT type, AI_BIZ_HEAD_INFO_T *head, char *payload);
 
 /**
  * @brief send ai biz packet with custom writer
@@ -228,22 +228,22 @@ OPERATE_RET tuya_ai_send_biz_pkt(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKE
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKET_PT type,
-                                        AI_BIZ_HEAD_INFO_T *head, CHAR_T *payload, AI_PACKET_WRITER_T *writer);
+OPERATE_RET tuya_ai_send_biz_pkt_custom(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKET_PT type,
+                                        AI_BIZ_HEAD_INFO_T *head, char *payload, AI_PACKET_WRITER_T *writer);
 
 /**
  * @brief get send id
  *
  * @return send id
  */
-INT_T tuya_ai_biz_get_send_id(VOID);
+int tuya_ai_biz_get_send_id(VOID);
 
 /**
  * @brief get recv id
  *
  * @return recv id
  */
-INT_T tuya_ai_biz_get_recv_id(VOID);
+int tuya_ai_biz_get_recv_id(VOID);
 
 /**
  * @brief init ai biz
@@ -276,7 +276,7 @@ AI_SESSION_CFG_T* tuya_ai_biz_get_session_cfg(AI_SESSION_ID id);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_parse_video_attr(CHAR_T *de_buf, UINT_T attr_len, AI_VIDEO_ATTR_T *video);
+OPERATE_RET tuya_ai_parse_video_attr(char *de_buf, uint32_t attr_len, AI_VIDEO_ATTR_T *video);
 
 /**
  * @brief parse audio attribute
@@ -287,7 +287,7 @@ OPERATE_RET tuya_ai_parse_video_attr(CHAR_T *de_buf, UINT_T attr_len, AI_VIDEO_A
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_parse_audio_attr(CHAR_T *de_buf, UINT_T attr_len, AI_AUDIO_ATTR_T *audio);
+OPERATE_RET tuya_ai_parse_audio_attr(char *de_buf, uint32_t attr_len, AI_AUDIO_ATTR_T *audio);
 
 /**
  * @brief parse image attribute
@@ -298,7 +298,7 @@ OPERATE_RET tuya_ai_parse_audio_attr(CHAR_T *de_buf, UINT_T attr_len, AI_AUDIO_A
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_parse_image_attr(CHAR_T *de_buf, UINT_T attr_len, AI_IMAGE_ATTR_T *image);
+OPERATE_RET tuya_ai_parse_image_attr(char *de_buf, uint32_t attr_len, AI_IMAGE_ATTR_T *image);
 
 /**
  * @brief parse file attribute
@@ -309,7 +309,7 @@ OPERATE_RET tuya_ai_parse_image_attr(CHAR_T *de_buf, UINT_T attr_len, AI_IMAGE_A
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_parse_file_attr(CHAR_T *de_buf, UINT_T attr_len, AI_FILE_ATTR_T *file);
+OPERATE_RET tuya_ai_parse_file_attr(char *de_buf, uint32_t attr_len, AI_FILE_ATTR_T *file);
 
 /**
  * @brief parse text attribute
@@ -320,7 +320,7 @@ OPERATE_RET tuya_ai_parse_file_attr(CHAR_T *de_buf, UINT_T attr_len, AI_FILE_ATT
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_parse_text_attr(CHAR_T *de_buf, UINT_T attr_len, AI_TEXT_ATTR_T *text);
+OPERATE_RET tuya_ai_parse_text_attr(char *de_buf, uint32_t attr_len, AI_TEXT_ATTR_T *text);
 
 /**
  * @brief parse event attribute
@@ -331,7 +331,7 @@ OPERATE_RET tuya_ai_parse_text_attr(CHAR_T *de_buf, UINT_T attr_len, AI_TEXT_ATT
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_parse_event_attr(CHAR_T *de_buf, UINT_T attr_len, AI_EVENT_ATTR_T *event);
+OPERATE_RET tuya_ai_parse_event_attr(char *de_buf, uint32_t attr_len, AI_EVENT_ATTR_T *event);
 
 /**
  * @brief set monitor callback
@@ -351,5 +351,5 @@ OPERATE_RET tuya_ai_biz_monitor_register(AI_BIZ_MONITOR_CB recv_cb, AI_BIZ_MONIT
  *
  * @return send id
  */
-INT_T tuya_ai_biz_get_reuse_send_id(AI_PACKET_PT type);
+int tuya_ai_biz_get_reuse_send_id(AI_PACKET_PT type);
 #endif

@@ -23,7 +23,7 @@ extern "C" {
 /**
  * @brief Definition of network status
  */
-typedef BYTE_T NETWORK_STATUS_E;
+typedef uint8_t NETWORK_STATUS_E;
 #define NETWORK_STATUS_OFFLINE  0  // all linkages are down
 #define NETWORK_STATUS_LOCAL    1  // any linkage is up
 #define NETWORK_STATUS_MQTT     2  // MQTT is connected

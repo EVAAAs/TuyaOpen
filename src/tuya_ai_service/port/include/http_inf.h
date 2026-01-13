@@ -63,7 +63,7 @@ typedef struct {
  *
  * @return NULL on error. Pointer to HTTP_URL_H_S on success
  */
-HTTP_URL_H_S *create_http_url_h(IN CONST USHORT_T buf_len, IN CONST USHORT_T param_cnt);
+HTTP_URL_H_S *create_http_url_h(IN CONST uint16_t buf_len, IN CONST uint16_t param_cnt);
 
 /**
  * @brief Free url of HTTP request
@@ -81,13 +81,13 @@ VOID del_http_url_h(IN HTTP_URL_H_S *hu_h);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET fill_url_head(INOUT HTTP_URL_H_S *hu_h, IN CONST CHAR_T *url_h);
+OPERATE_RET fill_url_head(INOUT HTTP_URL_H_S *hu_h, IN CONST char *url_h);
 
 // iot api
-OPERATE_RET iot_httpc_common_post(IN CONST CHAR_T *api_name, IN CONST CHAR_T *api_ver,
-                                  IN CONST CHAR_T *uuid, IN CONST CHAR_T *devid,
-                                  IN CHAR_T *post_data,
-                                  IN CONST CHAR_T *p_head_other,
+OPERATE_RET iot_httpc_common_post(IN CONST char *api_name, IN CONST char *api_ver,
+                                  IN CONST char *uuid, IN CONST char *devid,
+                                  IN char *post_data,
+                                  IN CONST char *p_head_other,
                                   OUT ty_cJSON **pp_result);
 
 #ifdef __cplusplus

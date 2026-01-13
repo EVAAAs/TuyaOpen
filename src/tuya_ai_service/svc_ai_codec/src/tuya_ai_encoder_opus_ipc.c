@@ -19,7 +19,7 @@
 
 extern OPERATE_RET tkl_audio_enc_request(VOID *enc_para);
 
-STATIC IPC_AUDIO_ENC_PARA_T *__ipc_para_alloc(IPC_AUDIO_ENC_OPS_E ops, TUYA_AI_ENCODER_INFO_T *info, INT_T out_buf_len)
+STATIC IPC_AUDIO_ENC_PARA_T *__ipc_para_alloc(IPC_AUDIO_ENC_OPS_E ops, TUYA_AI_ENCODER_INFO_T *info, int out_buf_len)
 {
     IPC_AUDIO_ENC_PARA_T *enc_para = (IPC_AUDIO_ENC_PARA_T *)OS_Malloc(sizeof(IPC_AUDIO_ENC_PARA_T));
     if (enc_para == NULL) {
@@ -89,7 +89,7 @@ STATIC OPERATE_RET _encoder_opus_ipc_destroy(AI_ENCODE_HANDLE_T handle)
     return OPRT_OK;
 }
 
-STATIC OPERATE_RET _encoder_opus_ipc_encode(AI_ENCODE_HANDLE_T handle, UCHAR_T *in_buf, UINT_T in_len, AI_ENCODER_DATA_OUT_CB cb, void *usr_data)
+STATIC OPERATE_RET _encoder_opus_ipc_encode(AI_ENCODE_HANDLE_T handle, uint8_t *in_buf, uint32_t in_len, AI_ENCODER_DATA_OUT_CB cb, void *usr_data)
 {
     OPERATE_RET rt = OPRT_OK;
     IPC_AUDIO_ENC_PARA_T *enc_para = __ipc_para_alloc(IPC_AUDIO_ENC_OPS_ENCODE, NULL, in_len / 6);
@@ -116,7 +116,7 @@ STATIC OPERATE_RET _encoder_opus_ipc_encode(AI_ENCODE_HANDLE_T handle, UCHAR_T *
         return rt;
     }
     if (cb && enc_para->out_buf && enc_para->out_len > 0) {
-        rt = cb(AUDIO_CODEC_OPUS, (UCHAR_T *)enc_para->out_buf, enc_para->out_len, usr_data);
+        rt = cb(AUDIO_CODEC_OPUS, (uint8_t *)enc_para->out_buf, enc_para->out_len, usr_data);
         if (rt != OPRT_OK) {
             __ipc_para_free(enc_para);
             return rt;

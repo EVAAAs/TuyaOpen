@@ -34,7 +34,7 @@ extern "C" {
  *
  * @return Device id as a string, return NULL if not exist
  */
-CONST CHAR_T *get_gw_dev_id(VOID);
+CONST char *get_gw_dev_id(VOID);
 
 #ifdef __cplusplus
 }

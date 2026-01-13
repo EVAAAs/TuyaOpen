@@ -186,7 +186,7 @@ typedef S_HTTP_SESSION *SESSION_ID;
  *
  * @return SESSION_ID on success, NULL on error
  */
-typedef SESSION_ID (*FUNC_HTTP_SESSION_CREATE)(IN CONST CHAR_T *url, BOOL_T is_persistent);
+typedef SESSION_ID (*FUNC_HTTP_SESSION_CREATE)(IN CONST char *url, BOOL_T is_persistent);
 
 /**
  * @brief This API is used to create HTTP session
@@ -196,7 +196,7 @@ typedef SESSION_ID (*FUNC_HTTP_SESSION_CREATE)(IN CONST CHAR_T *url, BOOL_T is_p
  *
  * @return SESSION_ID on success, NULL on error
  */
-typedef SESSION_ID (*FUNC_HTTP_SESSION_CREATE_TLS)(IN CONST CHAR_T *url, BOOL_T is_persistent,
+typedef SESSION_ID (*FUNC_HTTP_SESSION_CREATE_TLS)(IN CONST char *url, BOOL_T is_persistent,
                                                    tuya_tls_config_t *config);
 
 /**
@@ -242,7 +242,7 @@ typedef OPERATE_RET (*FUNC_HTTP_SESSION_DESTORY)(SESSION_ID session);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-typedef OPERATE_RET (*FUNC_HTTP_SESSION_RECEIVE_DATA)(SESSION_ID session, http_resp_t *pResp, BYTE_T **pDataOut);
+typedef OPERATE_RET (*FUNC_HTTP_SESSION_RECEIVE_DATA)(SESSION_ID session, http_resp_t *pResp, uint8_t **pDataOut);
 
 /**
  * @brief The HTTP session manager structure.

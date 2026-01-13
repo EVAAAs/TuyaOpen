@@ -59,23 +59,23 @@
 
 #pragma pack(1)
 typedef struct {
-    UINT32_T magic;                     // magic number for frame synchronization
-    UINT8_T  reserved : 6;              // reserved bits
-    UINT8_T  direction : 2;             // direction: 0 for device upload, 1 for cloud download, 2 for device ack to client
+    uint32_t magic;                     // magic number for frame synchronization
+    uint8_t  reserved : 6;              // reserved bits
+    uint8_t  direction : 2;             // direction: 0 for device upload, 1 for cloud download, 2 for device ack to client
     AI_PACKET_HEAD_T pkg_header;        // Base 2.0 Protocol header
 } ai_monitor_header_t;
 #pragma pack()
 
 typedef struct {
-    INT_T fd;                           // socket fd
+    int fd;                           // socket fd
     TUYA_IP_ADDR_T addr;                // client address
     BOOL_T connected;                   // connection status
-    UINT64_T last_ping_time;            // last ping time
-    UINT16_T sequence;                  // sequence number
-    UINT8_T *recv_buf;                  // receive buffer
-    UINT_T recv_buf_size;               // receive buffer size
-    UINT_T recv_len;                    // received data length
-    UINT8_T registered_types[8];        // registered data types bitmap, max 64 types
+    uint64_t last_ping_time;            // last ping time
+    uint16_t sequence;                  // sequence number
+    uint8_t *recv_buf;                  // receive buffer
+    uint32_t recv_buf_size;               // receive buffer size
+    uint32_t recv_len;                    // received data length
+    uint8_t registered_types[8];        // registered data types bitmap, max 64 types
 } ai_monitor_client_t;
 
 typedef struct {
@@ -83,11 +83,11 @@ typedef struct {
     BOOL_T running;                     // running flag
     ai_monitor_config_t config;         // server configuration
     netmgr_linkage_t *linkage;          // default lan linkage
-    INT_T server_fd;                    // server socket fd
+    int server_fd;                    // server socket fd
     ai_monitor_client_t *clients;       // client array
-    UINT_T client_count;                // current client count
-    UINT16_T sequence;                  // global sequence number
-    UINT32_T session_id;                // current session ID
+    uint32_t client_count;                // current client count
+    uint16_t sequence;                  // global sequence number
+    uint32_t session_id;                // current session ID
     MUTEX_HANDLE mutex;                 // mutex for thread safety
     TIMER_ID timer;                     // timer ID
     THREAD_HANDLE log_thread;           // log thread handle
@@ -97,28 +97,28 @@ typedef struct {
 
 typedef struct {
     AI_PACKET_WRITER_T *writer;         // packet writer
-    INT_T fd;                           // socket fd
-    UINT8_T direction;                  // direction: 0 for device upload, 1 for cloud download, 2 for device ack to client
-    USHORT_T sequence_out;              // sequence number for outgoing packets
-    UINT_T frag_offset[AI_MONITOR_DIR_MAX]; // offset for upstream/downstream/ack packet fragments
+    int fd;                           // socket fd
+    uint8_t direction;                  // direction: 0 for device upload, 1 for cloud download, 2 for device ack to client
+    uint16_t sequence_out;              // sequence number for outgoing packets
+    uint32_t frag_offset[AI_MONITOR_DIR_MAX]; // offset for upstream/downstream/ack packet fragments
 } ai_monitor_writer_cfg_t;
 
 STATIC ai_monitor_server_t g_ai_monitor_server = {0};
-STATIC OPERATE_RET __init_client(ai_monitor_client_t *client, INT_T fd, TUYA_IP_ADDR_T addr);
+STATIC OPERATE_RET __init_client(ai_monitor_client_t *client, int fd, TUYA_IP_ADDR_T addr);
 STATIC VOID __cleanup_client(ai_monitor_client_t *client);
-STATIC ai_monitor_client_t* __find_client_by_fd(INT_T fd);
-STATIC OPERATE_RET __parse_pkg(ai_monitor_client_t *client, CHAR_T *data, UINT_T len);
+STATIC ai_monitor_client_t* __find_client_by_fd(int fd);
+STATIC OPERATE_RET __parse_pkg(ai_monitor_client_t *client, char *data, uint32_t len);
 STATIC VOID __accept_handler(int32_t server_sock);
-STATIC VOID __accept_err(INT_T fd);
+STATIC VOID __accept_err(int fd);
 STATIC VOID __socket_read_handler(int32_t sock);
-STATIC VOID __socket_error_handler(INT_T sock);
+STATIC VOID __socket_error_handler(int sock);
 STATIC OPERATE_RET __client_register_clear(ai_monitor_client_t *client);
-STATIC OPERATE_RET __client_register(ai_monitor_client_t *client, UINT8_T type);
-STATIC BOOL_T __is_client_registered(ai_monitor_client_t *client, UINT8_T type);
+STATIC OPERATE_RET __client_register(ai_monitor_client_t *client, uint8_t type);
+STATIC BOOL_T __is_client_registered(ai_monitor_client_t *client, uint8_t type);
 STATIC VOID __session_close_all(VOID);
 STATIC OPERATE_RET __default_update(AI_STAGE_E stage, VOID *data, AI_SEND_PACKET_T *info);
-STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, UINT_T buf_len);
-STATIC VOID __log_output(CONST CHAR_T *str);
+STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, uint32_t buf_len);
+STATIC VOID __log_output(CONST char *str);
 
 ai_monitor_writer_cfg_t s_monitor_writer_cfg = {
     .writer = NULL,         // Will be set later
@@ -143,7 +143,7 @@ AI_PACKET_WRITER_T s_default_writer = {
 /**
  * @brief Initialize client structure
  */
-STATIC OPERATE_RET __init_client(ai_monitor_client_t *client, INT_T fd, TUYA_IP_ADDR_T addr)
+STATIC OPERATE_RET __init_client(ai_monitor_client_t *client, int fd, TUYA_IP_ADDR_T addr)
 {
     if (!client) {
         return OPRT_INVALID_PARM;
@@ -198,9 +198,9 @@ STATIC VOID __cleanup_client(ai_monitor_client_t *client)
 /**
  * @brief Find client by socket fd
  */
-STATIC ai_monitor_client_t* __find_client_by_fd(INT_T fd)
+STATIC ai_monitor_client_t* __find_client_by_fd(int fd)
 {
-    for (UINT_T i = 0; i < g_ai_monitor_server.config.max_clients; i++) {
+    for (uint32_t i = 0; i < g_ai_monitor_server.config.max_clients; i++) {
         if (g_ai_monitor_server.clients[i].fd == fd) {
             return &g_ai_monitor_server.clients[i];
         }
@@ -208,7 +208,7 @@ STATIC ai_monitor_client_t* __find_client_by_fd(INT_T fd)
     return NULL;
 }
 
-STATIC BOOL_T __is_client_registered(ai_monitor_client_t *client, UINT8_T type)
+STATIC BOOL_T __is_client_registered(ai_monitor_client_t *client, uint8_t type)
 {
     if (!client || type >= sizeof(client->registered_types) * 8 || !client->connected) {
         return FALSE;
@@ -216,7 +216,7 @@ STATIC BOOL_T __is_client_registered(ai_monitor_client_t *client, UINT8_T type)
     return (client->registered_types[type / 8] & (1 << (type % 8))) != 0;
 }
 
-STATIC OPERATE_RET __client_register(ai_monitor_client_t *client, UINT8_T type)
+STATIC OPERATE_RET __client_register(ai_monitor_client_t *client, uint8_t type)
 {
     if (!client || type >= sizeof(client->registered_types) * 8 || !client->connected) {
         return OPRT_INVALID_PARM;
@@ -237,7 +237,7 @@ STATIC OPERATE_RET __client_register_clear(ai_monitor_client_t *client)
 /**
  * @brief send message to specific client
  */
-STATIC OPERATE_RET __pack_and_send(ai_monitor_client_t *client, UINT8_T direction, USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, CHAR_T *data)
+STATIC OPERATE_RET __pack_and_send(ai_monitor_client_t *client, uint8_t direction, uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char *data)
 {
     OPERATE_RET rt = OPRT_OK;
     if (!client || !client->connected || !head || !attr) {
@@ -256,10 +256,10 @@ STATIC OPERATE_RET __pack_and_send(ai_monitor_client_t *client, UINT8_T directio
     return OPRT_OK;
 }
 
-STATIC OPERATE_RET __handle_ping(ai_monitor_client_t *client,  UINT64_T client_ts, CHAR_T *payload)
+STATIC OPERATE_RET __handle_ping(ai_monitor_client_t *client,  uint64_t client_ts, char *payload)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT64_T server_ts;
+    uint64_t server_ts;
 
     server_ts = client->last_ping_time = tal_time_get_posix_ms();
     PR_DEBUG("Received ping from client fd=%d, client_ts=%llu", client->fd, client_ts);
@@ -270,9 +270,9 @@ STATIC OPERATE_RET __handle_ping(ai_monitor_client_t *client,  UINT64_T client_t
     pkt.writer = &s_default_writer;
     AI_MONITOR_WRITER_UPDATE(pkt.writer, client->fd, AI_MONITOR_DIR_ACK); // Update writer with client fd and ACK direction
     // create pong attrs
-    UINT_T attr_idx = 0;
-    pkt.attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CLIENT_TS, ATTR_PT_U64, &client_ts, SIZEOF(UINT64_T));
-    pkt.attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SERVER_TS, ATTR_PT_U64, &server_ts, SIZEOF(UINT64_T));
+    uint32_t attr_idx = 0;
+    pkt.attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CLIENT_TS, ATTR_PT_U64, &client_ts, SIZEOF(uint64_t));
+    pkt.attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SERVER_TS, ATTR_PT_U64, &server_ts, SIZEOF(uint64_t));
     pkt.count = attr_idx;
     // TODO: check attr created
     // if (!__ai_check_attr_created(&pkt)) {
@@ -290,12 +290,12 @@ STATIC OPERATE_RET __handle_ping(ai_monitor_client_t *client,  UINT64_T client_t
 
 STATIC OPERATE_RET __handle_event_filter(ai_monitor_client_t *client, AI_EVENT_ATTR_T *event)
 {
-    UINT64_T user_data_bitmap = 0;
+    uint64_t user_data_bitmap = 0;
 
-    if (event->user_len != sizeof(UINT64_T)) {
+    if (event->user_len != sizeof(uint64_t)) {
         return OPRT_INVALID_PARM;
     }
-    memcpy(&user_data_bitmap, event->user_data, sizeof(UINT64_T));
+    memcpy(&user_data_bitmap, event->user_data, sizeof(uint64_t));
     UNI_NTOHLL(user_data_bitmap);
     PR_DEBUG("Monitor Filter User data bitmap: 0x%016llx", user_data_bitmap);
 
@@ -333,7 +333,7 @@ STATIC OPERATE_RET __handle_event_alg_ctrl(ai_monitor_client_t *client, AI_EVENT
     return OPRT_NOT_SUPPORTED; // Not implemented yet, return not supported
 }
 
-STATIC OPERATE_RET __handle_event(ai_monitor_client_t *client, AI_EVENT_ATTR_T *event, CHAR_T *payload)
+STATIC OPERATE_RET __handle_event(ai_monitor_client_t *client, AI_EVENT_ATTR_T *event, char *payload)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_EVENT_HEAD_T *head = (AI_EVENT_HEAD_T *)payload;
@@ -359,7 +359,7 @@ STATIC OPERATE_RET __handle_event(ai_monitor_client_t *client, AI_EVENT_ATTR_T *
     pkt.writer = &s_default_writer;
     AI_MONITOR_WRITER_UPDATE(pkt.writer, client->fd, AI_MONITOR_DIR_ACK); // Update writer with client fd and ACK direction
     // create event attrs
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
     pkt.attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SESSION_ID, ATTR_PT_STR, event->session_id, strlen(event->session_id));
     pkt.attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_EVENT_ID, ATTR_PT_STR, event->event_id, strlen(event->event_id));
     pkt.attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_USER_DATA, ATTR_PT_BYTES, event->user_data, event->user_len);
@@ -368,10 +368,10 @@ STATIC OPERATE_RET __handle_event(ai_monitor_client_t *client, AI_EVENT_ATTR_T *
     // if (!__ai_check_attr_created(&pkt)) {
     //     return OPRT_MALLOC_FAILED;
     // }
-    char resp_payload[sizeof(AI_EVENT_HEAD_T) + sizeof(UINT32_T)] = {0};
+    char resp_payload[sizeof(AI_EVENT_HEAD_T) + sizeof(uint32_t)] = {0};
     ((AI_EVENT_HEAD_T *)resp_payload)->type = UNI_HTONS(event_type);
-    ((AI_EVENT_HEAD_T *)resp_payload)->length = UNI_HTONS(sizeof(UINT32_T));
-    *((UINT32_T *)(resp_payload + sizeof(AI_EVENT_HEAD_T))) = UNI_HTONL(rt); // Response data length
+    ((AI_EVENT_HEAD_T *)resp_payload)->length = UNI_HTONS(sizeof(uint32_t));
+    *((uint32_t *)(resp_payload + sizeof(AI_EVENT_HEAD_T))) = UNI_HTONL(rt); // Response data length
     // Add response data
     pkt.data = resp_payload;
     pkt.len = sizeof(resp_payload);
@@ -386,7 +386,7 @@ STATIC OPERATE_RET __handle_event(ai_monitor_client_t *client, AI_EVENT_ATTR_T *
 /**
  * @brief Parse protocol frame
  */
-STATIC OPERATE_RET __parse_pkg(ai_monitor_client_t *client, CHAR_T *data, UINT_T len)
+STATIC OPERATE_RET __parse_pkg(ai_monitor_client_t *client, char *data, uint32_t len)
 {
     if (!client || !data || len < sizeof(AI_PAYLOAD_HEAD_T)) {
         return OPRT_INVALID_PARM;
@@ -396,14 +396,14 @@ STATIC OPERATE_RET __parse_pkg(ai_monitor_client_t *client, CHAR_T *data, UINT_T
     AI_PAYLOAD_HEAD_T *head = (AI_PAYLOAD_HEAD_T *)data;
     AI_PACKET_PT type = head->type;
     AI_ATTR_FLAG attr_flag = head->attribute_flag;
-    UINT_T attr_len = 0;
-    UINT_T offset = SIZEOF(AI_PAYLOAD_HEAD_T);
-    CHAR_T *payload, *attr_buf;
+    uint32_t attr_len = 0;
+    uint32_t offset = SIZEOF(AI_PAYLOAD_HEAD_T);
+    char *payload, *attr_buf;
 
     if (type == AI_PT_PING) {
         // parse attr
         AI_ATTRIBUTE_T attr = {0};
-        UINT64_T client_ts = 0;
+        uint64_t client_ts = 0;
         if (head->attribute_flag != AI_HAS_ATTR) {
             PR_ERR("ai ping packet has no attribute");
             return OPRT_COM_ERROR;
@@ -449,7 +449,7 @@ STATIC OPERATE_RET __parse_pkg(ai_monitor_client_t *client, CHAR_T *data, UINT_T
             offset += attr_len;
         }
 
-        offset += SIZEOF(UINT_T);
+        offset += SIZEOF(uint32_t);
         payload = data + offset;
 
         // handle event
@@ -461,11 +461,11 @@ STATIC OPERATE_RET __parse_pkg(ai_monitor_client_t *client, CHAR_T *data, UINT_T
 
 }
 
-STATIC INT_T __find_sync_frame(CONST UINT8_T *data, UINT_T len)
+STATIC int __find_sync_frame(CONST uint8_t *data, uint32_t len)
 {
     // Search for magic number
-    UINT32_T magic = UNI_HTONL(AI_MONITOR_MAGIC);
-    for (UINT_T offset = 0; offset <= len; offset++) {
+    uint32_t magic = UNI_HTONL(AI_MONITOR_MAGIC);
+    for (uint32_t offset = 0; offset <= len; offset++) {
         if (memcmp(data + offset, &magic, sizeof(magic)) == 0) {
             return offset; // Found sync frame
         }
@@ -486,7 +486,7 @@ STATIC VOID __socket_read_handler(int32_t sock)
 
     // FIXME: current only support event type with event type == 0xf000, need to handle other types
     // Receive data
-    INT_T recv_len = tal_net_recv(sock, client->recv_buf + client->recv_len, client->recv_buf_size - client->recv_len);
+    int recv_len = tal_net_recv(sock, client->recv_buf + client->recv_len, client->recv_buf_size - client->recv_len);
     if (recv_len <= 0) {
         if (recv_len == 0) {
             PR_INFO("client fd=%d disconnected", sock);
@@ -505,7 +505,7 @@ STATIC VOID __socket_read_handler(int32_t sock)
     client->recv_len += recv_len;
 
     // Parse frames
-    UINT_T processed = 0;
+    uint32_t processed = 0;
     while (processed < client->recv_len) {
         // find sync frame with magic number
         OPERATE_RET ret = __find_sync_frame(client->recv_buf + processed, client->recv_len - processed);
@@ -517,13 +517,13 @@ STATIC VOID __socket_read_handler(int32_t sock)
         }
         processed += ret; // Move to the start of the sync frame
 
-        if (client->recv_len - processed < sizeof(ai_monitor_header_t) + sizeof(UINT32_T)) {
+        if (client->recv_len - processed < sizeof(ai_monitor_header_t) + sizeof(uint32_t)) {
             break; // Need more data
         }
 
         ai_monitor_header_t *frame = (ai_monitor_header_t*)(client->recv_buf + processed);
-        UINT32_T pkg_len;
-        memcpy(&pkg_len, frame + 1, sizeof(UINT32_T));
+        uint32_t pkg_len;
+        memcpy(&pkg_len, frame + 1, sizeof(uint32_t));
         pkg_len = UNI_NTOHL(pkg_len);
 
         if (frame->direction != AI_MONITOR_DIR_ACK ||
@@ -534,16 +534,16 @@ STATIC VOID __socket_read_handler(int32_t sock)
             PR_ERR("invalid frame: direction=%d, version=%d, iv_flag=%d, security_level=%d, frag_flag=%d, seq=%d, pkg_len=%d",
                    frame->direction, frame->pkg_header.version, frame->pkg_header.iv_flag,
                    frame->pkg_header.security_level, frame->pkg_header.frag_flag, UNI_NTOHS(frame->pkg_header.sequence), pkg_len);
-            processed += sizeof(UINT32_T); // skip magic for next frame
+            processed += sizeof(uint32_t); // skip magic for next frame
             continue; // Try next frame
         }
 
-        processed += sizeof(ai_monitor_header_t) + sizeof(UINT32_T); // Skip header + length
+        processed += sizeof(ai_monitor_header_t) + sizeof(uint32_t); // Skip header + length
 
         // Parse header
         if (client->recv_len - processed < pkg_len) {
             PR_TRACE("incomplete frame, need %u bytes, got %u", pkg_len, client->recv_len - processed);
-            processed -= sizeof(ai_monitor_header_t) + sizeof(UINT32_T); // Move back to start of frame
+            processed -= sizeof(ai_monitor_header_t) + sizeof(uint32_t); // Move back to start of frame
             break; // Need more data
         }
 
@@ -552,7 +552,7 @@ STATIC VOID __socket_read_handler(int32_t sock)
                 frame->pkg_header.security_level, frame->pkg_header.frag_flag, frame->pkg_header.sequence, pkg_len);
 
         // Parse packet
-        ret = __parse_pkg(client, (CHAR_T *)client->recv_buf + processed, pkg_len);
+        ret = __parse_pkg(client, (char *)client->recv_buf + processed, pkg_len);
         processed += pkg_len;
         if (ret != OPRT_OK) {
             PR_ERR("parse frame failed: %d", ret);
@@ -572,7 +572,7 @@ STATIC VOID __socket_read_handler(int32_t sock)
 /**
  * @brief Socket error handler
  */
-STATIC VOID __socket_error_handler(INT_T sock)
+STATIC VOID __socket_error_handler(int sock)
 {
     ai_monitor_client_t *client = __find_client_by_fd(sock);
     if (!client) {
@@ -586,10 +586,10 @@ STATIC VOID __socket_error_handler(INT_T sock)
     g_ai_monitor_server.client_count--;
 }
 
-STATIC INT_T __create_server_socket(INT_T port)
+STATIC int __create_server_socket(int port)
 {
-    INT_T status = 0;
-    INT_T sockfd = 0;
+    int status = 0;
+    int sockfd = 0;
     OPERATE_RET op_ret = OPRT_OK;
     NW_IP_S ip;
     TUYA_IP_ADDR_T ip_addr = TY_IPADDR_ANY;
@@ -638,7 +638,7 @@ STATIC INT_T __create_server_socket(INT_T port)
     return sockfd;
 }
 
-STATIC INT_T __tcp_create_serv_fd(VOID)
+STATIC int __tcp_create_serv_fd(VOID)
 {
     OPERATE_RET rt = OPRT_OK;
 
@@ -682,7 +682,7 @@ STATIC VOID __accept_handler(int32_t server_sock)
     OPERATE_RET ret = OPRT_OK;
     TUYA_IP_ADDR_T addr = 0;
 
-    INT_T client_fd = tal_net_accept(server_sock, &addr, NULL);
+    int client_fd = tal_net_accept(server_sock, &addr, NULL);
     if (client_fd < 0) {
         PR_ERR("accept failed %d (errno: %d)", client_fd, tal_net_get_errno());
         return;
@@ -697,7 +697,7 @@ STATIC VOID __accept_handler(int32_t server_sock)
 
     // Find free client slot
     ai_monitor_client_t *client = NULL;
-    for (UINT_T i = 0; i < g_ai_monitor_server.config.max_clients; i++) {
+    for (uint32_t i = 0; i < g_ai_monitor_server.config.max_clients; i++) {
         if (!g_ai_monitor_server.clients[i].connected) {
             client = &g_ai_monitor_server.clients[i];
             break;
@@ -746,14 +746,14 @@ STATIC VOID __accept_handler(int32_t server_sock)
             client_fd, tal_net_addr2str(addr), g_ai_monitor_server.client_count);
 }
 
-STATIC VOID __accept_err(INT_T fd)
+STATIC VOID __accept_err(int fd)
 {
     PR_DEBUG("accept error on fd=%d", fd);
     __session_close_all();
     return;
 }
 
-STATIC OPERATE_RET __ai_biz_handler(UINT8_T direction, USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, CHAR_T *data, VOID *usr_data)
+STATIC OPERATE_RET __ai_biz_handler(uint8_t direction, uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char *data, VOID *usr_data)
 {
     if (!attr || !head) {
         return OPRT_INVALID_PARM;
@@ -769,7 +769,7 @@ STATIC OPERATE_RET __ai_biz_handler(UINT8_T direction, USHORT_T id, AI_BIZ_ATTR_
     ai_monitor_server_t *server = (ai_monitor_server_t *)usr_data;
 
     // send to specific client which registered this type
-    for (UINT_T i = 0; i < server->config.max_clients; i++) {
+    for (uint32_t i = 0; i < server->config.max_clients; i++) {
         ai_monitor_client_t *client = &server->clients[i];
         if (!client->connected || client->fd < 0) {
             continue; // Skip disconnected clients
@@ -792,17 +792,17 @@ STATIC OPERATE_RET __ai_biz_handler(UINT8_T direction, USHORT_T id, AI_BIZ_ATTR_
     return ret;
 }
 
-STATIC OPERATE_RET __ai_biz_recv_handler(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, CHAR_T *data, VOID *usr_data)
+STATIC OPERATE_RET __ai_biz_recv_handler(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char *data, VOID *usr_data)
 {
     return __ai_biz_handler(AI_MONITOR_DIR_DS, id, attr, head, data, usr_data);
 }
 
-STATIC OPERATE_RET __ai_biz_send_handler(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, CHAR_T *data, VOID *usr_data)
+STATIC OPERATE_RET __ai_biz_send_handler(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char *data, VOID *usr_data)
 {
     return __ai_biz_handler(AI_MONITOR_DIR_US, id, attr, head, data, usr_data);
 }
 
-STATIC VOID __monitor_tm_cb(TIMER_ID timerID, PVOID_T pTimerArg)
+STATIC VOID __monitor_tm_cb(TIMER_ID timerID, void* pTimerArg)
 {
     NW_IP_S ip;
     memset(&ip, 0, SIZEOF(NW_IP_S));
@@ -903,7 +903,7 @@ OPERATE_RET tuya_ai_monitor_init(CONST ai_monitor_config_t *config)
     }
 
     // Initialize clients
-    for (UINT_T i = 0; i < config->max_clients; i++) {
+    for (uint32_t i = 0; i < config->max_clients; i++) {
         memset(&g_ai_monitor_server.clients[i], 0, sizeof(ai_monitor_client_t));
         g_ai_monitor_server.clients[i].fd = -1;
         g_ai_monitor_server.clients[i].connected = FALSE;
@@ -951,7 +951,7 @@ STATIC VOID __session_close_all(VOID)
     }
 
     // Disconnect all clients
-    for (UINT_T i = 0; i < g_ai_monitor_server.config.max_clients; i++) {
+    for (uint32_t i = 0; i < g_ai_monitor_server.config.max_clients; i++) {
         if (g_ai_monitor_server.clients[i].connected) {
             tuya_unreg_lan_sock(g_ai_monitor_server.clients[i].fd);
             __cleanup_client(&g_ai_monitor_server.clients[i]);
@@ -1027,7 +1027,7 @@ BOOL_T tuya_ai_monitor_is_running(VOID)
 /**
  * @brief broadcast message to all connected clients
  */
-OPERATE_RET tuya_ai_monitor_broadcast(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, CHAR_T *data)
+OPERATE_RET tuya_ai_monitor_broadcast(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char *data)
 {
     if (!g_ai_monitor_server.initialized || !g_ai_monitor_server.running) {
         return OPRT_INVALID_PARM;
@@ -1050,7 +1050,7 @@ OPERATE_RET tuya_ai_monitor_broadcast(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_
 /**
  * @brief broadcast text data to all connected clients
  */
-STATIC OPERATE_RET __broadcast_text(USHORT_T data_id, CHAR_T *data, UINT_T len)
+STATIC OPERATE_RET __broadcast_text(uint16_t data_id, char *data, uint32_t len)
 {
     if (!g_ai_monitor_server.initialized || !g_ai_monitor_server.running) {
         return OPRT_INVALID_PARM;
@@ -1080,7 +1080,7 @@ STATIC OPERATE_RET __broadcast_text(USHORT_T data_id, CHAR_T *data, UINT_T len)
 /**
  * @brief broadcast text data to all connected clients
  */
-OPERATE_RET tuya_ai_monitor_broadcast_text(CHAR_T *data, UINT_T len)
+OPERATE_RET tuya_ai_monitor_broadcast_text(char *data, uint32_t len)
 {
     return __broadcast_text(TY_AI_MONITOR_US_TEXT, data, len);
 }
@@ -1088,7 +1088,7 @@ OPERATE_RET tuya_ai_monitor_broadcast_text(CHAR_T *data, UINT_T len)
 /**
  * @brief broadcast log data to all connected clients
  */
-OPERATE_RET tuya_ai_monitor_broadcast_log(CHAR_T *data, UINT_T len)
+OPERATE_RET tuya_ai_monitor_broadcast_log(char *data, uint32_t len)
 {
     return __broadcast_text(TY_AI_MONITOR_US_LOG, data, len);
 }
@@ -1096,7 +1096,7 @@ OPERATE_RET tuya_ai_monitor_broadcast_log(CHAR_T *data, UINT_T len)
 /**
  * @brief broadcast audio data to all connected clients
  */
-OPERATE_RET tuya_ai_monitor_broadcast_audio(USHORT_T data_id, AI_STREAM_TYPE stype, AI_AUDIO_CODEC_TYPE codec_type, CHAR_T *data, UINT_T len)
+OPERATE_RET tuya_ai_monitor_broadcast_audio(uint16_t data_id, AI_STREAM_TYPE stype, AI_AUDIO_CODEC_TYPE codec_type, char *data, uint32_t len)
 {
     if (!g_ai_monitor_server.initialized || !g_ai_monitor_server.running) {
         return OPRT_INVALID_PARM;
@@ -1129,7 +1129,7 @@ OPERATE_RET tuya_ai_monitor_broadcast_audio(USHORT_T data_id, AI_STREAM_TYPE sty
 /**
  * @brief broadcast mic audio data to all connected clients
  */
-OPERATE_RET tuya_ai_monitor_broadcast_audio_mic(AI_STREAM_TYPE stype, CHAR_T *data, UINT_T len)
+OPERATE_RET tuya_ai_monitor_broadcast_audio_mic(AI_STREAM_TYPE stype, char *data, uint32_t len)
 {
     return tuya_ai_monitor_broadcast_audio(TY_AI_MONITOR_US_MIC, stype, AUDIO_CODEC_PCM, data, len);
 }
@@ -1137,7 +1137,7 @@ OPERATE_RET tuya_ai_monitor_broadcast_audio_mic(AI_STREAM_TYPE stype, CHAR_T *da
 /**
  * @brief broadcast ref audio data to all connected clients
  */
-OPERATE_RET tuya_ai_monitor_broadcast_audio_ref(AI_STREAM_TYPE stype, CHAR_T *data, UINT_T len)
+OPERATE_RET tuya_ai_monitor_broadcast_audio_ref(AI_STREAM_TYPE stype, char *data, uint32_t len)
 {
     return tuya_ai_monitor_broadcast_audio(TY_AI_MONITOR_US_REF, stype, AUDIO_CODEC_PCM, data, len);
 }
@@ -1145,7 +1145,7 @@ OPERATE_RET tuya_ai_monitor_broadcast_audio_ref(AI_STREAM_TYPE stype, CHAR_T *da
 /**
  * @brief broadcast aec audio data to all connected clients
  */
-OPERATE_RET tuya_ai_monitor_broadcast_audio_aec(AI_STREAM_TYPE stype, CHAR_T *data, UINT_T len)
+OPERATE_RET tuya_ai_monitor_broadcast_audio_aec(AI_STREAM_TYPE stype, char *data, uint32_t len)
 {
     return tuya_ai_monitor_broadcast_audio(TY_AI_MONITOR_US_AEC, stype, AUDIO_CODEC_PCM, data, len);
 }
@@ -1168,7 +1168,7 @@ VOID tuya_ai_monitor_dump_status(VOID)
     PR_INFO("Current clients: %d", g_ai_monitor_server.client_count);
     PR_INFO("Server FD: %d", g_ai_monitor_server.server_fd);
 
-    for (UINT_T i = 0; i < g_ai_monitor_server.config.max_clients; i++) {
+    for (uint32_t i = 0; i < g_ai_monitor_server.config.max_clients; i++) {
         if (g_ai_monitor_server.clients[i].connected) {
             PR_INFO("Client[%d]: fd=%d, addr=%s, last_ping=%llu",
                     i, g_ai_monitor_server.clients[i].fd,
@@ -1183,10 +1183,10 @@ STATIC OPERATE_RET __default_update(AI_STAGE_E stage, VOID *data, AI_SEND_PACKET
     ai_monitor_writer_cfg_t *cfg = (ai_monitor_writer_cfg_t *)info->writer->user_data;
 
     if (stage == AI_STAGE_GET_FRAG_OFFSET) {
-        *(UINT_T **)data = &cfg->frag_offset[cfg->direction % AI_MONITOR_DIR_MAX];
+        *(uint32_t **)data = &cfg->frag_offset[cfg->direction % AI_MONITOR_DIR_MAX];
         return OPRT_OK;
     } else if (stage == AI_STAGE_GET_SEQUENCE) {
-        *(USHORT_T *)data = cfg->sequence_out++;
+        *(uint16_t *)data = cfg->sequence_out++;
         if (cfg->sequence_out == 0) {
             cfg->sequence_out = 1;
         }
@@ -1202,7 +1202,7 @@ STATIC OPERATE_RET __default_update(AI_STAGE_E stage, VOID *data, AI_SEND_PACKET
     }
 }
 
-STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, UINT_T buf_len)
+STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, uint32_t buf_len)
 {
     ai_monitor_writer_cfg_t *cfg = (ai_monitor_writer_cfg_t *)writer->user_data;
     if (cfg->fd < 0 || !buf || buf_len == 0) {
@@ -1210,11 +1210,11 @@ STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, UINT_T
     }
 
     OPERATE_RET rt = OPRT_OK;
-    UINT_T total_sent = 0;
-    UINT_T remaining = buf_len;
+    uint32_t total_sent = 0;
+    uint32_t remaining = buf_len;
 
     while (remaining > 0) {
-        rt = tal_net_send(cfg->fd, (CHAR_T *)buf + total_sent, remaining);
+        rt = tal_net_send(cfg->fd, (char *)buf + total_sent, remaining);
         if (rt <= 0) {
             TUYA_ERRNO err = tal_net_get_errno();
             // FIXME: some platforms may return different error codes
@@ -1234,7 +1234,7 @@ STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, UINT_T
 }
 
 #if 0
-STATIC VOID __log_recv_task(PVOID_T args)
+STATIC VOID __log_recv_task(void* args)
 {
     while (g_ai_monitor_server.log_thread_running) {
 
@@ -1273,7 +1273,7 @@ STATIC OPERATE_RET __stop_log_server(VOID)
 }
 #endif
 
-STATIC VOID __log_output(CONST CHAR_T *str)
+STATIC VOID __log_output(CONST char *str)
 {
     if (!str || strlen(str) == 0) {
         return; // Ignore empty log messages
@@ -1281,5 +1281,5 @@ STATIC VOID __log_output(CONST CHAR_T *str)
 
     // TODO: async log output
     // Broadcast log message to all connected clients
-    // tuya_ai_monitor_broadcast_log((CHAR_T *)str, strlen(str));
+    // tuya_ai_monitor_broadcast_log((char *)str, strlen(str));
 }

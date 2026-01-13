@@ -226,7 +226,7 @@ static OPERATE_RET __handle_player_streaming_source(AI_PLAYER_T *player)
 
     // 1. Read data from datasink (skip if decoder has pending output)
     if (!player->has_pending_output) {
-        UINT_T out_len = 0;
+        uint32_t out_len = 0;
 
         rt = ai_player_datasink_read(player->sink, player->framebuf + player->offset, AI_PLAYER_FRAMEBUF_SIZE - player->offset, &out_len);
         if(OPRT_OK == rt) {
@@ -531,6 +531,9 @@ static void __ai_player_thread_cb(void* args)
 
         __switch_player_mode();
     }
+
+        PR_NOTICE("ai player thread exit");
+
 
     __cmd_player_service_deinit();
 }

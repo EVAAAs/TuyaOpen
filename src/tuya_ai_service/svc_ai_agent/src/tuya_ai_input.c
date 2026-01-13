@@ -66,10 +66,10 @@ typedef struct {
     THREAD_HANDLE thread;
     AI_INPUT_STATE_E state;
     TUYA_RINGBUFF_T ringbuf;
-    UINT32_T lazy_input;
+    uint32_t lazy_input;
     MUTEX_HANDLE mutex;
     QUEUE_HANDLE queue;
-    CHAR_T *input_buf;
+    char *input_buf;
     bool terminate;
     bool queue_sync;
     AI_ALERT_CTX_T alert;
@@ -78,9 +78,9 @@ STATIC AI_INPUT_CTX_T ai_input_ctx;
 
 STATIC VOID_T __alert_timeout_cb(TIMER_ID timer_id, VOID_T *arg);
 
-OPERATE_RET tuya_ai_input_write(AI_RINGBUF_HEAD_T *head, BYTE_T *data)
+OPERATE_RET tuya_ai_input_write(AI_RINGBUF_HEAD_T *head, uint8_t *data)
 {
-    UINT_T rt = 0;
+    uint32_t rt = 0;
     // if ((ai_input_ctx.state != AI_INPUT_PROC) && (ai_input_ctx.state != AI_INPUT_STOPPING)) {
     //     return OPRT_OK;
     // }
@@ -94,7 +94,7 @@ OPERATE_RET tuya_ai_input_write(AI_RINGBUF_HEAD_T *head, BYTE_T *data)
     }
 
     tal_mutex_lock(ai_input_ctx.mutex);
-    UINT_T free_size = tuya_ring_buff_free_size_get(ai_input_ctx.ringbuf);
+    uint32_t free_size = tuya_ring_buff_free_size_get(ai_input_ctx.ringbuf);
     if (free_size < (SIZEOF(AI_RINGBUF_HEAD_T) + head->len)) {
         tal_mutex_unlock(ai_input_ctx.mutex);
         return OPRT_RESOURCE_NOT_READY;
@@ -119,10 +119,10 @@ EXIT:
     return OPRT_COM_ERROR;
 }
 
-OPERATE_RET tuya_ai_input_read(AI_RINGBUF_HEAD_T *head, CHAR_T *buf)
+OPERATE_RET tuya_ai_input_read(AI_RINGBUF_HEAD_T *head, char *buf)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T read_len = 0, total_len = 0;
+    uint32_t read_len = 0, total_len = 0;
 
     if (ai_input_ctx.ringbuf == NULL) {
         PR_ERR("ring buffer is not initialized");
@@ -161,7 +161,7 @@ OPERATE_RET tuya_ai_input_read(AI_RINGBUF_HEAD_T *head, CHAR_T *buf)
 
 bool tuya_ai_input_is_started(VOID)
 {
-    UINT_T cnt = 0;
+    uint32_t cnt = 0;
     while (!ai_input_ctx.queue_sync) {
         tal_system_sleep(50);
         if (cnt++ > 100) {
@@ -172,7 +172,7 @@ bool tuya_ai_input_is_started(VOID)
     return TRUE;
 }
 
-OPERATE_RET tuya_ai_video_input(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, UINT_T len, UINT_T total_len)
+OPERATE_RET tuya_ai_video_input(uint64_t timestamp, uint64_t pts, uint8_t *data, uint32_t len, uint32_t total_len)
 {
     if (!tuya_ai_input_is_started()) {
         return OPRT_RESOURCE_NOT_READY;
@@ -180,10 +180,10 @@ OPERATE_RET tuya_ai_video_input(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, 
     AI_BIZ_HD_T biz = {0};
     biz.video.timestamp = timestamp;
     biz.video.pts = pts;
-    return tuya_ai_agent_upload_stream(AI_PT_VIDEO, &biz, (CHAR_T *)data, len, total_len);
+    return tuya_ai_agent_upload_stream(AI_PT_VIDEO, &biz, (char *)data, len, total_len);
 }
 
-OPERATE_RET tuya_ai_audio_input_direct(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, UINT_T len, UINT_T total_len)
+OPERATE_RET tuya_ai_audio_input_direct(uint64_t timestamp, uint64_t pts, uint8_t *data, uint32_t len, uint32_t total_len)
 {
     if (!tuya_ai_input_is_started()) {
         return OPRT_RESOURCE_NOT_READY;
@@ -191,13 +191,13 @@ OPERATE_RET tuya_ai_audio_input_direct(UINT64_T timestamp, UINT64_T pts, BYTE_T 
     AI_BIZ_HD_T biz = {0};
     biz.audio.timestamp = timestamp;
     biz.audio.pts = pts;
-    return tuya_ai_agent_upload_stream(AI_PT_AUDIO, &biz, (CHAR_T *)data, len, total_len);
+    return tuya_ai_agent_upload_stream(AI_PT_AUDIO, &biz, (char *)data, len, total_len);
 }
 
-OPERATE_RET tuya_ai_audio_input(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, UINT_T len, UINT_T total_len)
+OPERATE_RET tuya_ai_audio_input(uint64_t timestamp, uint64_t pts, uint8_t *data, uint32_t len, uint32_t total_len)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T cnt = 0;
+    uint32_t cnt = 0;
     AI_RINGBUF_HEAD_T head = {0};
     head.type = AI_PT_AUDIO;
     head.len = len;
@@ -216,30 +216,30 @@ OPERATE_RET tuya_ai_audio_input(UINT64_T timestamp, UINT64_T pts, BYTE_T *data, 
     return rt;
 }
 
-OPERATE_RET tuya_ai_image_input(UINT64_T timestamp, BYTE_T *data, UINT_T len, UINT_T total_len)
+OPERATE_RET tuya_ai_image_input(uint64_t timestamp, uint8_t *data, uint32_t len, uint32_t total_len)
 {
     if (!tuya_ai_input_is_started()) {
         return OPRT_RESOURCE_NOT_READY;
     }
     AI_BIZ_HD_T biz = {0};
     biz.image.timestamp = timestamp;
-    return tuya_ai_agent_upload_stream(AI_PT_IMAGE, &biz, (CHAR_T *)data, len, total_len);
+    return tuya_ai_agent_upload_stream(AI_PT_IMAGE, &biz, (char *)data, len, total_len);
 }
 
-OPERATE_RET tuya_ai_text_input(BYTE_T *data, UINT_T len, UINT_T total_len)
+OPERATE_RET tuya_ai_text_input(uint8_t *data, uint32_t len, uint32_t total_len)
 {
     if (!tuya_ai_input_is_started()) {
         return OPRT_RESOURCE_NOT_READY;
     }
-    return tuya_ai_agent_upload_stream(AI_PT_TEXT, NULL, (CHAR_T *)data, len, total_len);
+    return tuya_ai_agent_upload_stream(AI_PT_TEXT, NULL, (char *)data, len, total_len);
 }
 
-OPERATE_RET tuya_ai_file_input(BYTE_T *data, UINT_T len, UINT_T total_len)
+OPERATE_RET tuya_ai_file_input(uint8_t *data, uint32_t len, uint32_t total_len)
 {
     if (!tuya_ai_input_is_started()) {
         return OPRT_RESOURCE_NOT_READY;
     }
-    return tuya_ai_agent_upload_stream(AI_PT_FILE, NULL, (CHAR_T *)data, len, total_len);
+    return tuya_ai_agent_upload_stream(AI_PT_FILE, NULL, (char *)data, len, total_len);
 }
 
 VOID tuya_ai_input_start(bool force)
@@ -274,7 +274,7 @@ AI_INPUT_STATE_E tuya_ai_input_get_state(VOID)
 VOID tuya_ai_input_stop(VOID)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T cnt = 0;
+    uint32_t cnt = 0;
     if (!tuya_ai_client_is_ready()) {
         return;
     }
@@ -422,6 +422,7 @@ STATIC VOID __ai_input_thread(VOID *arg)
             tal_system_sleep(10);
         }
     }
+    PR_NOTICE("ai input thread exiting...");
     __ai_input_free();
 }
 
@@ -486,7 +487,7 @@ OPERATE_RET tuya_ai_input_alert(AI_CLOUD_ALERT_TYPE_E type, AI_ALERT_FB_CB cb)
     tuya_ai_input_stop();
     tuya_ai_output_stop(TRUE);
     tuya_ai_agent_set_scode(AI_AGENT_SCODE_ALERT);
-    CHAR_T eid[AI_UUID_V4_LEN + 1] = {0};
+    char eid[AI_UUID_V4_LEN + 1] = {0};
     tuya_ai_basic_uuid_v4(eid);
     memcpy(eid, AI_ALERT_PLAY_ID, AI_ALERT_PLAY_ID_LEN);    // set eid start from AI_ALERT_PLAY_ID
     tuya_ai_agent_set_eid(eid);
@@ -527,13 +528,13 @@ OPERATE_RET tuya_ai_input_alert(AI_CLOUD_ALERT_TYPE_E type, AI_ALERT_FB_CB cb)
         PR_WARN("alert type %d is not support", type);
         return OPRT_NOT_SUPPORTED;
     }
-    CHAR_T *alert_prompt = ty_cJSON_PrintUnformatted(json);
+    char *alert_prompt = ty_cJSON_PrintUnformatted(json);
     if (alert_prompt == NULL) {
         ty_cJSON_Delete(json);
         return OPRT_MALLOC_FAILED;
     }
     ty_cJSON_Delete(json);
-    tuya_ai_text_input((BYTE_T *)alert_prompt, strlen(alert_prompt), strlen(alert_prompt));
+    tuya_ai_text_input((uint8_t *)alert_prompt, strlen(alert_prompt), strlen(alert_prompt));
     Free(alert_prompt);
 
     tuya_ai_input_stop();
@@ -582,8 +583,8 @@ STATIC VOID_T __alert_timeout_cb(TIMER_ID timer_id, VOID_T *arg)
 }
 
 typedef struct {
-    const CHAR_T *request_id;
-    const CHAR_T *content;
+    const char *request_id;
+    const char *content;
 } AI_CLOUD_TRIGGER_T;
 
 VOID __cloud_trigger_wq(VOID *data)
@@ -592,28 +593,28 @@ VOID __cloud_trigger_wq(VOID *data)
     if (trigger == NULL) {
         return;
     }
-    const CHAR_T *request_id = trigger->request_id;
-    const CHAR_T *content = trigger->content;
+    const char *request_id = trigger->request_id;
+    const char *content = trigger->content;
     if (request_id && content) {
         tuya_ai_input_stop();
         tuya_ai_output_stop(TRUE);
         tuya_ai_agent_set_scode(AI_AGENT_SCODE_DEFAULT);
-        tuya_ai_agent_set_eid((CHAR_T *)request_id);
+        tuya_ai_agent_set_eid((char *)request_id);
         tuya_ai_input_start(FALSE);
-        tuya_ai_text_input((BYTE_T *)content, strlen(content), strlen(content));
+        tuya_ai_text_input((uint8_t *)content, strlen(content), strlen(content));
         tuya_ai_input_stop();
     }
 
     if (trigger->request_id) {
-        tal_free((CHAR_T *)trigger->request_id);
+        tal_free((char *)trigger->request_id);
     }
     if (trigger->content) {
-        tal_free((CHAR_T *)trigger->content);
+        tal_free((char *)trigger->content);
     }
     tal_free(trigger);
 }
 
-OPERATE_RET tuya_ai_input_cloud_trigger(const CHAR_T *request_id, const CHAR_T *content)
+OPERATE_RET tuya_ai_input_cloud_trigger(const char *request_id, const char *content)
 {
     OPERATE_RET rt = OPRT_OK;
 
@@ -638,10 +639,10 @@ OPERATE_RET tuya_ai_input_cloud_trigger(const CHAR_T *request_id, const CHAR_T *
     return rt;
 err:
     if (trigger && trigger->request_id) {
-        tal_free((CHAR_T *)trigger->request_id);
+        tal_free((char *)trigger->request_id);
     }
     if (trigger && trigger->content) {
-        tal_free((CHAR_T *)trigger->content);
+        tal_free((char *)trigger->content);
     }
     if (trigger) {
         tal_free(trigger);

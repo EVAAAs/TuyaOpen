@@ -32,7 +32,7 @@ static char sg_devid[MAX_LENGTH_DEVICE_ID + 1] = {0};
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
-CONST CHAR_T *get_gw_dev_id(VOID)
+CONST char *get_gw_dev_id(VOID)
 {
     tuya_iot_client_t *client = tuya_iot_client_get();
     if (NULL == client) {

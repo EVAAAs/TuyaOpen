@@ -17,21 +17,21 @@
 // Opus encoder context
 typedef struct {
     OpusEncoder *codec;             // Opus encoder handle
-    UINT_T frame_size;              // Frame size in samples
-    UINT_T buf_offset;              // PCM data input buffer offset
-    BYTE_T *in_buf;                 // Input buffer
-    UINT_T in_buf_size;             // Input buffer size
-    BYTE_T *out_buf;                // Encoded output data buffer
-    UINT_T out_buf_size;            // Encoded output data buffer size
+    uint32_t frame_size;              // Frame size in samples
+    uint32_t buf_offset;              // PCM data input buffer offset
+    uint8_t *in_buf;                 // Input buffer
+    uint32_t in_buf_size;             // Input buffer size
+    uint8_t *out_buf;                // Encoded output data buffer
+    uint32_t out_buf_size;            // Encoded output data buffer size
 } TUYA_AI_OPUS_CONTEXT_T;
 
 STATIC OPERATE_RET _encoder_opus_create(AI_ENCODE_HANDLE_T *handle, TUYA_AI_ENCODER_INFO_T *info)
 {
     OPERATE_RET rt = OPRT_OK;
-    const INT_T application = OPUS_APPLICATION_VOIP;
+    const int application = OPUS_APPLICATION_VOIP;
     opus_int32 sample_rate = (opus_int32)info->sample_rate;
     int variable_duration = OPUS_FRAMESIZE_ARG;
-    INT_T channels = info->channels;
+    int channels = info->channels;
     if (channels != 1) {
         ENC_PR_D("current opus supports only 1 channel.");
         return OPRT_INVALID_PARM;
@@ -46,7 +46,7 @@ STATIC OPERATE_RET _encoder_opus_create(AI_ENCODE_HANDLE_T *handle, TUYA_AI_ENCO
     if (info->frame_size == 0) {
         info->frame_size = (UINT16_T)(sample_rate / 1000 * 40); // 40ms
     }
-    UINT_T frame_size_ms = info->frame_size / (sample_rate / 1000);
+    uint32_t frame_size_ms = info->frame_size / (sample_rate / 1000);
     if (frame_size_ms == 10) {
         variable_duration = OPUS_FRAMESIZE_10_MS;
     } else if (frame_size_ms == 20) {
@@ -59,7 +59,7 @@ STATIC OPERATE_RET _encoder_opus_create(AI_ENCODE_HANDLE_T *handle, TUYA_AI_ENCO
         ENC_PR_D("opus supported frame size is 10,20,40 and 60 ms.");
         return OPRT_INVALID_PARM;
     }
-    INT_T frame_size = sample_rate / 1000 * frame_size_ms;
+    int frame_size = sample_rate / 1000 * frame_size_ms;
 
     TUYA_AI_OPUS_CONTEXT_T *opus = (TUYA_AI_OPUS_CONTEXT_T *)OS_Malloc(sizeof(TUYA_AI_OPUS_CONTEXT_T));
     if (NULL == opus) {
@@ -68,7 +68,7 @@ STATIC OPERATE_RET _encoder_opus_create(AI_ENCODE_HANDLE_T *handle, TUYA_AI_ENCO
         goto FAILURE_EXIT;
     }
     memset(opus, 0, sizeof(TUYA_AI_OPUS_CONTEXT_T));
-    INT_T err = 0;
+    int err = 0;
     OpusEncoder *enc = opus_encoder_create(sample_rate, channels, application, &err);
     if (err != OPUS_OK) {
         ENC_PR_D("can't create encoder: %s", opus_strerror(err));
@@ -92,13 +92,13 @@ STATIC OPERATE_RET _encoder_opus_create(AI_ENCODE_HANDLE_T *handle, TUYA_AI_ENCO
     opus->codec = enc;
     opus->frame_size = frame_size;
     opus->in_buf_size = frame_size * channels * sizeof(opus_int16);
-    opus->in_buf = (BYTE_T *)OS_Malloc(opus->in_buf_size);
+    opus->in_buf = (uint8_t *)OS_Malloc(opus->in_buf_size);
     if (NULL == opus->in_buf) {
         rt = OPRT_MALLOC_FAILED;
         goto FAILURE_EXIT;
     }
     opus->out_buf_size = OPUS_ENCODE_MAX_PACKET;
-    opus->out_buf = (BYTE_T *)OS_Malloc(opus->out_buf_size);
+    opus->out_buf = (uint8_t *)OS_Malloc(opus->out_buf_size);
     if (NULL == opus->out_buf) {
         rt = OPRT_MALLOC_FAILED;
         goto FAILURE_EXIT;
@@ -146,7 +146,7 @@ STATIC OPERATE_RET _encoder_opus_destroy(AI_ENCODE_HANDLE_T handle)
     return OPRT_OK;
 }
 
-STATIC OPERATE_RET _encoder_opus_encode(AI_ENCODE_HANDLE_T handle, UCHAR_T *in_buf, UINT_T in_len, AI_ENCODER_DATA_OUT_CB cb, void *usr_data)
+STATIC OPERATE_RET _encoder_opus_encode(AI_ENCODE_HANDLE_T handle, uint8_t *in_buf, uint32_t in_len, AI_ENCODER_DATA_OUT_CB cb, void *usr_data)
 {
     TUYA_AI_OPUS_CONTEXT_T *opus = (TUYA_AI_OPUS_CONTEXT_T *)handle;
 
@@ -154,10 +154,10 @@ STATIC OPERATE_RET _encoder_opus_encode(AI_ENCODE_HANDLE_T handle, UCHAR_T *in_b
         return OPRT_INVALID_PARM;
     }
     OpusEncoder *enc = opus->codec;
-    UINT_T frame_size = opus->frame_size;
+    uint32_t frame_size = opus->frame_size;
 
     while (in_len > 0) {
-        UINT_T copy_size = opus->buf_offset + in_len > opus->in_buf_size ? opus->in_buf_size - opus->buf_offset : in_len;
+        uint32_t copy_size = opus->buf_offset + in_len > opus->in_buf_size ? opus->in_buf_size - opus->buf_offset : in_len;
         memcpy(opus->in_buf + opus->buf_offset, in_buf, copy_size);
         opus->buf_offset += copy_size;
         if (opus->buf_offset < opus->in_buf_size) {
@@ -178,7 +178,7 @@ STATIC OPERATE_RET _encoder_opus_encode(AI_ENCODE_HANDLE_T handle, UCHAR_T *in_b
         SYS_TIME_T end = tal_system_get_millisecond();
         SYS_TIME_T delta = end - start;
         ENC_PR_D("_encoder_opus_encode: start: %llu, end: %llu, delta: %llu(ms), out_bytes=%d", start, end, delta, len);
-        UINT_T watermark = 0;
+        uint32_t watermark = 0;
         tkl_thread_get_watermark(NULL, &watermark);
         ENC_PR_D("water mark after encode: %d", watermark);
 #endif

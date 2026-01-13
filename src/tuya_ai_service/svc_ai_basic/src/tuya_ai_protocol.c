@@ -66,38 +66,38 @@ https://wiki.tuya-inc.com:7799/page/1935941995700686914
 
 typedef struct {
     AI_FRAG_FLAG frag_flag;
-    UINT_T offset;
-    CHAR_T *data;
+    uint32_t offset;
+    char *data;
 } AI_RECV_FRAG_MNG_T;
 typedef struct {
-    UINT_T offset;
+    uint32_t offset;
 } AI_SEND_FRAG_MNG_T;
 typedef struct {
     MUTEX_HANDLE mutex;
     tuya_transporter_t transporter;
-    CHAR_T crypt_key[AI_KEY_LEN + 1];
-    CHAR_T sign_key[AI_KEY_LEN + 1];
-    USHORT_T sequence_in;
-    USHORT_T sequence_out;
-    CHAR_T crypt_random[AI_RANDOM_LEN + 1];
-    CHAR_T sign_random[AI_RANDOM_LEN + 1];
+    char crypt_key[AI_KEY_LEN + 1];
+    char sign_key[AI_KEY_LEN + 1];
+    uint16_t sequence_in;
+    uint16_t sequence_out;
+    char crypt_random[AI_RANDOM_LEN + 1];
+    char sign_random[AI_RANDOM_LEN + 1];
     AI_PACKET_SL sl;
     BOOL_T connected;
-    CHAR_T *connection_id;
-    CHAR_T encrypt_iv[AI_IV_LEN + 1];
-    CHAR_T decrypt_iv[AI_IV_LEN + 1];
-    CHAR_T iv_mask[AI_IV_LEN + 1];
+    char *connection_id;
+    char encrypt_iv[AI_IV_LEN + 1];
+    char decrypt_iv[AI_IV_LEN + 1];
+    char iv_mask[AI_IV_LEN + 1];
     AI_RECV_FRAG_MNG_T recv_frag_mng;
     AI_SEND_FRAG_MNG_T send_frag_mng[5];
     BOOL_T frag_flag;
-    CHAR_T recv_buf[AI_MAX_FRAGMENT_LENGTH + AI_ADD_PKT_LEN];
-    CHAR_T *rsa_public_key;
-    UINT_T file_seq;
-    UINT_T text_seq;
+    char recv_buf[AI_MAX_FRAGMENT_LENGTH + AI_ADD_PKT_LEN];
+    char *rsa_public_key;
+    uint32_t file_seq;
+    uint32_t text_seq;
 } AI_BASIC_PROTO_T;
 STATIC AI_BASIC_PROTO_T *ai_basic_proto = NULL;
 
-STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, UINT_T buf_len);
+STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, uint32_t buf_len);
 
 STATIC AI_PACKET_WRITER_T s_default_packet_writer = {
     .write = __default_write,
@@ -164,12 +164,12 @@ STATIC AI_ATTR_TYPE_INFO s_attr_type_array[] = {
 };
 #endif
 
-STATIC VOID xor_ivmask_with_sequence(UCHAR_T ivmask[16], SHORT_T sequence)
+STATIC VOID xor_ivmask_with_sequence(uint8_t ivmask[16], short sequence)
 {
-    UCHAR_T short_bytes[16] = {0};
+    uint8_t short_bytes[16] = {0};
     sequence = UNI_HTONS(sequence);
     memcpy(short_bytes + 14, &sequence, sizeof(short));
-    for (INT_T i = 0; i < 16; i++) {
+    for (int i = 0; i < 16; i++) {
         ivmask[i] ^= short_bytes[i];
     }
 }
@@ -194,13 +194,13 @@ STATIC OPERATE_RET __ai_generate_crypt_key()
 
     uni_random_string(ai_basic_proto->crypt_random, AI_RANDOM_LEN);
 
-    CHAR_T* slat = ai_basic_proto->crypt_random;
+    char* slat = ai_basic_proto->crypt_random;
     size_t salt_len = AI_RANDOM_LEN;
 
-    CHAR_T* ikm = get_gw_cntl()->gw_actv.local_key;
+    char* ikm = get_gw_cntl()->gw_actv.local_key;
     size_t ikm_len = strlen(ikm);
 
-    CHAR_T *info = NULL;
+    char *info = NULL;
     size_t info_len = 0;
 
     rt = mbedtls_hkdf(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
@@ -209,12 +209,12 @@ STATIC OPERATE_RET __ai_generate_crypt_key()
                       (const unsigned char *)info, info_len,
                       (unsigned char *)ai_basic_proto->crypt_key, AI_KEY_LEN);
     memcpy(ai_basic_proto->iv_mask, ai_basic_proto->crypt_key, AI_IV_LEN);
-    // tuya_debug_hex_dump("iv_mask ", 64, (UCHAR_T *)ai_basic_proto->crypt_key, AI_IV_LEN);
+    // tuya_debug_hex_dump("iv_mask ", 64, (uint8_t *)ai_basic_proto->crypt_key, AI_IV_LEN);
 
     return rt;
 }
 
-STATIC CHAR_T *__ai_get_crypt_key(VOID)
+STATIC char *__ai_get_crypt_key(VOID)
 {
     return ai_basic_proto->crypt_key;
 }
@@ -225,13 +225,13 @@ STATIC OPERATE_RET __ai_generate_sign_key()
 
     uni_random_string(ai_basic_proto->sign_random, AI_RANDOM_LEN);
 
-    CHAR_T* slat = ai_basic_proto->sign_random;
+    char* slat = ai_basic_proto->sign_random;
     size_t salt_len = AI_RANDOM_LEN;
 
-    CHAR_T* ikm = get_gw_cntl()->gw_actv.local_key;
+    char* ikm = get_gw_cntl()->gw_actv.local_key;
     size_t ikm_len = strlen(ikm);
 
-    CHAR_T *info = NULL;
+    char *info = NULL;
     size_t info_len = 0;
 
     rt = mbedtls_hkdf(mbedtls_md_info_from_type(MBEDTLS_MD_SHA256),
@@ -242,7 +242,7 @@ STATIC OPERATE_RET __ai_generate_sign_key()
     return rt;
 }
 
-STATIC CHAR_T *__ai_get_sign_key(VOID)
+STATIC char *__ai_get_sign_key(VOID)
 {
     return ai_basic_proto->sign_key;
 }
@@ -354,9 +354,9 @@ OPERATE_RET tuya_ai_basic_setup(VOID)
     return __ai_basic_proto_init();
 }
 
-STATIC UINT_T __ai_get_head_len(CHAR_T *buf)
+STATIC uint32_t __ai_get_head_len(char *buf)
 {
-    UINT_T head_len = 0;
+    uint32_t head_len = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
     AI_PACKET_HEAD_T *head = (AI_PACKET_HEAD_T *)buf;
     head_len = SIZEOF(AI_PACKET_HEAD_T);
@@ -366,16 +366,16 @@ STATIC UINT_T __ai_get_head_len(CHAR_T *buf)
     head_len += SIZEOF(head_len);
 #else
     head_len = SIZEOF(AI_PACKET_HEAD_T_V2);
-    head_len += SIZEOF(SHORT_T);
+    head_len += SIZEOF(short);
 #endif
     return head_len;
 }
 
-STATIC UINT_T __ai_get_packet_len(CHAR_T *buf)
+STATIC uint32_t __ai_get_packet_len(char *buf)
 {
-    UINT_T packet_len = 0;
+    uint32_t packet_len = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    UINT_T head_len = SIZEOF(AI_PACKET_HEAD_T);
+    uint32_t head_len = SIZEOF(AI_PACKET_HEAD_T);
     AI_PACKET_HEAD_T *head = (AI_PACKET_HEAD_T *)buf;
     if (head->iv_flag) {
         memcpy(&packet_len, buf + head_len + AI_IV_LEN, SIZEOF(packet_len));
@@ -384,8 +384,8 @@ STATIC UINT_T __ai_get_packet_len(CHAR_T *buf)
     }
     packet_len = UNI_NTOHL(packet_len);
 #else
-    UINT_T head_len = SIZEOF(AI_PACKET_HEAD_T_V2);
-    memcpy(&packet_len, buf + head_len, SIZEOF(SHORT_T));
+    uint32_t head_len = SIZEOF(AI_PACKET_HEAD_T_V2);
+    memcpy(&packet_len, buf + head_len, SIZEOF(short));
 
     packet_len = UNI_NTOHS(packet_len);
 #endif
@@ -393,7 +393,7 @@ STATIC UINT_T __ai_get_packet_len(CHAR_T *buf)
     return packet_len;
 }
 
-STATIC UINT_T __ai_get_payload_len(CHAR_T *buf)
+STATIC uint32_t __ai_get_payload_len(char *buf)
 {
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
     return __ai_get_packet_len(buf) - AI_SIGN_LEN;
@@ -402,18 +402,18 @@ STATIC UINT_T __ai_get_payload_len(CHAR_T *buf)
 #endif
 }
 
-STATIC OPERATE_RET __ai_packet_sign(CHAR_T *buf, UCHAR_T *signature)
+STATIC OPERATE_RET __ai_packet_sign(char *buf, uint8_t *signature)
 {
     OPERATE_RET rt = OPRT_OK;
-    CHAR_T *sign_key = __ai_get_sign_key();
+    char *sign_key = __ai_get_sign_key();
     TUYA_CHECK_NULL_RETURN(sign_key, OPRT_COM_ERROR);
 
-    UINT_T head_len = __ai_get_head_len(buf);
-    UINT_T payload_len = __ai_get_payload_len(buf);
+    uint32_t head_len = __ai_get_head_len(buf);
+    uint32_t payload_len = __ai_get_payload_len(buf);
 
     //transport first 32 byte and packet last 32 byte, if less than 64 byte,use all packet
-    UCHAR_T sign_data[64] = {0};
-    UINT_T sign_len = 0;
+    uint8_t sign_data[64] = {0};
+    uint32_t sign_len = 0;
 
     AI_PROTO_D("start sign head_len:%d, payload_len:%d", head_len, payload_len);
     if (head_len + payload_len <= SIZEOF(sign_data)) {
@@ -421,26 +421,30 @@ STATIC OPERATE_RET __ai_packet_sign(CHAR_T *buf, UCHAR_T *signature)
         sign_len = head_len + payload_len;
     } else {
         memcpy(sign_data, buf, 32);
-        CHAR_T *payload = buf + head_len;
-        UINT_T offset = (payload_len > 32) ? payload_len - 32 : 0;
-        UINT_T copy_len = (payload_len > 32) ? 32 : payload_len;
+        char *payload = buf + head_len;
+        uint32_t offset = (payload_len > 32) ? payload_len - 32 : 0;
+        uint32_t copy_len = (payload_len > 32) ? 32 : payload_len;
         memcpy(sign_data + 32, payload + offset, copy_len);
         sign_len = SIZEOF(sign_data);
     }
 
-    rt = tal_sha256_mac((UCHAR_T *)sign_key, AI_KEY_LEN, (BYTE_T *)sign_data, sign_len, signature);
+    rt = tal_sha256_mac((uint8_t *)sign_key, AI_KEY_LEN, (uint8_t *)sign_data, sign_len, signature);
     if (OPRT_OK != rt) {
         PR_ERR("sign packet failed, rt:%d", rt);
     }
     return rt;
 }
 
-UINT_T __ai_get_send_attr_len(AI_SEND_PACKET_T *info)
+uint32_t __ai_get_send_attr_len(AI_SEND_PACKET_T *info)
 {
-    UINT_T len = 0, idx = 0;
-    if ((info->count != 0) && (info->attrs)) {
+    uint32_t len = 0, idx = 0;
+    if ((info->count != 0)) {
         len += SIZEOF(len);
         for (idx = 0; idx < info->count; idx++) {
+            if (NULL == info->attrs[idx]) {
+                continue;
+            }
+
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
             len += OFFSOF(AI_ATTRIBUTE_T, value) + info->attrs[idx]->length;
 #else
@@ -460,9 +464,9 @@ BOOL_T tuya_ai_is_need_attr(AI_FRAG_FLAG frag_flag)
     return FALSE;
 }
 
-UINT_T __ai_get_send_payload_len(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag_flag)
+uint32_t __ai_get_send_payload_len(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag_flag)
 {
-    UINT_T len = 0;
+    uint32_t len = 0;
     if (tuya_ai_is_need_attr(frag_flag)) {
         len += SIZEOF(AI_PAYLOAD_HEAD_T);
         len += __ai_get_send_attr_len(info);
@@ -491,9 +495,9 @@ STATIC BOOL_T __ai_is_need_iv(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag_flag)
 }
 #endif
 
-STATIC UINT_T __ai_get_send_pkt_len(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag_flag)
+STATIC uint32_t __ai_get_send_pkt_len(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag_flag)
 {
-    UINT_T len = 0;
+    uint32_t len = 0;
     AI_PACKET_PT type = __ai_get_sl(info, FALSE);
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
     len = SIZEOF(AI_PACKET_HEAD_T);
@@ -503,7 +507,7 @@ STATIC UINT_T __ai_get_send_pkt_len(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag_fl
     len += SIZEOF(len);
 #else
     len = SIZEOF(AI_PACKET_HEAD_T_V2);
-    len += SIZEOF(USHORT_T);
+    len += SIZEOF(uint16_t);
 #endif
 
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
@@ -543,11 +547,11 @@ STATIC UINT_T __ai_get_send_pkt_len(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag_fl
 }
 
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-STATIC INT_T __ai_encrypt_add_pkcs(CHAR_T *p, UINT_T len)
+STATIC int __ai_encrypt_add_pkcs(char *p, uint32_t len)
 {
-    CHAR_T pkcs[16];
-    INT_T cz = 0;
-    INT_T i = 0;
+    char pkcs[16];
+    int cz = 0;
+    int i = 0;
 
     cz = len < 16 ? (16 - len) : (16 - len % 16);
     memset(pkcs, 0, sizeof(pkcs));
@@ -559,27 +563,27 @@ STATIC INT_T __ai_encrypt_add_pkcs(CHAR_T *p, UINT_T len)
 }
 #endif
 
-STATIC OPERATE_RET __ai_rsa_encrypt_info(CHAR_T *key, CHAR_T *out, UINT_T *outlen, CHAR_T *data, UINT_T len)
+STATIC OPERATE_RET __ai_rsa_encrypt_info(char *key, char *out, uint32_t *outlen, char *data, uint32_t len)
 {
     OPERATE_RET ret = OPRT_OK;
 #if defined(AI_VERSION) && (0x02 == AI_VERSION)
     mbedtls_pk_context pk;
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
-    UINT_T pk_len = strlen(key);
-    UCHAR_T output[pk_len + 1];
+    uint32_t pk_len = strlen(key);
+    uint8_t output[pk_len + 1];
     memset(output, 0, sizeof(output));
-    UINT_T olen = 0;
+    uint32_t olen = 0;
 
-    CHAR_T *pers = "rsa_encrypt";
+    char *pers = "rsa_encrypt";
     mbedtls_pk_init(&pk);
     mbedtls_entropy_init(&entropy);
     mbedtls_ctr_drbg_init(&ctr_drbg);
 
-    if ((ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, (const UCHAR_T*) pers, strlen((const CHAR_T *)pers))) != 0) {
+    if ((ret = mbedtls_ctr_drbg_seed(&ctr_drbg, mbedtls_entropy_func, &entropy, (const uint8_t*) pers, strlen((const char *)pers))) != 0) {
         goto end;
     }
-    if ((ret = mbedtls_pk_parse_public_key(&pk, (const UCHAR_T*) key, strlen(key) + 1)) != 0) {
+    if ((ret = mbedtls_pk_parse_public_key(&pk, (const uint8_t*) key, strlen(key) + 1)) != 0) {
         PR_ERR("Failed in mbedtls_pk_parse_public_key, ret = -0x%04X\n", -ret);
         goto end;
     }
@@ -592,7 +596,7 @@ STATIC OPERATE_RET __ai_rsa_encrypt_info(CHAR_T *key, CHAR_T *out, UINT_T *outle
     mbedtls_rsa_context *rsa = mbedtls_pk_rsa(pk);
     mbedtls_rsa_set_padding(rsa, MBEDTLS_RSA_PKCS_V21, MBEDTLS_MD_SHA256);  // OAEP + SHA-256
 
-    ret = mbedtls_pk_encrypt(&pk, (const UCHAR_T*)data, len, output, &olen, sizeof(output), mbedtls_ctr_drbg_random, &ctr_drbg);
+    ret = mbedtls_pk_encrypt(&pk, (const uint8_t*)data, len, output, &olen, sizeof(output), mbedtls_ctr_drbg_random, &ctr_drbg);
     if (ret != 0) {
         PR_ERR("Failed in mbedtls_pk_encrypt, ret = -0x%04X\n", -ret);
         goto end;
@@ -609,22 +613,22 @@ end:
     return ret;
 }
 
-STATIC OPERATE_RET __ai_encrypt_clint_hello_info(CHAR_T *pubkey, CHAR_T *out, UINT_T *outlen, CHAR_T *data, UINT_T len)
+STATIC OPERATE_RET __ai_encrypt_clint_hello_info(char *pubkey, char *out, uint32_t *outlen, char *data, uint32_t len)
 {
     //client hello RSA(AES KEY) + IV + AES(BODY + TAG)
     OPERATE_RET rt = OPRT_OK;
-    UINT_T en_len = 0;
-    UINT_T positon = 0;
-    BYTE_T tag[AI_GCM_TAG_LEN] = {0};
-    UCHAR_T iv[AI_IV_LEN] = {0};
-    CHAR_T *aes_p = NULL;
-    CHAR_T *key = __ai_get_crypt_key();
+    uint32_t en_len = 0;
+    uint32_t positon = 0;
+    uint8_t tag[AI_GCM_TAG_LEN] = {0};
+    uint8_t iv[AI_IV_LEN] = {0};
+    char *aes_p = NULL;
+    char *key = __ai_get_crypt_key();
 
     memcpy(iv, ai_basic_proto->iv_mask, AI_IV_LEN);
     xor_ivmask_with_sequence(iv, (rand() % 255 + 1));
 
-    // tuya_debug_hex_dump("aes key  ", 64, (UCHAR_T *)key, AI_KEY_LEN);
-    // tuya_debug_hex_dump("iv  ", 64, (UCHAR_T *)iv, AI_IV_LEN);
+    // tuya_debug_hex_dump("aes key  ", 64, (uint8_t *)key, AI_KEY_LEN);
+    // tuya_debug_hex_dump("iv  ", 64, (uint8_t *)iv, AI_IV_LEN);
 
     if (OPRT_OK != __ai_rsa_encrypt_info(pubkey, out, &positon, key, AI_KEY_LEN)) {
         PR_ERR("RSA encrypt error \r\n");
@@ -633,7 +637,7 @@ STATIC OPERATE_RET __ai_encrypt_clint_hello_info(CHAR_T *pubkey, CHAR_T *out, UI
 
     memcpy(out + positon, iv, AI_IV_LEN);
     positon += AI_IV_LEN;
-    // tuya_debug_hex_dump("RSA +iv ", 64, (UCHAR_T *)out, positon);
+    // tuya_debug_hex_dump("RSA +iv ", 64, (uint8_t *)out, positon);
 
     aes_p = out + positon;
     memcpy(aes_p, data, len);
@@ -643,14 +647,14 @@ STATIC OPERATE_RET __ai_encrypt_clint_hello_info(CHAR_T *pubkey, CHAR_T *out, UI
         .cipher_type = MBEDTLS_CIPHER_AES_256_GCM,
         .key = (unsigned char *)key,
         .key_len = AI_KEY_LEN,
-        .nonce = (UCHAR_T *)iv,
+        .nonce = (uint8_t *)iv,
         .nonce_len = AI_IV_LEN,
         .ad = NULL,
         .ad_len = 0,
-        .data = (UCHAR_T *)aes_p,
+        .data = (uint8_t *)aes_p,
         .data_len = len
     },
-    (UCHAR_T *)aes_p, (size_t *)&en_len,
+    (uint8_t *)aes_p, (size_t *)&en_len,
     tag, SIZEOF(tag));
     if (rt != OPRT_OK) {
         PR_ERR("aes128_gcm_encode error:%x", rt);
@@ -660,16 +664,16 @@ STATIC OPERATE_RET __ai_encrypt_clint_hello_info(CHAR_T *pubkey, CHAR_T *out, UI
 
     *outlen = en_len + positon;
 
-    // tuya_debug_hex_dump("encrypt_data", 64, (UCHAR_T *)out, *outlen);
+    // tuya_debug_hex_dump("encrypt_data", 64, (uint8_t *)out, *outlen);
 
     return rt;
 }
 
-STATIC OPERATE_RET __ai_encrypt_packet(AI_SEND_PACKET_T *info, CHAR_T *data, UINT_T len, CHAR_T *output, UINT_T *en_len, USHORT_T sequence)
+STATIC OPERATE_RET __ai_encrypt_packet(AI_SEND_PACKET_T *info, char *data, uint32_t len, char *output, uint32_t *en_len, uint16_t sequence)
 {
     OPERATE_RET rt = OPRT_OK;
-    INT_T data_out_len = 0;
-    CHAR_T *key = __ai_get_crypt_key();
+    int data_out_len = 0;
+    char *key = __ai_get_crypt_key();
     TUYA_CHECK_NULL_RETURN(key, OPRT_COM_ERROR);
 
     AI_PACKET_SL sl = __ai_get_sl(info, FALSE);
@@ -677,9 +681,9 @@ STATIC OPERATE_RET __ai_encrypt_packet(AI_SEND_PACKET_T *info, CHAR_T *data, UIN
 #if (AI_PACKET_SECURITY_LEVEL == AI_PACKET_SL2)
         memcpy(output, data, len);
         data_out_len = __ai_encrypt_add_pkcs(output, len);
-        CHAR_T nonce[12] = {0};
+        char nonce[12] = {0};
         memcpy(nonce, ai_basic_proto->encrypt_iv, SIZEOF(nonce));
-        rt = mbedtls_chacha20_crypt((UCHAR_T *)key, (UCHAR_T *)nonce, 0, len, (UCHAR_T *)data, (UCHAR_T *)output);
+        rt = mbedtls_chacha20_crypt((uint8_t *)key, (uint8_t *)nonce, 0, len, (uint8_t *)data, (uint8_t *)output);
         if (OPRT_OK != rt) {
             PR_ERR("chacha20_crypt error:%d", rt);
             return rt;
@@ -689,8 +693,8 @@ STATIC OPERATE_RET __ai_encrypt_packet(AI_SEND_PACKET_T *info, CHAR_T *data, UIN
     } else if (sl == AI_PACKET_SL3) {
 #if (AI_PACKET_SECURITY_LEVEL == AI_PACKET_SL3)
         memcpy(output, data, len);
-        data_out_len = tal_pkcs7padding_buffer((UCHAR_T *)output, len);
-        rt = tal_aes256_cbc_encode_raw((BYTE_T *)output, data_out_len, (UCHAR_T *)key, (UCHAR_T *)ai_basic_proto->encrypt_iv, (UCHAR_T *)output);
+        data_out_len = tal_pkcs7padding_buffer((uint8_t *)output, len);
+        rt = tal_aes256_cbc_encode_raw((uint8_t *)output, data_out_len, (uint8_t *)key, (uint8_t *)ai_basic_proto->encrypt_iv, (uint8_t *)output);
         if (OPRT_OK != rt) {
             PR_ERR("aes128_cbc_encode error:%d", rt);
             return rt;
@@ -701,12 +705,12 @@ STATIC OPERATE_RET __ai_encrypt_packet(AI_SEND_PACKET_T *info, CHAR_T *data, UIN
 #if (AI_PACKET_SECURITY_LEVEL == AI_PACKET_SL4)
 
 #if defined(AI_VERSION) && (0x02 == AI_VERSION)
-        UCHAR_T iv[AI_IV_LEN] = {0};
+        uint8_t iv[AI_IV_LEN] = {0};
         memcpy(iv, ai_basic_proto->iv_mask, AI_IV_LEN);
         xor_ivmask_with_sequence(iv, sequence);
 #endif
 
-        BYTE_T tag[AI_GCM_TAG_LEN] = {0};
+        uint8_t tag[AI_GCM_TAG_LEN] = {0};
         memcpy(output, data, len);
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
         data_out_len = __ai_encrypt_add_pkcs(output, len);
@@ -719,24 +723,24 @@ STATIC OPERATE_RET __ai_encrypt_packet(AI_SEND_PACKET_T *info, CHAR_T *data, UIN
             .key = (unsigned char *)key,
             .key_len = AI_KEY_LEN,
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-            .nonce = (UCHAR_T *)ai_basic_proto->encrypt_iv,
+            .nonce = (uint8_t *)ai_basic_proto->encrypt_iv,
 #else
-            .nonce = (UCHAR_T *)iv,
+            .nonce = (uint8_t *)iv,
 #endif
             .nonce_len = AI_IV_LEN,
             .ad = NULL,
             .ad_len = 0,
-            .data = (UCHAR_T *)output,
+            .data = (uint8_t *)output,
             .data_len = data_out_len
         },
-        (UCHAR_T *)output, (size_t *)en_len,
+        (uint8_t *)output, (size_t *)en_len,
         tag, SIZEOF(tag));
         if (rt != OPRT_OK) {
             PR_ERR("aes128_gcm_encode error:%x", rt);
         }
         memcpy(output + *en_len, tag, SIZEOF(tag));
         *en_len += SIZEOF(tag);
-        // tuya_debug_hex_dump("encrypt_data", 64, (UCHAR_T *)output, *en_len);
+        // tuya_debug_hex_dump("encrypt_data", 64, (uint8_t *)output, *en_len);
 #endif
     } else if (sl == AI_PACKET_SL0) {
         AI_PROTO_D("sl:%d do not need crypt", sl);
@@ -752,18 +756,18 @@ STATIC OPERATE_RET __ai_encrypt_packet(AI_SEND_PACKET_T *info, CHAR_T *data, UIN
     return rt;
 }
 
-STATIC OPERATE_RET __ai_decrypt_packet(CHAR_T *data, UINT_T len, CHAR_T *output, UINT_T *de_len, USHORT_T sequence)
+STATIC OPERATE_RET __ai_decrypt_packet(char *data, uint32_t len, char *output, uint32_t *de_len, uint16_t sequence)
 {
     OPERATE_RET rt = OPRT_OK;
-    CHAR_T *key = __ai_get_crypt_key();
+    char *key = __ai_get_crypt_key();
     TUYA_CHECK_NULL_RETURN(key, OPRT_COM_ERROR);
 
     AI_PACKET_SL sl = __ai_get_sl(0, TRUE);
     if (sl == AI_PACKET_SL2) {
 #if (AI_PACKET_SECURITY_LEVEL == AI_PACKET_SL2)
-        CHAR_T nonce[12] = {0};
+        char nonce[12] = {0};
         memcpy(nonce, ai_basic_proto->decrypt_iv, SIZEOF(nonce));
-        rt = mbedtls_chacha20_crypt((UCHAR_T *)key, (UCHAR_T *)nonce, 0, len, (UCHAR_T *)data, (UCHAR_T *)output);
+        rt = mbedtls_chacha20_crypt((uint8_t *)key, (uint8_t *)nonce, 0, len, (uint8_t *)data, (uint8_t *)output);
         if (OPRT_OK != rt) {
             PR_ERR("chacha20_crypt error:%d", rt);
             return rt;
@@ -772,7 +776,7 @@ STATIC OPERATE_RET __ai_decrypt_packet(CHAR_T *data, UINT_T len, CHAR_T *output,
 #endif
     } else if (sl == AI_PACKET_SL3) {
 #if (AI_PACKET_SECURITY_LEVEL == AI_PACKET_SL3)
-        rt = tal_aes256_cbc_decode_raw((UCHAR_T *)data, len, (UCHAR_T *)key, (UCHAR_T *)ai_basic_proto->decrypt_iv, (UCHAR_T *)output);
+        rt = tal_aes256_cbc_decode_raw((uint8_t *)data, len, (uint8_t *)key, (uint8_t *)ai_basic_proto->decrypt_iv, (uint8_t *)output);
         if (OPRT_OK != rt) {
             PR_ERR("aes128_cbc_decode error:%d", rt);
             return rt;
@@ -783,37 +787,37 @@ STATIC OPERATE_RET __ai_decrypt_packet(CHAR_T *data, UINT_T len, CHAR_T *output,
 #if (AI_PACKET_SECURITY_LEVEL == AI_PACKET_SL4)
 
 #if defined(AI_VERSION) && (0x02 == AI_VERSION)
-        UCHAR_T iv[AI_IV_LEN] = {0};
+        uint8_t iv[AI_IV_LEN] = {0};
         memcpy(iv, ai_basic_proto->iv_mask, AI_IV_LEN);
         xor_ivmask_with_sequence(iv, sequence);
 #endif
 
-        // tuya_debug_hex_dump("decrypt_data", 64, (UCHAR_T *)data, len - AI_GCM_TAG_LEN);
-        // tuya_debug_hex_dump("decrypt_key", 64, (UCHAR_T *)key, AI_KEY_LEN);
+        // tuya_debug_hex_dump("decrypt_data", 64, (uint8_t *)data, len - AI_GCM_TAG_LEN);
+        // tuya_debug_hex_dump("decrypt_key", 64, (uint8_t *)key, AI_KEY_LEN);
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-        // tuya_debug_hex_dump("decrypt_iv v1", 64, (UCHAR_T *)ai_basic_proto->decrypt_iv, AI_IV_LEN);
+        // tuya_debug_hex_dump("decrypt_iv v1", 64, (uint8_t *)ai_basic_proto->decrypt_iv, AI_IV_LEN);
 #else
-        // tuya_debug_hex_dump("decrypt_iv v2", 64, (UCHAR_T *)iv, AI_IV_LEN);
+        // tuya_debug_hex_dump("decrypt_iv v2", 64, (uint8_t *)iv, AI_IV_LEN);
 #endif
-        // tuya_debug_hex_dump("decrypt_tag", 64, (UCHAR_T *)(data + len - AI_GCM_TAG_LEN), AI_GCM_TAG_LEN);
+        // tuya_debug_hex_dump("decrypt_tag", 64, (uint8_t *)(data + len - AI_GCM_TAG_LEN), AI_GCM_TAG_LEN);
         rt = mbedtls_cipher_auth_decrypt_wrapper(
         &(CONST cipher_params_t) {
             .cipher_type = MBEDTLS_CIPHER_AES_256_GCM,
             .key = (unsigned char *)key,
             .key_len = AI_KEY_LEN,
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-            .nonce = (UCHAR_T *)ai_basic_proto->decrypt_iv,
+            .nonce = (uint8_t *)ai_basic_proto->decrypt_iv,
 #else
-            .nonce = (UCHAR_T *)iv,
+            .nonce = (uint8_t *)iv,
 #endif
             .nonce_len = AI_IV_LEN,
             .ad = NULL,
             .ad_len = 0,
-            .data = (UCHAR_T *)data,
+            .data = (uint8_t *)data,
             .data_len = len - AI_GCM_TAG_LEN
         },
-        (UCHAR_T *)output, (size_t *)de_len,
-        (UCHAR_T *)(data + len - AI_GCM_TAG_LEN), AI_GCM_TAG_LEN);
+        (uint8_t *)output, (size_t *)de_len,
+        (uint8_t *)(data + len - AI_GCM_TAG_LEN), AI_GCM_TAG_LEN);
         if (rt != OPRT_OK) {
             PR_ERR("aes128_gcm_decode error:%x", rt);
             return rt;
@@ -836,15 +840,15 @@ STATIC OPERATE_RET __ai_decrypt_packet(CHAR_T *data, UINT_T len, CHAR_T *output,
     return rt;
 }
 
-STATIC OPERATE_RET __ai_pack_payload(AI_SEND_PACKET_T *info, CHAR_T *payload_buf, UINT_T *payload_len, AI_FRAG_FLAG frag, UINT_T origin_len, USHORT_T sequence)
+STATIC OPERATE_RET __ai_pack_payload(AI_SEND_PACKET_T *info, char *payload_buf, uint32_t *payload_len, AI_FRAG_FLAG frag, uint32_t origin_len, uint16_t sequence)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T idx = 0, attr_len = 0, packet_len = 0;
-    UINT_T offset = 0;
+    uint32_t idx = 0, attr_len = 0, packet_len = 0;
+    uint32_t offset = 0;
     TUYA_CHECK_NULL_RETURN(info, OPRT_INVALID_PARM);
     packet_len = __ai_get_send_payload_len(info, frag);
 
-    CHAR_T *buf = OS_MALLOC(packet_len);
+    char *buf = OS_MALLOC(packet_len);
     TUYA_CHECK_NULL_RETURN(buf, OPRT_MALLOC_FAILED);
     memset(buf, 0, packet_len);
 
@@ -868,11 +872,11 @@ STATIC OPERATE_RET __ai_pack_payload(AI_SEND_PACKET_T *info, CHAR_T *payload_buf
                 memcpy(buf + offset, &payload_type, SIZEOF(AI_ATTR_PT));
                 offset += SIZEOF(AI_ATTR_PT);
 #endif
-                UINT_T attr_idx_len = info->attrs[idx]->length;
+                uint32_t attr_idx_len = info->attrs[idx]->length;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-                UINT_T length = UNI_HTONL(attr_idx_len);
+                uint32_t length = UNI_HTONL(attr_idx_len);
 #else
-                USHORT_T length = attr_idx_len;
+                uint16_t length = attr_idx_len;
                 length = UNI_HTONS(length);
 #endif
                 memcpy(buf + offset, &length, SIZEOF(length));
@@ -880,13 +884,13 @@ STATIC OPERATE_RET __ai_pack_payload(AI_SEND_PACKET_T *info, CHAR_T *payload_buf
                 if (payload_type == ATTR_PT_U8) {
                     memcpy(buf + offset, &info->attrs[idx]->value.u8, attr_idx_len);
                 } else if (payload_type == ATTR_PT_U16) {
-                    USHORT_T value = UNI_HTONS(info->attrs[idx]->value.u16);
+                    uint16_t value = UNI_HTONS(info->attrs[idx]->value.u16);
                     memcpy(buf + offset, &value, attr_idx_len);
                 } else if (payload_type == ATTR_PT_U32) {
-                    UINT_T value = UNI_HTONL(info->attrs[idx]->value.u32);
+                    uint32_t value = UNI_HTONL(info->attrs[idx]->value.u32);
                     memcpy(buf + offset, &value, attr_idx_len);
                 } else if (payload_type == ATTR_PT_U64) {
-                    UINT64_T value = info->attrs[idx]->value.u64;
+                    uint64_t value = info->attrs[idx]->value.u64;
                     UNI_HTONLL(value);
                     memcpy(buf + offset, &value, attr_idx_len);
                 } else if (payload_type == ATTR_PT_BYTES) {
@@ -904,7 +908,7 @@ STATIC OPERATE_RET __ai_pack_payload(AI_SEND_PACKET_T *info, CHAR_T *payload_buf
         }
         memcpy(buf, &payload_head, SIZEOF(AI_PAYLOAD_HEAD_T));
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-        UINT_T info_len = UNI_HTONL(origin_len);
+        uint32_t info_len = UNI_HTONL(origin_len);
         memcpy(buf + offset, &info_len, SIZEOF(info->len));
         AI_PROTO_D("payload len:%d", origin_len);
         offset += SIZEOF(info->len);
@@ -915,7 +919,7 @@ STATIC OPERATE_RET __ai_pack_payload(AI_SEND_PACKET_T *info, CHAR_T *payload_buf
     offset += info->len;
     AI_PROTO_D("payload len:%d, offset:%d", packet_len, offset);
 
-    // tuya_debug_hex_dump("payload_uncrypt", 64, (UCHAR_T *)buf, packet_len);
+    // tuya_debug_hex_dump("payload_uncrypt", 64, (uint8_t *)buf, packet_len);
     rt = __ai_encrypt_packet(info, buf, packet_len, payload_buf, payload_len, sequence);
     if (OPRT_OK != rt) {
         PR_ERR("encrypt packet failed, rt:%d", rt);
@@ -929,7 +933,7 @@ STATIC BOOL_T __ai_check_attr_vaild(AI_ATTRIBUTE_T *attr)
 {
     AI_ATTR_TYPE type = attr->type;
     AI_ATTR_PT payload_type = attr->payload_type;
-    UINT_T length = attr->length;
+    uint32_t length = attr->length;
 
     if ((type == AI_ATTR_CONNECT_STATUS_CODE) ||
         (type == AI_ATTR_CONNECT_CLOSE_ERR_CODE)) {
@@ -939,22 +943,22 @@ STATIC BOOL_T __ai_check_attr_vaild(AI_ATTRIBUTE_T *attr)
     }
     switch (payload_type) {
     case ATTR_PT_U8:
-        if (length != SIZEOF(UCHAR_T)) {
+        if (length != SIZEOF(uint8_t)) {
             return FALSE;
         }
         break;
     case ATTR_PT_U16:
-        if (length != SIZEOF(USHORT_T)) {
+        if (length != SIZEOF(uint16_t)) {
             return FALSE;
         }
         break;
     case ATTR_PT_U32:
-        if (length != SIZEOF(UINT_T)) {
+        if (length != SIZEOF(uint32_t)) {
             return FALSE;
         }
         break;
     case ATTR_PT_U64:
-        if (length != SIZEOF(UINT64_T)) {
+        if (length != SIZEOF(uint64_t)) {
             return FALSE;
         }
         break;
@@ -968,10 +972,10 @@ STATIC BOOL_T __ai_check_attr_vaild(AI_ATTRIBUTE_T *attr)
     return TRUE;
 }
 
-UINT_T tuya_ai_get_attr_num(CHAR_T *de_buf, UINT_T attr_len)
+uint32_t tuya_ai_get_attr_num(char *de_buf, uint32_t attr_len)
 {
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    UINT_T offset = 0, idx = 0, length = 0;
+    uint32_t offset = 0, idx = 0, length = 0;
     while (offset < attr_len) {
         offset += SIZEOF(AI_ATTR_TYPE);
         offset += SIZEOF(AI_ATTR_PT);
@@ -981,7 +985,7 @@ UINT_T tuya_ai_get_attr_num(CHAR_T *de_buf, UINT_T attr_len)
         idx++;
     }
 #else
-    USHORT_T offset = 0, idx = 0, length = 0;
+    uint16_t offset = 0, idx = 0, length = 0;
     while (offset < attr_len) {
         offset += SIZEOF(AI_ATTR_TYPE);
         memcpy(&length, de_buf + offset, SIZEOF(length));
@@ -993,15 +997,15 @@ UINT_T tuya_ai_get_attr_num(CHAR_T *de_buf, UINT_T attr_len)
     return idx;
 }
 
-OPERATE_RET tuya_ai_get_attr_value(CHAR_T *de_buf, UINT_T *offset, AI_ATTRIBUTE_T *attr)
+OPERATE_RET tuya_ai_get_attr_value(char *de_buf, uint32_t *offset, AI_ATTRIBUTE_T *attr)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_ATTR_TYPE type = 0;
     AI_ATTR_PT payload_type = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    UINT_T length = 0;
+    uint32_t length = 0;
 #else
-    USHORT_T length = 0;
+    uint16_t length = 0;
 #endif
     AI_ATTR_VALUE value = {0};
     memcpy(&type, de_buf + *offset, SIZEOF(type));
@@ -1040,7 +1044,7 @@ OPERATE_RET tuya_ai_get_attr_value(CHAR_T *de_buf, UINT_T *offset, AI_ATTRIBUTE_
         attr->value.u64 = value.u64;
         UNI_NTOHLL(attr->value.u64);
     } else if (payload_type == ATTR_PT_BYTES) {
-        attr->value.bytes = (UCHAR_T *)(de_buf + *offset);
+        attr->value.bytes = (uint8_t *)(de_buf + *offset);
     } else if (payload_type == ATTR_PT_STR) {
         attr->value.str = de_buf + *offset;
     } else {
@@ -1056,13 +1060,13 @@ OPERATE_RET tuya_ai_get_attr_value(CHAR_T *de_buf, UINT_T *offset, AI_ATTRIBUTE_
     return rt;
 }
 
-STATIC OPERATE_RET __ai_packet_write(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag, UINT_T origin_len)
+STATIC OPERATE_RET __ai_packet_write(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag, uint32_t origin_len)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T payload_len = 0, offset = 0;
+    uint32_t payload_len = 0, offset = 0;
     AI_PACKET_SL sl = __ai_get_sl(info, FALSE);
-    UCHAR_T signature[AI_SIGN_LEN] = {0};
-    USHORT_T sequence;
+    uint8_t signature[AI_SIGN_LEN] = {0};
+    uint16_t sequence;
     if (info->writer && info->writer->update) {
         rt = info->writer->update(AI_STAGE_PRE_WRITE, NULL, info);
         if (OPRT_OK != rt) {
@@ -1078,17 +1082,17 @@ STATIC OPERATE_RET __ai_packet_write(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag, 
     }
     AI_PROTO_D("send packet sequence:%d, frag:%d", sequence, frag);
 
-    UINT_T uncrypt_len = __ai_get_send_pkt_len(info, frag);
+    uint32_t uncrypt_len = __ai_get_send_pkt_len(info, frag);
     if (uncrypt_len > AI_MAX_FRAGMENT_LENGTH) {
         PR_ERR("send packet too long, len: %d", uncrypt_len);
         return OPRT_COM_ERROR;
     }
-    CHAR_T *send_pkt_buf = OS_MALLOC(uncrypt_len);
+    char *send_pkt_buf = OS_MALLOC(uncrypt_len);
     TUYA_CHECK_NULL_RETURN(send_pkt_buf, OPRT_MALLOC_FAILED);
     memset(send_pkt_buf, 0, uncrypt_len);
 
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    UINT_T head_len = SIZEOF(AI_PACKET_HEAD_T);
+    uint32_t head_len = SIZEOF(AI_PACKET_HEAD_T);
     AI_PROTO_D("head len:%d", head_len);
 
     AI_PACKET_HEAD_T head = {0};
@@ -1098,7 +1102,7 @@ STATIC OPERATE_RET __ai_packet_write(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag, 
     head.security_level = sl;
     head.iv_flag = __ai_is_need_iv(info, frag);
 #else
-    UINT_T head_len = SIZEOF(AI_PACKET_HEAD_T_V2);
+    uint32_t head_len = SIZEOF(AI_PACKET_HEAD_T_V2);
     AI_PROTO_D("head len:%d, version:%d", head_len, AI_VERSION);
     AI_PACKET_HEAD_T_V2 head = {0};
     head.version = 0x02;
@@ -1117,9 +1121,9 @@ STATIC OPERATE_RET __ai_packet_write(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag, 
 #endif
 
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    UINT_T length = 0;
+    uint32_t length = 0;
 #else
-    SHORT_T length = 0;
+    short length = 0;
 #endif
     offset += SIZEOF(length);
 
@@ -1164,13 +1168,13 @@ STATIC OPERATE_RET __ai_packet_write(AI_SEND_PACKET_T *info, AI_FRAG_FLAG frag, 
     }
 #endif
 
-    // tuya_debug_hex_dump("send_pkt_buf", 64, (UCHAR_T *)send_pkt_buf, offset);
+    // tuya_debug_hex_dump("send_pkt_buf", 64, (uint8_t *)send_pkt_buf, offset);
 
     AI_PROTO_D("send packet len:%d", payload_len + AI_SIGN_LEN);
     AI_PROTO_D("send payload len:%d", payload_len);
 
     AI_PROTO_D("send total len:%d, send_len:%d", offset, uncrypt_len);
-    // tuya_debug_hex_dump("send_pkt_buf", 64, (UCHAR_T *)send_pkt_buf, head_len);
+    // tuya_debug_hex_dump("send_pkt_buf", 64, (uint8_t *)send_pkt_buf, head_len);
     AI_PACKET_WRITER_T *writer = info->writer;
     // if no writer, use default writer
     if (!writer) {
@@ -1212,7 +1216,7 @@ VOID tuya_ai_free_attribute(AI_ATTRIBUTE_T *attr)
 
 VOID tuya_ai_free_attrs(AI_SEND_PACKET_T *pkt)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
     for (attr_idx = 0; attr_idx < pkt->count; attr_idx++) {
         if (pkt->attrs[attr_idx]) {
             tuya_ai_free_attribute(pkt->attrs[attr_idx]);
@@ -1222,22 +1226,22 @@ VOID tuya_ai_free_attrs(AI_SEND_PACKET_T *pkt)
 
 STATIC VOID __ai_basic_reset_send_frag(AI_PACKET_PT type)
 {
-    UCHAR_T idx = type - AI_PT_VIDEO;
+    uint8_t idx = type - AI_PT_VIDEO;
     ai_basic_proto->send_frag_mng[idx].offset = 0;
 }
 
 STATIC VOID __ai_basic_get_send_frag(AI_SEND_PACKET_T *info, AI_FRAG_FLAG *frag_flag)
 {
-    UINT_T *offset = NULL;
+    uint32_t *offset = NULL;
     AI_PACKET_PT type = info->type;
-    UINT_T frag_len = info->len;
-    UINT_T total_len = info->total_len;
-    UINT_T biz_head_len = 0;
-    UCHAR_T idx = type - AI_PT_VIDEO;
-    UINT_T actual_len = 0, actual_total_len = 0;
+    uint32_t frag_len = info->len;
+    uint32_t total_len = info->total_len;
+    uint32_t biz_head_len = 0;
+    uint8_t idx = type - AI_PT_VIDEO;
+    uint32_t actual_len = 0, actual_total_len = 0;
 #if defined(AI_VERSION) && (0x02 == AI_VERSION)
-    UINT_T seq_len = 0;
-    CHAR_T seq_array[10] = {0};
+    uint32_t seq_len = 0;
+    char seq_array[10] = {0};
 #endif
 
     if (idx >= SIZEOF(ai_basic_proto->send_frag_mng)) {
@@ -1356,16 +1360,16 @@ OPERATE_RET tuya_ai_basic_pkt_frag_send(AI_SEND_PACKET_T *info)
 OPERATE_RET tuya_ai_basic_pkt_send(AI_SEND_PACKET_T *info)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0, frag_len = 0, attr_len = 0;
-    UINT_T one_packet_len = 0;
+    uint32_t offset = 0, frag_len = 0, attr_len = 0;
+    uint32_t one_packet_len = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    UINT_T min_pkt_len = SIZEOF(AI_PACKET_HEAD_T) + (2 * AI_ADD_PKT_LEN); // AI_SIGN_LEN + AI_IV_LEN + AI_ADD_PKT_LEN
+    uint32_t min_pkt_len = SIZEOF(AI_PACKET_HEAD_T) + (2 * AI_ADD_PKT_LEN); // AI_SIGN_LEN + AI_IV_LEN + AI_ADD_PKT_LEN
 #else
-    UINT_T min_pkt_len = SIZEOF(AI_PACKET_HEAD_T_V2) + (2 * AI_ADD_PKT_LEN); // AI_SIGN_LEN + AI_IV_LEN + AI_ADD_PKT_LEN
+    uint32_t min_pkt_len = SIZEOF(AI_PACKET_HEAD_T_V2) + (2 * AI_ADD_PKT_LEN); // AI_SIGN_LEN + AI_IV_LEN + AI_ADD_PKT_LEN
 #endif
 
-    UINT_T origin_len = info->len;
-    CHAR_T *origin_data = info->data;
+    uint32_t origin_len = info->len;
+    char *origin_data = info->data;
     AI_PROTO_D("send payload len:%d", origin_len);
 
     if (!ai_basic_proto) {
@@ -1382,7 +1386,7 @@ OPERATE_RET tuya_ai_basic_pkt_send(AI_SEND_PACKET_T *info)
         return OPRT_COM_ERROR;
     }
 
-    UINT_T send_pkt_len = __ai_get_send_pkt_len(info, AI_PACKET_NO_FRAG);
+    uint32_t send_pkt_len = __ai_get_send_pkt_len(info, AI_PACKET_NO_FRAG);
     if (send_pkt_len <= AI_MAX_FRAGMENT_LENGTH) {
         rt = __ai_packet_write(info, AI_PACKET_NO_FRAG, origin_len);
     } else {
@@ -1421,7 +1425,7 @@ OPERATE_RET tuya_ai_basic_pkt_send(AI_SEND_PACKET_T *info)
 
 STATIC BOOL_T __ai_check_attr_created(AI_SEND_PACKET_T *pkt)
 {
-    UINT_T idx = 0;
+    uint32_t idx = 0;
     for (idx = 0; idx < pkt->count; idx++) {
         if (pkt->attrs[idx] == NULL) {
             PR_ERR("attr[%d] is null", idx);
@@ -1435,7 +1439,7 @@ STATIC BOOL_T __ai_check_attr_created(AI_SEND_PACKET_T *pkt)
     return TRUE;
 }
 
-AI_ATTRIBUTE_T* tuya_ai_create_attribute(AI_ATTR_TYPE type, AI_ATTR_PT payload_type, VOID *value, UINT_T len)
+AI_ATTRIBUTE_T* tuya_ai_create_attribute(AI_ATTR_TYPE type, AI_ATTR_PT payload_type, VOID *value, uint32_t len)
 {
     AI_ATTRIBUTE_T *attr = (AI_ATTRIBUTE_T *)OS_MALLOC(SIZEOF(AI_ATTRIBUTE_T));
     if (!attr) {
@@ -1448,19 +1452,19 @@ AI_ATTRIBUTE_T* tuya_ai_create_attribute(AI_ATTR_TYPE type, AI_ATTR_PT payload_t
     attr->length = len;
     switch (payload_type) {
     case ATTR_PT_U8:
-        attr->value.u8 = *(UCHAR_T *)value;
+        attr->value.u8 = *(uint8_t *)value;
         AI_PROTO_D("add value:%d", attr->value.u8);
         break;
     case ATTR_PT_U16:
-        attr->value.u16 = *(USHORT_T *)value;
+        attr->value.u16 = *(uint16_t *)value;
         AI_PROTO_D("add value:%d", attr->value.u16);
         break;
     case ATTR_PT_U32:
-        attr->value.u32 = *(UINT_T *)value;
+        attr->value.u32 = *(uint32_t *)value;
         AI_PROTO_D("add value:%ld", attr->value.u32);
         break;
     case ATTR_PT_U64:
-        attr->value.u64 = *(UINT64_T *)value;
+        attr->value.u64 = *(uint64_t *)value;
         AI_PROTO_D("add value:%llu", attr->value.u64);
         break;
     case ATTR_PT_BYTES:
@@ -1472,7 +1476,7 @@ AI_ATTRIBUTE_T* tuya_ai_create_attribute(AI_ATTR_TYPE type, AI_ATTR_PT payload_t
         }
         break;
     case ATTR_PT_STR:
-        attr->value.str = mm_strdup((CHAR_T *)value);
+        attr->value.str = mm_strdup((char *)value);
         AI_PROTO_D("add value:%s", attr->value.str);
         break;
     default:
@@ -1485,7 +1489,7 @@ AI_ATTRIBUTE_T* tuya_ai_create_attribute(AI_ATTR_TYPE type, AI_ATTR_PT payload_t
 
 STATIC OPERATE_RET __create_conn_close_attrs(AI_SEND_PACKET_T *pkt, AI_STATUS_CODE code)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CONNECT_CLOSE_ERR_CODE, ATTR_PT_U16, &code, SIZEOF(AI_STATUS_CODE));
     pkt->count = attr_idx;
     if (!__ai_check_attr_created(pkt)) {
@@ -1496,10 +1500,10 @@ STATIC OPERATE_RET __create_conn_close_attrs(AI_SEND_PACKET_T *pkt, AI_STATUS_CO
 
 STATIC OPERATE_RET __create_auth_req_attrs(AI_SEND_PACKET_T *pkt, AI_SERVER_CFG_INFO_T *cfg)
 {
-    UINT_T attr_idx = 0;
-    CHAR_T *user_name = cfg->username;
+    uint32_t attr_idx = 0;
+    char *user_name = cfg->username;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_USER_NAME, ATTR_PT_STR, user_name, strlen(user_name));
-    CHAR_T *password = cfg->credential;
+    char *password = cfg->credential;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_PASSWORD, ATTR_PT_STR, password, strlen(password));
     pkt->count = attr_idx;
     if (!__ai_check_attr_created(pkt)) {
@@ -1510,29 +1514,29 @@ STATIC OPERATE_RET __create_auth_req_attrs(AI_SEND_PACKET_T *pkt, AI_SERVER_CFG_
 
 STATIC OPERATE_RET __create_clt_hello_attrs(AI_SEND_PACKET_T *pkt, AI_SERVER_CFG_INFO_T *cfg)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
 
-    UCHAR_T client_type = ATTR_CLIENT_TYPE_DEVICE;
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CLIENT_TYPE, ATTR_PT_U8, &client_type, SIZEOF(UCHAR_T));
+    uint8_t client_type = ATTR_CLIENT_TYPE_DEVICE;
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CLIENT_TYPE, ATTR_PT_U8, &client_type, SIZEOF(uint8_t));
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    CHAR_T *client_id = cfg->client_id;
+    char *client_id = cfg->client_id;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CLIENT_ID, ATTR_PT_STR, client_id, strlen(client_id));
-    CHAR_T *derived_algorithm = cfg->derived_algorithm;
+    char *derived_algorithm = cfg->derived_algorithm;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_DERIVED_ALGORITHM, ATTR_PT_STR, derived_algorithm, strlen(derived_algorithm));
-    CHAR_T *derived_iv = cfg->derived_iv;
+    char *derived_iv = cfg->derived_iv;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_DERIVED_IV, ATTR_PT_STR, derived_iv, strlen(derived_iv));
-    CHAR_T *crypt_random = ai_basic_proto->crypt_random;
+    char *crypt_random = ai_basic_proto->crypt_random;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_ENCRYPT_RANDOM, ATTR_PT_STR, crypt_random, AI_RANDOM_LEN);
-    CHAR_T *sign_random = ai_basic_proto->sign_random;
+    char *sign_random = ai_basic_proto->sign_random;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SIGN_RANDOM, ATTR_PT_STR, sign_random, AI_RANDOM_LEN);
 #else
     //ClientID
-    CHAR_T *derived_client_id = cfg->derived_client_id;
+    char *derived_client_id = cfg->derived_client_id;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CLIENT_ID, ATTR_PT_STR, derived_client_id, strlen(derived_client_id));
 
 
-    UCHAR_T security_suit[34] = {0};
-    UCHAR_T pisiton = 0;
+    uint8_t security_suit[34] = {0};
+    uint8_t pisiton = 0;
     security_suit[pisiton] = AI_PACKET_SL4; //L4
     pisiton += 1;
     security_suit[pisiton] = 0X00; //sign level
@@ -1540,29 +1544,29 @@ STATIC OPERATE_RET __create_clt_hello_attrs(AI_SEND_PACKET_T *pkt, AI_SERVER_CFG
     memcpy(security_suit + 2, ai_basic_proto->crypt_random, AI_RANDOM_LEN);
     pisiton += AI_RANDOM_LEN;
 
-    // tuya_debug_hex_dump("random ", 64, (UCHAR_T *)ai_basic_proto->crypt_random, AI_RANDOM_LEN);
+    // tuya_debug_hex_dump("random ", 64, (uint8_t *)ai_basic_proto->crypt_random, AI_RANDOM_LEN);
 
 
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SECURITSUIT_TYPE, ATTR_PT_BYTES, security_suit, sizeof(security_suit));
 #endif
     //MaxFragmentLength
-    UINT_T max_fragment_len = AI_MAX_FRAGMENT_LENGTH;
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_MAX_FRAGMENT_LEN, ATTR_PT_U32, &max_fragment_len, SIZEOF(UINT_T));
+    uint32_t max_fragment_len = AI_MAX_FRAGMENT_LENGTH;
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_MAX_FRAGMENT_LEN, ATTR_PT_U32, &max_fragment_len, SIZEOF(uint32_t));
     if (AI_READ_SOCKET_BUF_SIZE > 0) {
-        UINT_T read_buf_size = AI_READ_SOCKET_BUF_SIZE;
-        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_READ_BUFFER_SIZE, ATTR_PT_U32, &read_buf_size, SIZEOF(UINT_T));
+        uint32_t read_buf_size = AI_READ_SOCKET_BUF_SIZE;
+        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_READ_BUFFER_SIZE, ATTR_PT_U32, &read_buf_size, SIZEOF(uint32_t));
     }
     if (AI_WRITE_SOCKET_BUF_SIZE > 0) {
-        UINT_T write_buf_size = AI_WRITE_SOCKET_BUF_SIZE;
-        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_WRITE_BUFFER_SIZE, ATTR_PT_U32, &write_buf_size, SIZEOF(UINT_T));
+        uint32_t write_buf_size = AI_WRITE_SOCKET_BUF_SIZE;
+        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_WRITE_BUFFER_SIZE, ATTR_PT_U32, &write_buf_size, SIZEOF(uint32_t));
     }
-    CHAR_T *connection_id = ai_basic_proto->connection_id;
+    char *connection_id = ai_basic_proto->connection_id;
     if (connection_id) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CONNECTION_ID, ATTR_PT_STR, connection_id, strlen(connection_id));
     }
     if (AI_HEARTBEAT_INTERVAL > 0) {
-        UINT_T ping_interval = AI_HEARTBEAT_INTERVAL * 1000;
-        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_PING_INTERVAL, ATTR_PT_U32, &ping_interval, SIZEOF(UINT_T));
+        uint32_t ping_interval = AI_HEARTBEAT_INTERVAL * 1000;
+        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_PING_INTERVAL, ATTR_PT_U32, &ping_interval, SIZEOF(uint32_t));
     }
     pkt->count = attr_idx;
     if (!__ai_check_attr_created(pkt)) {
@@ -1573,8 +1577,8 @@ STATIC OPERATE_RET __create_clt_hello_attrs(AI_SEND_PACKET_T *pkt, AI_SERVER_CFG
 
 STATIC OPERATE_RET __create_refresh_req_attrs(AI_SEND_PACKET_T *pkt)
 {
-    UINT_T attr_idx = 0;
-    CHAR_T *connection_id = ai_basic_proto->connection_id;
+    uint32_t attr_idx = 0;
+    char *connection_id = ai_basic_proto->connection_id;
     if (connection_id) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CONNECTION_ID, ATTR_PT_STR, connection_id, strlen(connection_id));
     }
@@ -1598,12 +1602,12 @@ OPERATE_RET tuya_ai_basic_refresh_req(VOID)
     return tuya_ai_basic_pkt_send(&pkt);
 }
 
-OPERATE_RET tuya_ai_pong(CHAR_T *data, UINT_T len)
+OPERATE_RET tuya_ai_pong(char *data, uint32_t len)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_ATTRIBUTE_T attr = {0};
-    UINT64_T client_ts = 0;
-    UINT64_T server_ts = 0;
+    uint64_t client_ts = 0;
+    uint64_t server_ts = 0;
 
     AI_PAYLOAD_HEAD_T *packet = (AI_PAYLOAD_HEAD_T *)data;
     if (packet->attribute_flag != AI_HAS_ATTR) {
@@ -1611,11 +1615,11 @@ OPERATE_RET tuya_ai_pong(CHAR_T *data, UINT_T len)
         return OPRT_COM_ERROR;
     }
 
-    UINT_T attr_len = 0;
+    uint32_t attr_len = 0;
     memcpy(&attr_len, data + SIZEOF(AI_PAYLOAD_HEAD_T), SIZEOF(attr_len));
     attr_len = UNI_NTOHL(attr_len);
-    UINT_T offset = SIZEOF(AI_PAYLOAD_HEAD_T) + SIZEOF(attr_len);
-    CHAR_T *attr_data = data + offset;
+    uint32_t offset = SIZEOF(AI_PAYLOAD_HEAD_T) + SIZEOF(attr_len);
+    char *attr_data = data + offset;
     offset = 0;
 
     while (offset < attr_len) {
@@ -1639,11 +1643,11 @@ OPERATE_RET tuya_ai_pong(CHAR_T *data, UINT_T len)
     return rt;
 }
 
-OPERATE_RET tuya_ai_refresh_resp(CHAR_T *de_buf, UINT_T attr_len, UINT64_T *expire)
+OPERATE_RET tuya_ai_refresh_resp(char *de_buf, uint32_t attr_len, uint64_t *expire)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_ATTRIBUTE_T *attr = NULL;
-    UINT_T attr_num = 0, idx = 0;
+    uint32_t attr_num = 0, idx = 0;
 
     rt = tuya_parse_user_attrs(de_buf, attr_len, &attr, &attr_num);
     if (OPRT_OK != rt) {
@@ -1652,7 +1656,7 @@ OPERATE_RET tuya_ai_refresh_resp(CHAR_T *de_buf, UINT_T attr_len, UINT64_T *expi
     }
     for (idx = 0; idx < attr_num; idx++) {
         if (attr[idx].type == AI_ATTR_CONNECT_STATUS_CODE) {
-            USHORT_T status = attr[idx].value.u16;
+            uint16_t status = attr[idx].value.u16;
             if (status == AI_CODE_OK) {
                 PR_NOTICE("connect refresh resp success");
             } else {
@@ -1719,15 +1723,15 @@ OPERATE_RET tuya_ai_basic_conn_close(AI_STATUS_CODE code)
     return rt;
 }
 
-STATIC INT_T __ai_baisc_read_pkt_head(CHAR_T *recv_buf)
+STATIC int __ai_baisc_read_pkt_head(char *recv_buf)
 {
-    INT_T offset = SIZEOF(AI_PACKET_HEAD_T);
-    INT_T need_recv_len = offset;
-    INT_T total_recv_len = 0;
-    INT_T recv_len = 0;
+    int offset = SIZEOF(AI_PACKET_HEAD_T);
+    int need_recv_len = offset;
+    int total_recv_len = 0;
+    int recv_len = 0;
 
     while (total_recv_len < need_recv_len) {
-        recv_len = tuya_transporter_read(ai_basic_proto->transporter, (UCHAR_T *)recv_buf + total_recv_len, need_recv_len - total_recv_len, 1000/*AI_SEND_SOCKET_TIMEOUT*/);
+        recv_len = tuya_transporter_read(ai_basic_proto->transporter, (uint8_t *)recv_buf + total_recv_len, need_recv_len - total_recv_len, 1000/*AI_SEND_SOCKET_TIMEOUT*/);
         if (recv_len <= 0) {
             if (total_recv_len == 0) {
                 return recv_len;
@@ -1739,7 +1743,7 @@ STATIC INT_T __ai_baisc_read_pkt_head(CHAR_T *recv_buf)
         total_recv_len += recv_len;
     }
 
-    need_recv_len = SIZEOF(UINT_T);
+    need_recv_len = SIZEOF(uint32_t);
 
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
     AI_PACKET_HEAD_T *head = (AI_PACKET_HEAD_T *)recv_buf;
@@ -1750,7 +1754,7 @@ STATIC INT_T __ai_baisc_read_pkt_head(CHAR_T *recv_buf)
 
     total_recv_len = 0;
     while (total_recv_len < need_recv_len) {
-        recv_len = tuya_transporter_read(ai_basic_proto->transporter, (UCHAR_T *)recv_buf + offset + total_recv_len, need_recv_len - total_recv_len, AI_SEND_SOCKET_TIMEOUT);
+        recv_len = tuya_transporter_read(ai_basic_proto->transporter, (uint8_t *)recv_buf + offset + total_recv_len, need_recv_len - total_recv_len, AI_SEND_SOCKET_TIMEOUT);
         if (recv_len <= 0) {
             PR_ERR("recv length err, rt:%d, %d", recv_len, need_recv_len);
             return OPRT_COM_ERROR;
@@ -1768,7 +1772,7 @@ STATIC INT_T __ai_baisc_read_pkt_head(CHAR_T *recv_buf)
     return offset;
 }
 
-VOID tuya_ai_basic_pkt_free(CHAR_T *data)
+VOID tuya_ai_basic_pkt_free(char *data)
 {
     if (data == ai_basic_proto->recv_frag_mng.data) {
         OS_FREE(data);
@@ -1793,20 +1797,20 @@ STATIC BOOL_T __ai_basic_get_frag_flag()
     return ai_basic_proto->frag_flag;
 }
 
-OPERATE_RET tuya_ai_basic_pkt_read(CHAR_T **out, UINT_T *out_len, AI_FRAG_FLAG *out_frag)
+OPERATE_RET tuya_ai_basic_pkt_read(char **out, uint32_t *out_len, AI_FRAG_FLAG *out_frag)
 {
     OPERATE_RET rt = OPRT_OK;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    UCHAR_T calc_sign[AI_SIGN_LEN] = {0};
-    UCHAR_T packet_sign[AI_SIGN_LEN] = {0};
+    uint8_t calc_sign[AI_SIGN_LEN] = {0};
+    uint8_t packet_sign[AI_SIGN_LEN] = {0};
 #endif
-    CHAR_T *decrypt_buf = NULL;
-    CHAR_T *recv_buf = ai_basic_proto->recv_buf;
+    char *decrypt_buf = NULL;
+    char *recv_buf = ai_basic_proto->recv_buf;
     TUYA_CHECK_NULL_RETURN(recv_buf, OPRT_COM_ERROR);
 
     memset(recv_buf, 0, SIZEOF(ai_basic_proto->recv_buf));
     AI_PROTO_D("recv packet ing");
-    INT_T recv_len = __ai_baisc_read_pkt_head(recv_buf);
+    int recv_len = __ai_baisc_read_pkt_head(recv_buf);
     if (recv_len <= 0) {
         goto EXIT;
     }
@@ -1819,7 +1823,7 @@ OPERATE_RET tuya_ai_basic_pkt_read(CHAR_T **out, UINT_T *out_len, AI_FRAG_FLAG *
     AI_PROTO_D("recv packet sl:%d", head->security_level);
     AI_PROTO_D("recv packet iv flag:%d", head->iv_flag);
 #else
-    // tuya_debug_hex_dump("recv ", 64, (UCHAR_T *)recv_buf, recv_len);
+    // tuya_debug_hex_dump("recv ", 64, (uint8_t *)recv_buf, recv_len);
     AI_PACKET_HEAD_T_V2 *head = (AI_PACKET_HEAD_T_V2 *)recv_buf;
     AI_PROTO_D("recv packet ver:%d", head->version);
     AI_PROTO_D("recv packet seq:%d", UNI_NTOHS(head->sequence));
@@ -1828,8 +1832,8 @@ OPERATE_RET tuya_ai_basic_pkt_read(CHAR_T **out, UINT_T *out_len, AI_FRAG_FLAG *
 
 #endif
 
-    UINT_T head_len = __ai_get_head_len(recv_buf);
-    UINT_T packet_len = __ai_get_packet_len(recv_buf);
+    uint32_t head_len = __ai_get_head_len(recv_buf);
+    uint32_t packet_len = __ai_get_packet_len(recv_buf);
 
     AI_PROTO_D("recv head len:%d", head_len);
     AI_PROTO_D("recv packet len:%d", packet_len);
@@ -1840,7 +1844,7 @@ OPERATE_RET tuya_ai_basic_pkt_read(CHAR_T **out, UINT_T *out_len, AI_FRAG_FLAG *
         goto EXIT;
     }
 
-    USHORT_T sequence = UNI_NTOHS(head->sequence);
+    uint16_t sequence = UNI_NTOHS(head->sequence);
     if (sequence <= ai_basic_proto->sequence_in) {
         PR_ERR("sequence error, in:%d, pre:%d", sequence, ai_basic_proto->sequence_in);
         goto EXIT;
@@ -1851,12 +1855,12 @@ OPERATE_RET tuya_ai_basic_pkt_read(CHAR_T **out, UINT_T *out_len, AI_FRAG_FLAG *
         ai_basic_proto->sequence_in = 0;
     }
 
-    UINT_T continue_recv_len = 0;
-    INT_T offset = recv_len;
+    uint32_t continue_recv_len = 0;
+    int offset = recv_len;
     BOOL_T read_timeout_flag = FALSE;
     while (packet_len + head_len > offset) {
         continue_recv_len = packet_len + head_len - offset;
-        recv_len = tuya_transporter_read(ai_basic_proto->transporter, (UCHAR_T *)(recv_buf + offset), continue_recv_len, AI_SEND_SOCKET_TIMEOUT);
+        recv_len = tuya_transporter_read(ai_basic_proto->transporter, (uint8_t *)(recv_buf + offset), continue_recv_len, AI_SEND_SOCKET_TIMEOUT);
         if (recv_len <= 0) {
             PR_ERR("read ai pkt body failed, rt:%d, %d, %d", recv_len, continue_recv_len, read_timeout_flag);
             if ((recv_len == OPRT_RESOURCE_NOT_READY) && (!read_timeout_flag)) {
@@ -1879,8 +1883,8 @@ OPERATE_RET tuya_ai_basic_pkt_read(CHAR_T **out, UINT_T *out_len, AI_FRAG_FLAG *
     }
 
     AI_PROTO_D("sign ok");
-    UINT_T payload_len = __ai_get_payload_len(recv_buf);
-    CHAR_T *payload = recv_buf + head_len;
+    uint32_t payload_len = __ai_get_payload_len(recv_buf);
+    char *payload = recv_buf + head_len;
     memcpy(packet_sign, payload + payload_len, AI_SIGN_LEN);
     if (memcmp(calc_sign, packet_sign, SIZEOF(calc_sign))) {
         PR_ERR("packet sign error");
@@ -1890,10 +1894,10 @@ OPERATE_RET tuya_ai_basic_pkt_read(CHAR_T **out, UINT_T *out_len, AI_FRAG_FLAG *
         goto EXIT;
     }
 #else
-    UINT_T payload_len = __ai_get_payload_len(recv_buf);
-    CHAR_T *payload = recv_buf + head_len;
+    uint32_t payload_len = __ai_get_payload_len(recv_buf);
+    char *payload = recv_buf + head_len;
 #endif
-    UINT_T decrypt_len = 0;
+    uint32_t decrypt_len = 0;
     decrypt_buf = OS_MALLOC(packet_len + head_len + AI_ADD_PKT_LEN);
     TUYA_CHECK_NULL_RETURN(decrypt_buf, OPRT_MALLOC_FAILED);
     memset(decrypt_buf, 0, packet_len + head_len + AI_ADD_PKT_LEN);
@@ -1918,7 +1922,7 @@ OPERATE_RET tuya_ai_basic_pkt_read(CHAR_T **out, UINT_T *out_len, AI_FRAG_FLAG *
         AI_PROTO_D("frag flag:%d", head->frag_flag);
         AI_PROTO_D("frag mng info, flag:%d, offset:%d", ai_basic_proto->recv_frag_mng.frag_flag, ai_basic_proto->recv_frag_mng.offset);
         if (current_frag_flag == AI_PACKET_FRAG_START) {
-            UINT_T origin_len = 0, frag_offset = 0, attr_len = 0, frag_total_len = 0;
+            uint32_t origin_len = 0, frag_offset = 0, attr_len = 0, frag_total_len = 0;
             AI_PAYLOAD_HEAD_T *pkt_head = (AI_PAYLOAD_HEAD_T *)decrypt_buf;
             if (pkt_head->attribute_flag == AI_HAS_ATTR) {
                 frag_offset = SIZEOF(AI_PAYLOAD_HEAD_T);
@@ -2010,13 +2014,13 @@ VOID tuya_free_user_attrs(AI_ATTRIBUTE_T *attr)
     }
 }
 
-OPERATE_RET tuya_parse_user_attrs(CHAR_T *in, UINT_T attr_len, AI_ATTRIBUTE_T **attr_out, UINT_T *attr_num)
+OPERATE_RET tuya_parse_user_attrs(char *in, uint32_t attr_len, AI_ATTRIBUTE_T **attr_out, uint32_t *attr_num)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0;
-    UINT_T idx = 0;
+    uint32_t offset = 0;
+    uint32_t idx = 0;
 
-    UINT_T num = tuya_ai_get_attr_num(in, attr_len);
+    uint32_t num = tuya_ai_get_attr_num(in, attr_len);
     AI_ATTRIBUTE_T *attr = OS_MALLOC(num * SIZEOF(AI_ATTRIBUTE_T));
     if (!attr) {
         PR_ERR("malloc attr failed");
@@ -2039,11 +2043,11 @@ OPERATE_RET tuya_parse_user_attrs(CHAR_T *in, UINT_T attr_len, AI_ATTRIBUTE_T **
     return rt;
 }
 
-OPERATE_RET __ai_parse_auth_resp(CHAR_T *de_buf, UINT_T attr_len)
+OPERATE_RET __ai_parse_auth_resp(char *de_buf, uint32_t attr_len)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_ATTRIBUTE_T *attr = NULL;
-    UINT_T attr_num = 0, idx = 0, vaild_num = 0;
+    uint32_t attr_num = 0, idx = 0, vaild_num = 0;
 
     rt = tuya_parse_user_attrs(de_buf, attr_len, &attr, &attr_num);
     if (OPRT_OK != rt) {
@@ -2053,7 +2057,7 @@ OPERATE_RET __ai_parse_auth_resp(CHAR_T *de_buf, UINT_T attr_len)
 
     for (idx = 0; idx < attr_num; idx++) {
         if (attr[idx].type == AI_ATTR_CONNECT_STATUS_CODE) {
-            USHORT_T status = attr[idx].value.u16;
+            uint16_t status = attr[idx].value.u16;
             if (status == AI_CODE_OK) {
                 PR_NOTICE("auth success");
                 vaild_num++;
@@ -2089,11 +2093,11 @@ EXIT:
     return rt;
 }
 
-OPERATE_RET tuya_ai_parse_conn_close(CHAR_T *de_buf, UINT_T attr_len)
+OPERATE_RET tuya_ai_parse_conn_close(char *de_buf, uint32_t attr_len)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_ATTRIBUTE_T *attr = NULL;
-    UINT_T attr_num = 0, idx = 0;
+    uint32_t attr_num = 0, idx = 0;
 
     rt = tuya_parse_user_attrs(de_buf, attr_len, &attr, &attr_num);
     if (OPRT_OK != rt) {
@@ -2103,7 +2107,7 @@ OPERATE_RET tuya_ai_parse_conn_close(CHAR_T *de_buf, UINT_T attr_len)
 
     for (idx = 0; idx < attr_num; idx++) {
         if (attr[idx].type == AI_ATTR_CONNECT_CLOSE_ERR_CODE) {
-            USHORT_T status = attr[idx].value.u16;
+            uint16_t status = attr[idx].value.u16;
             PR_ERR("recv connect close when auth:%d", status);
             rt = OPRT_AUTHENTICATION_FAIL;
         } else {
@@ -2117,8 +2121,8 @@ OPERATE_RET tuya_ai_parse_conn_close(CHAR_T *de_buf, UINT_T attr_len)
 OPERATE_RET tuya_ai_auth_resp(VOID)
 {
     OPERATE_RET rt = OPRT_OK;
-    CHAR_T *de_buf = NULL;
-    UINT_T de_len = 0;
+    char *de_buf = NULL;
+    uint32_t de_len = 0;
     AI_FRAG_FLAG frag = AI_PACKET_NO_FRAG;
 
     rt = tuya_ai_basic_pkt_read(&de_buf, &de_len, &frag);
@@ -2137,10 +2141,10 @@ OPERATE_RET tuya_ai_auth_resp(VOID)
         return OPRT_COM_ERROR;
     }
 
-    UINT_T attr_len = 0;
+    uint32_t attr_len = 0;
     memcpy(&attr_len, de_buf + SIZEOF(AI_PAYLOAD_HEAD_T), SIZEOF(attr_len));
     attr_len = UNI_NTOHL(attr_len);
-    UINT_T offset = SIZEOF(AI_PAYLOAD_HEAD_T) + SIZEOF(attr_len);
+    uint32_t offset = SIZEOF(AI_PAYLOAD_HEAD_T) + SIZEOF(attr_len);
     if (packet->type == AI_PT_AUTH_RESP) {
         rt = __ai_parse_auth_resp(de_buf + offset, attr_len);
     } else if (packet->type == AI_PT_CONN_CLOSE) {
@@ -2155,9 +2159,9 @@ OPERATE_RET tuya_ai_auth_resp(VOID)
 
 STATIC OPERATE_RET __create_ping_attrs(AI_SEND_PACKET_T *pkt)
 {
-    UINT_T attr_idx = 0;
-    UINT64_T ts = tal_time_get_posix_ms();
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CLIENT_TS, ATTR_PT_U64, &ts, SIZEOF(UINT64_T));
+    uint32_t attr_idx = 0;
+    uint64_t ts = tal_time_get_posix_ms();
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CLIENT_TS, ATTR_PT_U64, &ts, SIZEOF(uint64_t));
     pkt->count = attr_idx;
     if (!__ai_check_attr_created(pkt)) {
         return OPRT_MALLOC_FAILED;
@@ -2182,7 +2186,7 @@ OPERATE_RET tuya_ai_basic_ping(VOID)
 OPERATE_RET tuya_ai_basic_connect(AI_SERVER_CFG_INFO_T *cfg)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T idx = 0;
+    uint32_t idx = 0;
     NW_IP_S ip;
 
     memset(&ip, 0, sizeof(NW_IP_S));
@@ -2204,9 +2208,9 @@ OPERATE_RET tuya_ai_basic_connect(AI_SERVER_CFG_INFO_T *cfg)
     sock_config.bindPort = 50000 + uni_random();
     sock_config.sendTimeoutMs = (AI_SEND_PKT_TIMEOUT * 1000);
 #if defined(ENABLE_IPv6) && (ENABLE_IPv6 == 1)
-    sock_config.bindAddr = tal_net_str2addr((CONST CHAR_T *)ip.nwipstr);
+    sock_config.bindAddr = tal_net_str2addr((CONST char *)ip.nwipstr);
 #else
-    sock_config.bindAddr = tal_net_str2addr((CONST CHAR_T *)ip.ip);
+    sock_config.bindAddr = tal_net_str2addr((CONST char *)ip.ip);
 #endif
 
     ai_basic_proto->transporter = tuya_transporter_create(TRANSPORT_TYPE_TCP, NULL);
@@ -2227,21 +2231,21 @@ OPERATE_RET tuya_ai_basic_connect(AI_SERVER_CFG_INFO_T *cfg)
     return rt;
 }
 
-AI_PACKET_PT tuya_ai_basic_get_pkt_type(CHAR_T *buf)
+AI_PACKET_PT tuya_ai_basic_get_pkt_type(char *buf)
 {
     AI_PAYLOAD_HEAD_T *payload = (AI_PAYLOAD_HEAD_T *)buf;
     return payload->type;
 }
 
-OPERATE_RET tuya_pack_user_attrs(AI_ATTRIBUTE_T *attr, UINT_T attr_num, BYTE_T **out, UINT_T *out_len)
+OPERATE_RET tuya_pack_user_attrs(AI_ATTRIBUTE_T *attr, uint32_t attr_num, uint8_t **out, uint32_t *out_len)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0, idx = 0, attr_len = 0;
+    uint32_t offset = 0, idx = 0, attr_len = 0;
     for (idx = 0; idx < attr_num; idx++) {
         attr_len += OFFSOF(AI_ATTRIBUTE_T, value) + attr[idx].length;
     }
 
-    CHAR_T *usr_buf = OS_MALLOC(attr_len);
+    char *usr_buf = OS_MALLOC(attr_len);
     TUYA_CHECK_NULL_RETURN(usr_buf, OPRT_MALLOC_FAILED);
     memset(usr_buf, 0, attr_len);
 
@@ -2252,20 +2256,20 @@ OPERATE_RET tuya_pack_user_attrs(AI_ATTRIBUTE_T *attr, UINT_T attr_num, BYTE_T *
         AI_ATTR_PT payload_type = attr[idx].payload_type;
         memcpy(usr_buf + offset, &payload_type, SIZEOF(AI_ATTR_PT));
         offset += SIZEOF(AI_ATTR_PT);
-        UINT_T attr_idx_len = attr[idx].length;
-        UINT_T length = UNI_HTONL(attr_idx_len);
-        memcpy(usr_buf + offset, &length, SIZEOF(UINT_T));
-        offset += SIZEOF(UINT_T);
+        uint32_t attr_idx_len = attr[idx].length;
+        uint32_t length = UNI_HTONL(attr_idx_len);
+        memcpy(usr_buf + offset, &length, SIZEOF(uint32_t));
+        offset += SIZEOF(uint32_t);
         if (payload_type == ATTR_PT_U8) {
             memcpy(usr_buf + offset, &attr[idx].value.u8, attr_idx_len);
         } else if (payload_type == ATTR_PT_U16) {
-            USHORT_T value_u16 = UNI_HTONS(attr[idx].value.u16);
+            uint16_t value_u16 = UNI_HTONS(attr[idx].value.u16);
             memcpy(usr_buf + offset, &value_u16, attr_idx_len);
         } else if (payload_type == ATTR_PT_U32) {
-            UINT_T value_u32 = UNI_HTONL(attr[idx].value.u32);
+            uint32_t value_u32 = UNI_HTONL(attr[idx].value.u32);
             memcpy(usr_buf + offset, &value_u32, attr_idx_len);
         } else if (payload_type == ATTR_PT_U64) {
-            UINT64_T value_u64 = attr[idx].value.u64;
+            uint64_t value_u64 = attr[idx].value.u64;
             UNI_HTONLL(value_u64);
             memcpy(usr_buf + offset, &value_u64, attr_idx_len);
         } else if (payload_type == ATTR_PT_BYTES) {
@@ -2281,17 +2285,17 @@ OPERATE_RET tuya_pack_user_attrs(AI_ATTRIBUTE_T *attr, UINT_T attr_num, BYTE_T *
     }
 
     *out_len = attr_len;
-    *out = (BYTE_T *)usr_buf;
+    *out = (uint8_t *)usr_buf;
 
     return rt;
 }
 
 STATIC OPERATE_RET __create_seesion_new_attrs(AI_SEND_PACKET_T *pkt, AI_SESSION_NEW_ATTR_T *session)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SESSION_ID, ATTR_PT_STR, session->id, strlen(session->id));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_BIZ_CODE, ATTR_PT_U32, &session->biz_code, SIZEOF(UINT_T));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_BIZ_TAG, ATTR_PT_U64, &session->biz_tag, SIZEOF(UINT64_T));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_BIZ_CODE, ATTR_PT_U32, &session->biz_code, SIZEOF(uint32_t));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_BIZ_TAG, ATTR_PT_U64, &session->biz_tag, SIZEOF(uint64_t));
     if (session->token) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AGENT_TOKEN, ATTR_PT_STR, session->token, strlen(session->token));
     }
@@ -2309,11 +2313,11 @@ STATIC OPERATE_RET __create_seesion_new_attrs(AI_SEND_PACKET_T *pkt, AI_SESSION_
     return OPRT_OK;
 }
 
-STATIC OPERATE_RET __create_seesion_close_attrs(AI_SEND_PACKET_T *pkt, CHAR_T *session_id, AI_STATUS_CODE code)
+STATIC OPERATE_RET __create_seesion_close_attrs(AI_SEND_PACKET_T *pkt, char *session_id, AI_STATUS_CODE code)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SESSION_ID, ATTR_PT_STR, session_id, strlen(session_id));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SESSION_CLOSE_ERR_CODE, ATTR_PT_U16, &code, SIZEOF(USHORT_T));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SESSION_CLOSE_ERR_CODE, ATTR_PT_U16, &code, SIZEOF(uint16_t));
     pkt->count = attr_idx;
     if (!__ai_check_attr_created(pkt)) {
         return OPRT_MALLOC_FAILED;
@@ -2323,17 +2327,17 @@ STATIC OPERATE_RET __create_seesion_close_attrs(AI_SEND_PACKET_T *pkt, CHAR_T *s
 
 STATIC OPERATE_RET __create_video_attrs(AI_SEND_PACKET_T *pkt, AI_VIDEO_ATTR_T *video)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_CODEC_TYPE, ATTR_PT_U16, &video->base.codec_type, SIZEOF(USHORT_T));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_SAMPLE_RATE, ATTR_PT_U32, &video->base.sample_rate, SIZEOF(UINT_T));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_WIDTH, ATTR_PT_U16, &video->base.width, SIZEOF(USHORT_T));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_HEIGHT, ATTR_PT_U16, &video->base.height, SIZEOF(USHORT_T));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_FPS, ATTR_PT_U16, &video->base.fps, SIZEOF(USHORT_T));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_CODEC_TYPE, ATTR_PT_U16, &video->base.codec_type, SIZEOF(uint16_t));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_SAMPLE_RATE, ATTR_PT_U32, &video->base.sample_rate, SIZEOF(uint32_t));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_WIDTH, ATTR_PT_U16, &video->base.width, SIZEOF(uint16_t));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_HEIGHT, ATTR_PT_U16, &video->base.height, SIZEOF(uint16_t));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_FPS, ATTR_PT_U16, &video->base.fps, SIZEOF(uint16_t));
 #else
-    UCHAR_T video_params[64];
+    uint8_t video_params[64];
     memset(video_params, 0, sizeof(video_params));
-    CHAR_T video_params_len = snprintf((CHAR_T *)video_params, sizeof(video_params), "%d %d %d %d %d", video->base.codec_type, video->base.width, video->base.height, video->base.fps, video->base.sample_rate);
+    char video_params_len = snprintf((char *)video_params, sizeof(video_params), "%d %d %d %d %d", video->base.codec_type, video->base.width, video->base.height, video->base.fps, video->base.sample_rate);
     // AI_ATTR_AUDIO_PARAMS
     if (video_params_len > 0) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_VIDEO_PARAMS, ATTR_PT_STR, video_params, video_params_len);
@@ -2357,18 +2361,18 @@ STATIC OPERATE_RET __create_video_attrs(AI_SEND_PACKET_T *pkt, AI_VIDEO_ATTR_T *
 
 STATIC OPERATE_RET __create_audio_attrs(AI_SEND_PACKET_T *pkt, AI_AUDIO_ATTR_T *audio)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_CODEC_TYPE, ATTR_PT_U16, &audio->base.codec_type, SIZEOF(USHORT_T));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_SAMPLE_RATE, ATTR_PT_U32, &audio->base.sample_rate, SIZEOF(UINT_T));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_CHANNELS, ATTR_PT_U16, &audio->base.channels, SIZEOF(USHORT_T));
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_DEPTH, ATTR_PT_U16, &audio->base.bit_depth, SIZEOF(USHORT_T));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_CODEC_TYPE, ATTR_PT_U16, &audio->base.codec_type, SIZEOF(uint16_t));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_SAMPLE_RATE, ATTR_PT_U32, &audio->base.sample_rate, SIZEOF(uint32_t));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_CHANNELS, ATTR_PT_U16, &audio->base.channels, SIZEOF(uint16_t));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_DEPTH, ATTR_PT_U16, &audio->base.bit_depth, SIZEOF(uint16_t));
     if (audio->base.codec_type == AUDIO_CODEC_SPEEX) {
         if (audio->base.frame_size > 0) {
-            pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_FRAME_SIZE, ATTR_PT_U16, &audio->base.frame_size, SIZEOF(USHORT_T));
+            pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_FRAME_SIZE, ATTR_PT_U16, &audio->base.frame_size, SIZEOF(uint16_t));
         } else {
-            USHORT_T speex_frame_size = 42; // default frame size @ wide band, quality 5, 20ms, mono
-            pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_FRAME_SIZE, ATTR_PT_U16, &speex_frame_size, SIZEOF(USHORT_T));
+            uint16_t speex_frame_size = 42; // default frame size @ wide band, quality 5, 20ms, mono
+            pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_FRAME_SIZE, ATTR_PT_U16, &speex_frame_size, SIZEOF(uint16_t));
         }
     }
     if (audio->option.user_data) {
@@ -2382,9 +2386,9 @@ STATIC OPERATE_RET __create_audio_attrs(AI_SEND_PACKET_T *pkt, AI_AUDIO_ATTR_T *
         return OPRT_MALLOC_FAILED;
     }
 #else
-    UCHAR_T audio_params[64];
+    uint8_t audio_params[64];
     memset(audio_params, 0, sizeof(audio_params));
-    CHAR_T audio_params_len = snprintf((CHAR_T *)audio_params, sizeof(audio_params), "%d %d %d %d", audio->base.codec_type, audio->base.channels, audio->base.bit_depth, audio->base.sample_rate);
+    char audio_params_len = snprintf((char *)audio_params, sizeof(audio_params), "%d %d %d %d", audio->base.codec_type, audio->base.channels, audio->base.bit_depth, audio->base.sample_rate);
     // AI_ATTR_AUDIO_PARAMS
     if (audio_params_len > 0) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_AUDIO_PARAMS, ATTR_PT_STR, audio_params, audio_params_len);
@@ -2410,19 +2414,19 @@ STATIC OPERATE_RET __create_audio_attrs(AI_SEND_PACKET_T *pkt, AI_AUDIO_ATTR_T *
 
 STATIC OPERATE_RET __create_image_attrs(AI_SEND_PACKET_T *pkt, AI_IMAGE_ATTR_T *image)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_IMAGE_FORMAT, ATTR_PT_U8, &image->base.format, SIZEOF(UCHAR_T));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_IMAGE_FORMAT, ATTR_PT_U8, &image->base.format, SIZEOF(uint8_t));
     if (image->base.width > 0) {
-        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_IMAGE_WIDTH, ATTR_PT_U16, &image->base.width, SIZEOF(USHORT_T));
+        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_IMAGE_WIDTH, ATTR_PT_U16, &image->base.width, SIZEOF(uint16_t));
     }
     if (image->base.height > 0) {
-        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_IMAGE_HEIGHT, ATTR_PT_U16, &image->base.height, SIZEOF(USHORT_T));
+        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_IMAGE_HEIGHT, ATTR_PT_U16, &image->base.height, SIZEOF(uint16_t));
     }
 #else
-    UCHAR_T image_params[64];
+    uint8_t image_params[64];
     memset(image_params, 0, sizeof(image_params));
-    CHAR_T image_params_len = snprintf((CHAR_T *)image_params, sizeof(image_params), "%d %d %d %d", image->base.type, image->base.format, image->base.width, image->base.height);
+    char image_params_len = snprintf((char *)image_params, sizeof(image_params), "%d %d %d %d", image->base.type, image->base.format, image->base.width, image->base.height);
     // AI_ATTR_AUDIO_PARAMS
     if (image_params_len > 0) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_IMAGE_PARAMS, ATTR_PT_STR, image_params, image_params_len);
@@ -2446,14 +2450,14 @@ STATIC OPERATE_RET __create_image_attrs(AI_SEND_PACKET_T *pkt, AI_IMAGE_ATTR_T *
 
 STATIC OPERATE_RET __create_file_attrs(AI_SEND_PACKET_T *pkt, AI_FILE_ATTR_T *file)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_FILE_FORMAT, ATTR_PT_U8, &file->base.format, SIZEOF(UCHAR_T));
+    pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_FILE_FORMAT, ATTR_PT_U8, &file->base.format, SIZEOF(uint8_t));
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_FILE_NAME, ATTR_PT_STR, &file->base.file_name, strlen(file->base.file_name));
 #else
-    UCHAR_T file_params[512] = {0};
+    uint8_t file_params[512] = {0};
     memset(file_params, 0, sizeof(file_params));
-    CHAR_T file_params_len = snprintf((CHAR_T *)file_params, sizeof(file_params), "%d %d %s", file->base.type, file->base.format, file->base.file_name);
+    char file_params_len = snprintf((char *)file_params, sizeof(file_params), "%d %d %s", file->base.type, file->base.format, file->base.file_name);
     // AI_ATTR_AUDIO_PARAMS
     if (file_params_len > 0) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_FILE_PARAMS, ATTR_PT_STR, file_params, file_params_len);
@@ -2477,7 +2481,7 @@ STATIC OPERATE_RET __create_file_attrs(AI_SEND_PACKET_T *pkt, AI_FILE_ATTR_T *fi
 
 STATIC OPERATE_RET __create_text_attrs(AI_SEND_PACKET_T *pkt, AI_TEXT_ATTR_T *text)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
     if (text->session_id_list) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SESSION_ID_LIST, ATTR_PT_STR, text->session_id_list, strlen(text->session_id_list));
     }
@@ -2490,15 +2494,15 @@ STATIC OPERATE_RET __create_text_attrs(AI_SEND_PACKET_T *pkt, AI_TEXT_ATTR_T *te
 
 STATIC OPERATE_RET __create_event_attrs(AI_SEND_PACKET_T *pkt, AI_EVENT_ATTR_T *event, AI_EVENT_TYPE type)
 {
-    UINT_T attr_idx = 0;
+    uint32_t attr_idx = 0;
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_SESSION_ID, ATTR_PT_STR, event->session_id, strlen(event->session_id));
     pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_EVENT_ID, ATTR_PT_STR, event->event_id, strlen(event->event_id));
     if (event->cmd_data) {
         pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_CMD_DATA, ATTR_PT_STR, event->cmd_data, strlen(event->cmd_data));
     }
     if (type == AI_EVENT_END) {
-        UINT64_T ts = tal_time_get_posix_ms();
-        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_EVENT_TS, ATTR_PT_U64, &ts, SIZEOF(UINT64_T));
+        uint64_t ts = tal_time_get_posix_ms();
+        pkt->attrs[attr_idx++] = tuya_ai_create_attribute(AI_ATTR_EVENT_TS, ATTR_PT_U64, &ts, SIZEOF(uint64_t));
     }
     if (event->user_data) {
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
@@ -2514,7 +2518,7 @@ STATIC OPERATE_RET __create_event_attrs(AI_SEND_PACKET_T *pkt, AI_EVENT_ATTR_T *
     return OPRT_OK;
 }
 
-OPERATE_RET tuya_ai_basic_session_new(AI_SESSION_NEW_ATTR_T *session, CHAR_T *data, UINT_T len)
+OPERATE_RET tuya_ai_basic_session_new(AI_SESSION_NEW_ATTR_T *session, char *data, uint32_t len)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_SEND_PACKET_T pkt = {0};
@@ -2529,7 +2533,7 @@ OPERATE_RET tuya_ai_basic_session_new(AI_SESSION_NEW_ATTR_T *session, CHAR_T *da
     return tuya_ai_basic_pkt_send(&pkt);
 }
 
-OPERATE_RET tuya_ai_basic_session_close(CHAR_T *session_id, AI_STATUS_CODE code)
+OPERATE_RET tuya_ai_basic_session_close(char *session_id, AI_STATUS_CODE code)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_SEND_PACKET_T pkt = {0};
@@ -2542,7 +2546,7 @@ OPERATE_RET tuya_ai_basic_session_close(CHAR_T *session_id, AI_STATUS_CODE code)
     return tuya_ai_basic_pkt_send(&pkt);
 }
 
-OPERATE_RET tuya_ai_basic_video(AI_VIDEO_ATTR_T *video, CHAR_T *data, UINT_T len, UINT_T total_len, AI_PACKET_WRITER_T *writer)
+OPERATE_RET tuya_ai_basic_video(AI_VIDEO_ATTR_T *video, char *data, uint32_t len, uint32_t total_len, AI_PACKET_WRITER_T *writer)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_SEND_PACKET_T pkt = {.writer = writer};
@@ -2564,7 +2568,7 @@ OPERATE_RET tuya_ai_basic_video(AI_VIDEO_ATTR_T *video, CHAR_T *data, UINT_T len
     }
 }
 
-OPERATE_RET tuya_ai_basic_audio(AI_AUDIO_ATTR_T *audio, CHAR_T *data, UINT_T len, UINT_T total_len, AI_PACKET_WRITER_T *writer)
+OPERATE_RET tuya_ai_basic_audio(AI_AUDIO_ATTR_T *audio, char *data, uint32_t len, uint32_t total_len, AI_PACKET_WRITER_T *writer)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_SEND_PACKET_T pkt = {.writer = writer};
@@ -2586,7 +2590,7 @@ OPERATE_RET tuya_ai_basic_audio(AI_AUDIO_ATTR_T *audio, CHAR_T *data, UINT_T len
     }
 }
 
-OPERATE_RET tuya_ai_basic_image(AI_IMAGE_ATTR_T *image, CHAR_T *data, UINT_T len, UINT_T total_len, AI_PACKET_WRITER_T *writer)
+OPERATE_RET tuya_ai_basic_image(AI_IMAGE_ATTR_T *image, char *data, uint32_t len, uint32_t total_len, AI_PACKET_WRITER_T *writer)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_SEND_PACKET_T pkt = {.writer = writer};
@@ -2608,7 +2612,7 @@ OPERATE_RET tuya_ai_basic_image(AI_IMAGE_ATTR_T *image, CHAR_T *data, UINT_T len
     }
 }
 
-OPERATE_RET tuya_ai_basic_file(AI_FILE_ATTR_T *file, CHAR_T *data, UINT_T len, UINT_T total_len, AI_PACKET_WRITER_T *writer)
+OPERATE_RET tuya_ai_basic_file(AI_FILE_ATTR_T *file, char *data, uint32_t len, uint32_t total_len, AI_PACKET_WRITER_T *writer)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_SEND_PACKET_T pkt = {.writer = writer};
@@ -2630,7 +2634,7 @@ OPERATE_RET tuya_ai_basic_file(AI_FILE_ATTR_T *file, CHAR_T *data, UINT_T len, U
     }
 }
 
-OPERATE_RET tuya_ai_basic_text(AI_TEXT_ATTR_T *text, CHAR_T *data, UINT_T len, UINT_T total_len, AI_PACKET_WRITER_T *writer)
+OPERATE_RET tuya_ai_basic_text(AI_TEXT_ATTR_T *text, char *data, uint32_t len, uint32_t total_len, AI_PACKET_WRITER_T *writer)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_SEND_PACKET_T pkt = {.writer = writer};
@@ -2652,7 +2656,7 @@ OPERATE_RET tuya_ai_basic_text(AI_TEXT_ATTR_T *text, CHAR_T *data, UINT_T len, U
     }
 }
 
-OPERATE_RET tuya_ai_basic_event(AI_EVENT_ATTR_T *event, CHAR_T *data, UINT_T len, AI_PACKET_WRITER_T *writer)
+OPERATE_RET tuya_ai_basic_event(AI_EVENT_ATTR_T *event, char *data, uint32_t len, AI_PACKET_WRITER_T *writer)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_SEND_PACKET_T pkt = {.writer = writer};
@@ -2674,9 +2678,9 @@ OPERATE_RET tuya_ai_basic_event(AI_EVENT_ATTR_T *event, CHAR_T *data, UINT_T len
     return tuya_ai_basic_pkt_send(&pkt);
 }
 
-UINT_T tuya_ai_basic_get_var_seq(AI_PACKET_PT type, CHAR_T *buffer)
+uint32_t tuya_ai_basic_get_var_seq(AI_PACKET_PT type, char *buffer)
 {
-    UINT_T count = 0, num = 0;
+    uint32_t count = 0, num = 0;
     if (type == AI_PT_FILE) {
         num = ai_basic_proto->file_seq;
     } else if (type == AI_PT_TEXT) {
@@ -2708,7 +2712,7 @@ VOID tuya_ai_basic_update_var_seq(AI_PACKET_PT type)
 }
 
 //such as f47ac10b-58cc-42d5-0136-4067a8e7d6b3
-OPERATE_RET tuya_ai_basic_uuid_v4(CHAR_T *uuid_str)
+OPERATE_RET tuya_ai_basic_uuid_v4(char *uuid_str)
 {
     if (NULL == uuid_str) {
         PR_ERR("uuid_str is NULL");
@@ -2716,7 +2720,7 @@ OPERATE_RET tuya_ai_basic_uuid_v4(CHAR_T *uuid_str)
     }
 
     memset(uuid_str, 0, AI_UUID_V4_LEN);
-    UCHAR_T uuid[16] = {0};
+    uint8_t uuid[16] = {0};
     uni_random_bytes(uuid, 16);
     uuid[6] = (uuid[6] & 0x0F) | 0x40;
     uuid[8] = (uuid[8] & 0x3F) | 0x80;
@@ -2727,7 +2731,7 @@ OPERATE_RET tuya_ai_basic_uuid_v4(CHAR_T *uuid_str)
 }
 
 //such as f47ac10b-58cc-42d5-0136
-OPERATE_RET tuya_ai_basic_uuid_short(CHAR_T *uuid_str)
+OPERATE_RET tuya_ai_basic_uuid_short(char *uuid_str)
 {
     if (NULL == uuid_str) {
         PR_ERR("uuid_str is NULL");
@@ -2735,7 +2739,7 @@ OPERATE_RET tuya_ai_basic_uuid_short(CHAR_T *uuid_str)
     }
 
     memset(uuid_str, 0, AI_UUID_SHORT_LEN);
-    UCHAR_T uuid[10] = {0};
+    uint8_t uuid[10] = {0};
     uni_random_bytes(uuid, 10);
     uuid[6] = (uuid[6] & 0x0F) | 0x40;
     uuid[8] = (uuid[8] & 0x3F) | 0x80;
@@ -2745,7 +2749,7 @@ OPERATE_RET tuya_ai_basic_uuid_short(CHAR_T *uuid_str)
     return OPRT_OK;
 }
 
-STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, UINT_T buf_len)
+STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, uint32_t buf_len)
 {
     OPERATE_RET rt = OPRT_OK;
     tuya_transporter_t transporter = (tuya_transporter_t)writer->user_data;
@@ -2753,9 +2757,9 @@ STATIC OPERATE_RET __default_write(AI_PACKET_WRITER_T *writer, VOID *buf, UINT_T
         PR_ERR("invalid parameter, transporter:%p, buf:%p, buf_len:%d", transporter, buf, buf_len);
         return OPRT_INVALID_PARM;
     }
-    UINT_T bytes_sent = 0;
-    UCHAR_T *current_buf_ptr = (UCHAR_T *)buf;
-    UINT_T remaining_len = buf_len;
+    uint32_t bytes_sent = 0;
+    uint8_t *current_buf_ptr = (uint8_t *)buf;
+    uint32_t remaining_len = buf_len;
 
     while (remaining_len > 0) {
         rt = tuya_transporter_write(transporter, current_buf_ptr, remaining_len, 0);

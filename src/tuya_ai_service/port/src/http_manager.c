@@ -69,7 +69,7 @@ static SESSION_ID http_session_create_tls(const char *url, BOOL_T is_persistent,
 static OPERATE_RET http_session_destroy(SESSION_ID id);
 static OPERATE_RET http_session_send(const SESSION_ID session, const http_req_t *req, http_hdr_field_sel_t field_flags);
 static OPERATE_RET http_session_receive(SESSION_ID session, http_resp_t **resp);
-static OPERATE_RET http_session_receive_data(SESSION_ID session, http_resp_t *pResp, BYTE_T **pDataOut);
+static OPERATE_RET http_session_receive_data(SESSION_ID session, http_resp_t *pResp, uint8_t **pDataOut);
 static OPERATE_RET http_parse_url(const char *url, char **host, char **path, uint16_t *port, BOOL_T *use_tls);
 static const char *http_method_to_string(http_method_t method);
 static void http_session_ctx_reset_response(http_session_ctx_t *ctx);
@@ -530,7 +530,7 @@ static OPERATE_RET http_session_receive(SESSION_ID session, http_resp_t **resp)
     return OPRT_OK;
 }
 
-static OPERATE_RET http_session_receive_data(SESSION_ID session, http_resp_t *pResp, BYTE_T **pDataOut)
+static OPERATE_RET http_session_receive_data(SESSION_ID session, http_resp_t *pResp, uint8_t **pDataOut)
 {
     if (!session || !pResp || !pDataOut) {
         return OPRT_INVALID_PARM;
@@ -542,7 +542,7 @@ static OPERATE_RET http_session_receive_data(SESSION_ID session, http_resp_t *pR
     }
 
     size_t total = ctx->response.body_length;
-    BYTE_T *buf = HTTP_MEMORY_MALLOC(total + 1);
+    uint8_t *buf = HTTP_MEMORY_MALLOC(total + 1);
     if (!buf) {
         return OPRT_MALLOC_FAILED;
     }

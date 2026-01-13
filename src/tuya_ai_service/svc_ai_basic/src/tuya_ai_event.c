@@ -29,7 +29,7 @@
 #include "tuya_ai_event.h"
 #include "tuya_ai_private.h"
 
-STATIC OPERATE_RET __ai_event(AI_EVENT_ATTR_T *event, AI_EVENT_HEAD_T *head, CHAR_T *payload)
+STATIC OPERATE_RET __ai_event(AI_EVENT_ATTR_T *event, AI_EVENT_HEAD_T *head, char *payload)
 {
     OPERATE_RET rt = OPRT_OK;
     if (event == NULL || (NULL == event->session_id) ||
@@ -39,8 +39,8 @@ STATIC OPERATE_RET __ai_event(AI_EVENT_ATTR_T *event, AI_EVENT_HEAD_T *head, CHA
         return OPRT_INVALID_PARM;
     }
 
-    UINT_T data_len = SIZEOF(AI_EVENT_HEAD_T) + head->length;
-    CHAR_T *event_data = OS_MALLOC(data_len);
+    uint32_t data_len = SIZEOF(AI_EVENT_HEAD_T) + head->length;
+    char *event_data = OS_MALLOC(data_len);
     if (event_data == NULL) {
         PR_ERR("malloc failed");
         return OPRT_MALLOC_FAILED;
@@ -58,7 +58,7 @@ STATIC OPERATE_RET __ai_event(AI_EVENT_ATTR_T *event, AI_EVENT_HEAD_T *head, CHA
     return rt;
 }
 
-OPERATE_RET tuya_ai_event_start(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_T *attr, UINT_T len)
+OPERATE_RET tuya_ai_event_start(AI_SESSION_ID sid, AI_EVENT_ID eid, uint8_t *attr, uint32_t len)
 {
     OPERATE_RET rt = OPRT_OK;
 
@@ -89,7 +89,7 @@ OPERATE_RET tuya_ai_event_start(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_T *attr
     return rt;
 }
 
-OPERATE_RET tuya_ai_event_payloads_end(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_T *attr, UINT_T len)
+OPERATE_RET tuya_ai_event_payloads_end(AI_SESSION_ID sid, AI_EVENT_ID eid, uint8_t *attr, uint32_t len)
 {
     AI_EVENT_ATTR_T event = {0};
     event.session_id = sid;
@@ -102,7 +102,7 @@ OPERATE_RET tuya_ai_event_payloads_end(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_
     return __ai_event(&event, &head, NULL);
 }
 
-OPERATE_RET tuya_ai_event_end(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_T *attr, UINT_T len)
+OPERATE_RET tuya_ai_event_end(AI_SESSION_ID sid, AI_EVENT_ID eid, uint8_t *attr, uint32_t len)
 {
     AI_EVENT_ATTR_T event = {0};
     event.session_id = sid;
@@ -115,7 +115,7 @@ OPERATE_RET tuya_ai_event_end(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_T *attr, 
     return __ai_event(&event, &head, NULL);
 }
 
-OPERATE_RET tuya_ai_event_chat_break(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_T *attr, UINT_T len)
+OPERATE_RET tuya_ai_event_chat_break(AI_SESSION_ID sid, AI_EVENT_ID eid, uint8_t *attr, uint32_t len)
 {
     AI_EVENT_ATTR_T event = {0};
     event.session_id = sid;
@@ -128,7 +128,7 @@ OPERATE_RET tuya_ai_event_chat_break(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_T 
     return __ai_event(&event, &head, NULL);
 }
 
-OPERATE_RET tuya_ai_event_one_shot(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_T *attr, UINT_T len)
+OPERATE_RET tuya_ai_event_one_shot(AI_SESSION_ID sid, AI_EVENT_ID eid, uint8_t *attr, uint32_t len)
 {
     AI_EVENT_ATTR_T event = {0};
     event.session_id = sid;
@@ -141,7 +141,7 @@ OPERATE_RET tuya_ai_event_one_shot(AI_SESSION_ID sid, AI_EVENT_ID eid, BYTE_T *a
     return __ai_event(&event, &head, NULL);
 }
 
-OPERATE_RET tuya_ai_event_mcp(AI_SESSION_ID sid, AI_EVENT_ID eid, CHAR_T *data)
+OPERATE_RET tuya_ai_event_mcp(AI_SESSION_ID sid, AI_EVENT_ID eid, char *data)
 {
     AI_EVENT_ATTR_T event = {0};
     event.session_id = sid;

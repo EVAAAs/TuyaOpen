@@ -38,7 +38,7 @@
 #endif
 
 typedef struct {
-    CHAR_T id[AI_UUID_V4_LEN];
+    char id[AI_UUID_V4_LEN];
     AI_SESSION_CFG_T cfg;
 } AI_SESSION_T;
 
@@ -61,7 +61,7 @@ AI_BASIC_BIZ_MONITOR_T ai_monitor;
 AI_BASIC_BIZ_T *ai_basic_biz;
 
 #if defined(AI_VERSION) && (0x02 == AI_VERSION)
-STATIC CHAR_T __get_varint_len(CHAR_T *data, size_t max_len)
+STATIC char __get_varint_len(char *data, size_t max_len)
 {
     size_t len = 0;
     while (len < max_len) {
@@ -74,7 +74,7 @@ STATIC CHAR_T __get_varint_len(CHAR_T *data, size_t max_len)
 }
 #endif
 
-OPERATE_RET tuya_ai_send_biz_pkt(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKET_PT type, AI_BIZ_HEAD_INFO_T *head, CHAR_T *payload)
+OPERATE_RET tuya_ai_send_biz_pkt(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKET_PT type, AI_BIZ_HEAD_INFO_T *head, char *payload)
 {
     OPERATE_RET rt = OPRT_OK;
     if (ai_basic_biz == NULL) {
@@ -101,14 +101,14 @@ OPERATE_RET tuya_ai_send_biz_pkt(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKE
     return tuya_ai_send_biz_pkt_custom(id, attr, type, head, payload, NULL);
 }
 
-OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKET_PT type,
-                                        AI_BIZ_HEAD_INFO_T *head, CHAR_T *payload, AI_PACKET_WRITER_T *writer)
+OPERATE_RET tuya_ai_send_biz_pkt_custom(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_PACKET_PT type,
+                                        AI_BIZ_HEAD_INFO_T *head, char *payload, AI_PACKET_WRITER_T *writer)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T payload_len = 0, total_len = 0;
+    uint32_t payload_len = 0, total_len = 0;
 #if defined(AI_VERSION) && (0x02 == AI_VERSION)
-    UINT_T seq_len = 0;
-    CHAR_T seq_array[10] = {0};
+    uint32_t seq_len = 0;
+    char seq_array[10] = {0};
 #endif
     if (ai_basic_biz == NULL) {
         PR_ERR("ai biz is null");
@@ -120,7 +120,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
     AI_PROTO_D("biz len:%d, total len:%d", head->len, head->total_len);
     tuya_ai_client_start_ping();
     if (type == AI_PT_VIDEO) {
-        INT_T video_head_len = 0;
+        int video_head_len = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
         video_head_len = SIZEOF(AI_VIDEO_HEAD_T);
 #else
@@ -128,7 +128,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
 #endif
         payload_len = video_head_len + head->len;
         total_len = video_head_len + head->total_len;
-        CHAR_T *video = OS_MALLOC(payload_len);
+        char *video = OS_MALLOC(payload_len);
         TUYA_CHECK_NULL_RETURN(video, OPRT_MALLOC_FAILED);
         memset(video, 0, payload_len);
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
@@ -142,15 +142,15 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
         video_head->timestamp = head->value.video.timestamp;
         UNI_HTONLL(video_head->timestamp);
 #else
-        UINT64_T val = ((UINT64_T)(head->stream_flag & 0x03) << (4 + 42)) |
+        uint64_t val = ((uint64_t)(head->stream_flag & 0x03) << (4 + 42)) |
                        (0ULL << 42) |
                        (head->value.video.timestamp & ((1ULL << 42) - 1));
-        video[2] = (UINT8_T)(val >> 40);
-        video[3] = (UINT8_T)(val >> 32);
-        video[4] = (UINT8_T)(val >> 24);
-        video[5] = (UINT8_T)(val >> 16);
-        video[6] = (UINT8_T)(val >> 8);
-        video[7] = (UINT8_T)(val);
+        video[2] = (uint8_t)(val >> 40);
+        video[3] = (uint8_t)(val >> 32);
+        video[4] = (uint8_t)(val >> 24);
+        video[5] = (uint8_t)(val >> 16);
+        video[6] = (uint8_t)(val >> 8);
+        video[7] = (uint8_t)(val);
 #endif
 
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
@@ -168,7 +168,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
         }
         OS_FREE(video);
     } else if (type == AI_PT_AUDIO) {
-        INT_T audio_head_len = 0;
+        int audio_head_len = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
         audio_head_len = SIZEOF(AI_AUDIO_HEAD_T);
 #else
@@ -176,7 +176,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
 #endif
         payload_len = audio_head_len + head->len;
         total_len = audio_head_len + head->total_len;
-        CHAR_T *audio = OS_MALLOC(payload_len);
+        char *audio = OS_MALLOC(payload_len);
         TUYA_CHECK_NULL_RETURN(audio, OPRT_MALLOC_FAILED);
         memset(audio, 0, payload_len);
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
@@ -191,15 +191,15 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
         audio_head->timestamp = head->value.audio.timestamp;
         UNI_HTONLL(audio_head->timestamp);
 #else
-        UINT64_T val = ((UINT64_T)(head->stream_flag & 0x03) << (4 + 42)) |
+        uint64_t val = ((uint64_t)(head->stream_flag & 0x03) << (4 + 42)) |
                        (0ULL << 42) |
                        (head->value.audio.timestamp & ((1ULL << 42) - 1));
-        audio[2] = (UINT8_T)(val >> 40);
-        audio[3] = (UINT8_T)(val >> 32);
-        audio[4] = (UINT8_T)(val >> 24);
-        audio[5] = (UINT8_T)(val >> 16);
-        audio[6] = (UINT8_T)(val >> 8);
-        audio[7] = (UINT8_T)(val);
+        audio[2] = (uint8_t)(val >> 40);
+        audio[3] = (uint8_t)(val >> 32);
+        audio[4] = (uint8_t)(val >> 24);
+        audio[5] = (uint8_t)(val >> 16);
+        audio[6] = (uint8_t)(val >> 8);
+        audio[7] = (uint8_t)(val);
 #endif
 
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
@@ -217,7 +217,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
         }
         OS_FREE(audio);
     } else if (type == AI_PT_IMAGE) {
-        INT_T image_head_len = 0;
+        int image_head_len = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
         image_head_len = SIZEOF(AI_IMAGE_HEAD_T);
 #else
@@ -226,7 +226,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
 
         payload_len = image_head_len + head->len;
         total_len = image_head_len + head->total_len;
-        CHAR_T *image = OS_MALLOC(payload_len);
+        char *image = OS_MALLOC(payload_len);
         TUYA_CHECK_NULL_RETURN(image, OPRT_MALLOC_FAILED);
         memset(image, 0, payload_len);
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
@@ -241,15 +241,15 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
         UNI_HTONLL(image_head->timestamp);
         image_head->length = UNI_HTONL(head->total_len);
 #else
-        UINT64_T val = ((UINT64_T)(head->stream_flag & 0x03) << (4 + 42)) |
+        uint64_t val = ((uint64_t)(head->stream_flag & 0x03) << (4 + 42)) |
                        (0ULL << 42) |
                        (head->value.image.timestamp & ((1ULL << 42) - 1));
-        image[2] = (UINT8_T)(val >> 40);
-        image[3] = (UINT8_T)(val >> 32);
-        image[4] = (UINT8_T)(val >> 24);
-        image[5] = (UINT8_T)(val >> 16);
-        image[6] = (UINT8_T)(val >> 8);
-        image[7] = (UINT8_T)(val);
+        image[2] = (uint8_t)(val >> 40);
+        image[3] = (uint8_t)(val >> 32);
+        image[4] = (uint8_t)(val >> 24);
+        image[5] = (uint8_t)(val >> 16);
+        image[6] = (uint8_t)(val >> 8);
+        image[7] = (uint8_t)(val);
 #endif
         if (payload && head->len) {
             memcpy(image + image_head_len, payload, head->len);
@@ -261,7 +261,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
         }
         OS_FREE(image);
     } else if (type == AI_PT_FILE) {
-        INT_T file_head_len = 0;
+        int file_head_len = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
         file_head_len = SIZEOF(AI_FILE_HEAD_T);
 #else
@@ -271,7 +271,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
 
         payload_len = file_head_len + head->len;
         total_len = file_head_len + head->total_len;
-        CHAR_T *file = OS_MALLOC(payload_len);
+        char *file = OS_MALLOC(payload_len);
         TUYA_CHECK_NULL_RETURN(file, OPRT_MALLOC_FAILED);
         memset(file, 0, payload_len);
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
@@ -301,7 +301,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
         OS_FREE(file);
     } else if (type == AI_PT_TEXT) {
 
-        INT_T text_head_len = 0;
+        int text_head_len = 0;
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
         text_head_len = SIZEOF(AI_TEXT_HEAD_T);
 #else
@@ -311,7 +311,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
 
         payload_len = text_head_len + head->len;
         total_len = text_head_len + head->total_len;
-        CHAR_T *text = OS_MALLOC(payload_len);
+        char *text = OS_MALLOC(payload_len);
         TUYA_CHECK_NULL_RETURN(text, OPRT_MALLOC_FAILED);
         memset(text, 0, payload_len);
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
@@ -342,7 +342,7 @@ OPERATE_RET tuya_ai_send_biz_pkt_custom(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, A
     } else if (type == AI_PT_EVENT) {
         payload_len = SIZEOF(AI_EVENT_HEAD_T) + head->len;
         total_len = SIZEOF(AI_EVENT_HEAD_T) + head->total_len;
-        CHAR_T *event = OS_MALLOC(payload_len);
+        char *event = OS_MALLOC(payload_len);
         TUYA_CHECK_NULL_RETURN(event, OPRT_MALLOC_FAILED);
         memset(event, 0, payload_len);
         AI_EVENT_HEAD_T *event_head = (AI_EVENT_HEAD_T *)event;
@@ -384,23 +384,23 @@ STATIC VOID __ai_biz_thread_exit()
     }
 }
 
-STATIC VOID __ai_biz_thread_cb(PVOID_T args)
+STATIC VOID __ai_biz_thread_cb(void* args)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T idx = 0, sidx = 0, kdx = 0;
+    uint32_t idx = 0, sidx = 0, kdx = 0;
     while (!ai_basic_biz->terminate && tal_thread_get_state(ai_basic_biz->thread) == THREAD_STATE_RUNNING) {
         if (!tuya_ai_client_is_ready()) {
             tal_system_sleep(200);
             continue;
         }
         tal_mutex_lock(ai_basic_biz->mutex);
-        USHORT_T sent_ids[AI_BIZ_MAX_NUM * AI_SESSION_MAX_NUM] = {0};
-        UINT_T sent_ids_count = 0;
+        uint16_t sent_ids[AI_BIZ_MAX_NUM * AI_SESSION_MAX_NUM] = {0};
+        uint32_t sent_ids_count = 0;
         for (idx = 0; idx < AI_SESSION_MAX_NUM; idx++) {
             if (ai_basic_biz->session[idx].id[0] != 0) {
                 AI_SESSION_T *session = &ai_basic_biz->session[idx];
                 for (sidx = 0; sidx < session->cfg.send_num; sidx++) {
-                    USHORT_T send_id = session->cfg.send[sidx].id;
+                    uint16_t send_id = session->cfg.send[sidx].id;
                     BOOL_T already_sent = FALSE;
                     for (kdx = 0; kdx < sent_ids_count; kdx++) {
                         if (sent_ids[kdx] == send_id) {
@@ -414,7 +414,7 @@ STATIC VOID __ai_biz_thread_cb(PVOID_T args)
                         if (send->get_cb) {
                             AI_BIZ_ATTR_INFO_T attr = {0};
                             AI_BIZ_HEAD_INFO_T head = {0};
-                            CHAR_T *payload = NULL;
+                            char *payload = NULL;
                             rt = send->get_cb(&attr, &head, &payload);
                             if (rt != OPRT_OK) {
                                 continue;
@@ -438,7 +438,7 @@ STATIC VOID __ai_biz_thread_cb(PVOID_T args)
 
 STATIC BOOL_T __ai_biz_need_send_task(VOID)
 {
-    UINT_T idx = 0, sidx = 0;
+    uint32_t idx = 0, sidx = 0;
     for (idx = 0; idx < AI_SESSION_MAX_NUM; idx++) {
         if (ai_basic_biz->session[idx].id[0] != 0) {
             AI_SESSION_T *session = &ai_basic_biz->session[idx];
@@ -474,10 +474,10 @@ STATIC OPERATE_RET __ai_biz_create_task(VOID)
     return rt;
 }
 
-OPERATE_RET __ai_parse_video_attr(CHAR_T *de_buf, UINT_T attr_len, AI_VIDEO_ATTR_T *video)
+OPERATE_RET __ai_parse_video_attr(char *de_buf, uint32_t attr_len, AI_VIDEO_ATTR_T *video)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0;
+    uint32_t offset = 0;
     AI_ATTRIBUTE_T attr = {0};
 
     while (offset < attr_len) {
@@ -502,17 +502,17 @@ OPERATE_RET __ai_parse_video_attr(CHAR_T *de_buf, UINT_T attr_len, AI_VIDEO_ATTR
 #else
         if (attr.type == AI_ATTR_VIDEO_PARAMS) {
             AI_PROTO_D("parase vedio params attr value:%s", attr.value.str);
-            UINT_T codec_type = 0, sample_rate = 0, width = 0, height = 0, fps = 0;
-            CHAR_T parased = sscanf(attr.value.str, "%d %d %d %d %d", &codec_type, &width, &height, &fps, &sample_rate);
+            uint32_t codec_type = 0, sample_rate = 0, width = 0, height = 0, fps = 0;
+            char parased = sscanf(attr.value.str, "%d %d %d %d %d", &codec_type, &width, &height, &fps, &sample_rate);
             if (OPRT_COM_ERROR == parased) {
                 PR_ERR("parase vedio params attr value failed, rt:%d ", parased);
                 return parased;
             }
             video->base.codec_type = (AI_VIDEO_CODEC_TYPE)codec_type;
-            video->base.sample_rate = (UINT_T)sample_rate;
-            video->base.width = (USHORT_T)width;
-            video->base.height = (USHORT_T)height;
-            video->base.fps = (USHORT_T)fps;
+            video->base.sample_rate = (uint32_t)sample_rate;
+            video->base.width = (uint16_t)width;
+            video->base.height = (uint16_t)height;
+            video->base.fps = (uint16_t)fps;
         }
 #endif
         else if (attr.type == AI_ATTR_USER_DATA) {
@@ -527,10 +527,10 @@ OPERATE_RET __ai_parse_video_attr(CHAR_T *de_buf, UINT_T attr_len, AI_VIDEO_ATTR
     return rt;
 }
 
-OPERATE_RET __ai_parse_audio_attr(CHAR_T *de_buf, UINT_T attr_len, AI_AUDIO_ATTR_T *audio)
+OPERATE_RET __ai_parse_audio_attr(char *de_buf, uint32_t attr_len, AI_AUDIO_ATTR_T *audio)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0;
+    uint32_t offset = 0;
     AI_ATTRIBUTE_T attr = {0};
 
     while (offset < attr_len) {
@@ -553,16 +553,16 @@ OPERATE_RET __ai_parse_audio_attr(CHAR_T *de_buf, UINT_T attr_len, AI_AUDIO_ATTR
 #else
         if (attr.type == AI_ATTR_AUDIO_PARAMS) {
             AI_PROTO_D("parase audio params attr value:%s", attr.value.str);
-            UINT_T codec_type = 0, sample_rate = 0, channels = 0, bit_depth = 0;
-            CHAR_T parased = sscanf(attr.value.str, "%d %d %d %d", &codec_type, &channels, &bit_depth, &sample_rate);
+            uint32_t codec_type = 0, sample_rate = 0, channels = 0, bit_depth = 0;
+            char parased = sscanf(attr.value.str, "%d %d %d %d", &codec_type, &channels, &bit_depth, &sample_rate);
             if (OPRT_COM_ERROR == parased) {
                 PR_ERR("parase audio params attr value failed, rt:%d ", parased);
                 return parased;
             }
             audio->base.codec_type = (AI_AUDIO_CODEC_TYPE)codec_type;
             audio->base.channels = (AI_AUDIO_CHANNELS)channels;
-            audio->base.bit_depth = (USHORT_T)bit_depth;
-            audio->base.sample_rate = (UINT_T)sample_rate;
+            audio->base.bit_depth = (uint16_t)bit_depth;
+            audio->base.sample_rate = (uint32_t)sample_rate;
         }
 #endif
         else if (attr.type == AI_ATTR_USER_DATA) {
@@ -577,10 +577,10 @@ OPERATE_RET __ai_parse_audio_attr(CHAR_T *de_buf, UINT_T attr_len, AI_AUDIO_ATTR
     return rt;
 }
 
-OPERATE_RET __ai_parse_image_attr(CHAR_T *de_buf, UINT_T attr_len, AI_IMAGE_ATTR_T *image)
+OPERATE_RET __ai_parse_image_attr(char *de_buf, uint32_t attr_len, AI_IMAGE_ATTR_T *image)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0;
+    uint32_t offset = 0;
     AI_ATTRIBUTE_T attr = {0};
 
     while (offset < attr_len) {
@@ -601,16 +601,16 @@ OPERATE_RET __ai_parse_image_attr(CHAR_T *de_buf, UINT_T attr_len, AI_IMAGE_ATTR
 #else
         if (AI_ATTR_IMAGE_PARAMS == attr.type) {
             AI_PROTO_D("parase image params attr value:%s", attr.value.str);
-            UINT_T image_type = 0, image_format = 0, image_width = 0, image_height = 0;
-            CHAR_T parased = sscanf(attr.value.str, "%d %d %d %d", &image_type, &image_format, &image_width, &image_height);
+            uint32_t image_type = 0, image_format = 0, image_width = 0, image_height = 0;
+            char parased = sscanf(attr.value.str, "%d %d %d %d", &image_type, &image_format, &image_width, &image_height);
             if (OPRT_COM_ERROR == parased) {
                 PR_ERR("parase image params attr value failed, rt:%d ", parased);
                 return parased;
             }
             image->base.type = (AI_IMAGE_PAYLOAD_TYPE)image_type;
             image->base.format = (AI_IMAGE_FORMAT)image_format;
-            image->base.width = (USHORT_T)image_width;
-            image->base.height = (USHORT_T)image_height;
+            image->base.width = (uint16_t)image_width;
+            image->base.height = (uint16_t)image_height;
             if (image_type > IMAGE_PAYLOAD_TYPE_URL) {
                 PR_ERR("image payload type invaild %d", image_type);
                 return OPRT_INVALID_PARM;
@@ -629,10 +629,10 @@ OPERATE_RET __ai_parse_image_attr(CHAR_T *de_buf, UINT_T attr_len, AI_IMAGE_ATTR
     return rt;
 }
 
-OPERATE_RET __ai_parse_file_attr(CHAR_T *de_buf, UINT_T attr_len, AI_FILE_ATTR_T *file)
+OPERATE_RET __ai_parse_file_attr(char *de_buf, uint32_t attr_len, AI_FILE_ATTR_T *file)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0;
+    uint32_t offset = 0;
     AI_ATTRIBUTE_T attr = {0};
 
     while (offset < attr_len) {
@@ -655,9 +655,9 @@ OPERATE_RET __ai_parse_file_attr(CHAR_T *de_buf, UINT_T attr_len, AI_FILE_ATTR_T
 #else
         if (AI_ATTR_FILE_PARAMS == attr.type) {
             AI_PROTO_D("parase file params attr value:%s", attr.value.str);
-            UINT_T file_type = 0, file_format = 0;
-            UCHAR_T file_name[256] = {0};
-            CHAR_T parased = sscanf(attr.value.str, "%d %d %s", &file_type, &file_format, file_name);
+            uint32_t file_type = 0, file_format = 0;
+            uint8_t file_name[256] = {0};
+            char parased = sscanf(attr.value.str, "%d %d %s", &file_type, &file_format, file_name);
             if (OPRT_COM_ERROR == parased) {
                 PR_ERR("parase image params attr value failed, rt:%d ", parased);
                 return parased;
@@ -665,12 +665,12 @@ OPERATE_RET __ai_parse_file_attr(CHAR_T *de_buf, UINT_T attr_len, AI_FILE_ATTR_T
             file->base.type = (AI_FILE_PAYLOAD_TYPE)file_type;
             file->base.format = (AI_FILE_FORMAT)file_format;
 
-            if ((strlen((CHAR_T *)file_name) > SIZEOF(file->base.file_name) ||
+            if ((strlen((char *)file_name) > SIZEOF(file->base.file_name) ||
                  (file_type > FILE_PAYLOAD_TYPE_URL))) {
                 PR_ERR("file params invalid %s, %d", file_name, file_type);
                 return OPRT_INVALID_PARM;
             }
-            memcpy(file->base.file_name, file_name, strlen((CHAR_T *)file_name));
+            memcpy(file->base.file_name, file_name, strlen((char *)file_name));
         }
 #endif
         else if (attr.type == AI_ATTR_USER_DATA) {
@@ -682,17 +682,19 @@ OPERATE_RET __ai_parse_file_attr(CHAR_T *de_buf, UINT_T attr_len, AI_FILE_ATTR_T
             PR_ERR("unknow attr type:%d", attr.type);
         }
     }
-    if (file->base.file_name == NULL) {
-        PR_ERR("file name is null");
-        return OPRT_INVALID_PARM;
-    }
+
+    // if (file->base.file_name == NULL) {
+    //     PR_ERR("file name is null");
+    //     return OPRT_INVALID_PARM;
+    // }
+
     return rt;
 }
 
-OPERATE_RET __ai_parse_text_attr(CHAR_T *de_buf, UINT_T attr_len, AI_TEXT_ATTR_T *text)
+OPERATE_RET __ai_parse_text_attr(char *de_buf, uint32_t attr_len, AI_TEXT_ATTR_T *text)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0;
+    uint32_t offset = 0;
     AI_ATTRIBUTE_T attr = {0};
 
     while (offset < attr_len) {
@@ -712,10 +714,10 @@ OPERATE_RET __ai_parse_text_attr(CHAR_T *de_buf, UINT_T attr_len, AI_TEXT_ATTR_T
     return rt;
 }
 
-OPERATE_RET __ai_parse_event_attr(CHAR_T *de_buf, UINT_T attr_len, AI_EVENT_ATTR_T *event)
+OPERATE_RET __ai_parse_event_attr(char *de_buf, uint32_t attr_len, AI_EVENT_ATTR_T *event)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0;
+    uint32_t offset = 0;
     AI_ATTRIBUTE_T attr = {0};
 
     while (offset < attr_len) {
@@ -755,10 +757,10 @@ OPERATE_RET __ai_parse_event_attr(CHAR_T *de_buf, UINT_T attr_len, AI_EVENT_ATTR
     return rt;
 }
 
-OPERATE_RET __ai_parse_session_close_attr(CHAR_T *de_buf, UINT_T attr_len, AI_SESSION_CLOSE_ATTR_T *close)
+OPERATE_RET __ai_parse_session_close_attr(char *de_buf, uint32_t attr_len, AI_SESSION_CLOSE_ATTR_T *close)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0;
+    uint32_t offset = 0;
     AI_ATTRIBUTE_T attr = {0};
 
     while (offset < attr_len) {
@@ -787,10 +789,10 @@ OPERATE_RET __ai_parse_session_close_attr(CHAR_T *de_buf, UINT_T attr_len, AI_SE
     return rt;
 }
 
-OPERATE_RET __ai_parse_session_state_attr(CHAR_T *de_buf, UINT_T attr_len, AI_SESSION_STATE_ATTR_T *state)
+OPERATE_RET __ai_parse_session_state_attr(char *de_buf, uint32_t attr_len, AI_SESSION_STATE_ATTR_T *state)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T offset = 0;
+    uint32_t offset = 0;
     AI_ATTRIBUTE_T attr = {0};
 
     while (offset < attr_len) {
@@ -822,7 +824,7 @@ OPERATE_RET __ai_parse_session_state_attr(CHAR_T *de_buf, UINT_T attr_len, AI_SE
     return rt;
 }
 
-STATIC OPERATE_RET __ai_parse_biz_attr(AI_PACKET_PT type, CHAR_T *attr_buf, UINT_T attr_len, AI_BIZ_ATTR_INFO_T *attr)
+STATIC OPERATE_RET __ai_parse_biz_attr(AI_PACKET_PT type, char *attr_buf, uint32_t attr_len, AI_BIZ_ATTR_INFO_T *attr)
 {
     OPERATE_RET rt = OPRT_OK;
     if (type == AI_PT_VIDEO) {
@@ -880,7 +882,7 @@ STATIC OPERATE_RET __ai_parse_biz_attr(AI_PACKET_PT type, CHAR_T *attr_buf, UINT
     return rt;
 }
 
-STATIC OPERATE_RET __ai_parse_biz_head(AI_PACKET_PT type, CHAR_T *payload, AI_BIZ_HEAD_INFO_T *biz_head, UINT_T *offset, UINT_T payload_len)
+STATIC OPERATE_RET __ai_parse_biz_head(AI_PACKET_PT type, char *payload, AI_BIZ_HEAD_INFO_T *biz_head, uint32_t *offset, uint32_t payload_len)
 {
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
     if (type == AI_PT_VIDEO) {
@@ -921,11 +923,11 @@ STATIC OPERATE_RET __ai_parse_biz_head(AI_PACKET_PT type, CHAR_T *payload, AI_BI
     }
 #else
     if ((type == AI_PT_VIDEO) || (type == AI_PT_AUDIO) || (type == AI_PT_IMAGE)) {
-        // tuya_debug_hex_dump("image_head:", 64, (UCHAR_T *)payload, 8);
+        // tuya_debug_hex_dump("image_head:", 64, (uint8_t *)payload, 8);
         biz_head->stream_flag = (payload[2] & 0xc0) >> 6;
         AI_PROTO_D("stream flag:%d", biz_head->stream_flag);
-        UINT64_T temp_time = 0;
-        memcpy(&temp_time, payload, SIZEOF(UINT64_T));
+        uint64_t temp_time = 0;
+        memcpy(&temp_time, payload, SIZEOF(uint64_t));
         UNI_NTOHLL(temp_time);
         temp_time = temp_time & ((1ULL << 42) - 1);
         biz_head->value.image.timestamp = temp_time;
@@ -937,7 +939,7 @@ STATIC OPERATE_RET __ai_parse_biz_head(AI_PACKET_PT type, CHAR_T *payload, AI_BI
         biz_head->stream_flag = file_head->stream_flag;
         AI_PROTO_D("stream flag:%d", biz_head->stream_flag);
         *offset = SIZEOF(AI_FILE_HEAD_T_V2);
-        UCHAR_T var_len = __get_varint_len(payload, payload_len);
+        uint8_t var_len = __get_varint_len(payload, payload_len);
         biz_head->len = payload_len - SIZEOF(AI_FILE_HEAD_T_V2) - var_len;
         AI_PROTO_D("var_len : %d ,payload_len : %d ", var_len, biz_head->len);
         *offset += var_len;
@@ -970,7 +972,7 @@ STATIC BOOL_T __ai_is_biz_pkt_vaild(AI_PACKET_PT type)
 STATIC OPERATE_RET __ai_biz_recv_event(AI_EVENT_ATTR_T *event, AI_EVENT_HEAD_T *head, VOID *data)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T idx = 0;
+    uint32_t idx = 0;
 
     tal_mutex_lock(ai_basic_biz->mutex);
     for (idx = 0; idx < AI_SESSION_MAX_NUM; idx++) {
@@ -999,7 +1001,7 @@ STATIC OPERATE_RET __ai_biz_recv_event(AI_EVENT_ATTR_T *event, AI_EVENT_HEAD_T *
 STATIC OPERATE_RET __ai_biz_session_destory(AI_SESSION_ID id, AI_STATUS_CODE code, BOOL_T sync_cloud)
 {
     OPERATE_RET rt = OPRT_OK;
-    UINT_T idx = 0;
+    uint32_t idx = 0;
     if ((id == NULL) || (ai_basic_biz == NULL)) {
         PR_ERR("del session id or biz is null");
         return OPRT_INVALID_PARM;
@@ -1034,10 +1036,10 @@ STATIC OPERATE_RET __ai_biz_session_destory(AI_SESSION_ID id, AI_STATUS_CODE cod
     return rt;
 }
 
-OPERATE_RET __ai_biz_recv_handle(CHAR_T *data, UINT_T len, AI_FRAG_FLAG frag)
+OPERATE_RET __ai_biz_recv_handle(char *data, uint32_t len, AI_FRAG_FLAG frag)
 {
     OPERATE_RET rt = OPRT_OK;
-    CHAR_T *payload = NULL, *attr_buf = NULL;
+    char *payload = NULL, *attr_buf = NULL;
     VOID *usr_data = NULL;
     AI_BIZ_HEAD_INFO_T biz_head = {0};
     AI_BIZ_RECV_CB cb = NULL;
@@ -1046,8 +1048,8 @@ OPERATE_RET __ai_biz_recv_handle(CHAR_T *data, UINT_T len, AI_FRAG_FLAG frag)
         AI_PAYLOAD_HEAD_T *head = (AI_PAYLOAD_HEAD_T *)data;
         AI_PACKET_PT type = head->type;
         AI_ATTR_FLAG attr_flag = head->attribute_flag;
-        UINT_T idx = 0, attr_len = 0;
-        UINT_T offset = SIZEOF(AI_PAYLOAD_HEAD_T);
+        uint32_t idx = 0, attr_len = 0;
+        uint32_t offset = SIZEOF(AI_PAYLOAD_HEAD_T);
         ai_basic_biz->cb = NULL;
         AI_PROTO_D("recv data type:%d, attr_flag:%d", type, attr_flag);
         if (!__ai_is_biz_pkt_vaild(type)) {
@@ -1082,7 +1084,7 @@ OPERATE_RET __ai_biz_recv_handle(CHAR_T *data, UINT_T len, AI_FRAG_FLAG frag)
         }
 
 #if defined(AI_VERSION) && (0x01 == AI_VERSION)
-        offset += SIZEOF(UINT_T);
+        offset += SIZEOF(uint32_t);
 #endif
         payload = data + offset;
 
@@ -1110,8 +1112,8 @@ OPERATE_RET __ai_biz_recv_handle(CHAR_T *data, UINT_T len, AI_FRAG_FLAG frag)
             biz_head.len = len; // not packet actually, need fix later
         }
 
-        USHORT_T recv_id = 0;
-        memcpy(&recv_id, payload, SIZEOF(USHORT_T));
+        uint16_t recv_id = 0;
+        memcpy(&recv_id, payload, SIZEOF(uint16_t));
         recv_id = UNI_NTOHS(recv_id);
         AI_PROTO_D("recv data id:%d", recv_id);
 
@@ -1119,7 +1121,7 @@ OPERATE_RET __ai_biz_recv_handle(CHAR_T *data, UINT_T len, AI_FRAG_FLAG frag)
         for (idx = 0; idx < AI_SESSION_MAX_NUM; idx++) {
             if (ai_basic_biz->session[idx].id[0] != 0) {
                 AI_SESSION_T *session = &ai_basic_biz->session[idx];
-                UINT_T sidx = 0;
+                uint32_t sidx = 0;
                 for (sidx = 0; sidx < session->cfg.recv_num; sidx++) {
                     if (session->cfg.recv[sidx].id == recv_id) {
                         usr_data = session->cfg.recv[sidx].usr_data;
@@ -1174,7 +1176,7 @@ OPERATE_RET __ai_biz_recv_handle(CHAR_T *data, UINT_T len, AI_FRAG_FLAG frag)
 
 STATIC OPERATE_RET __ai_clt_close_evt(VOID *data)
 {
-    UINT_T idx = 0;
+    uint32_t idx = 0;
 
     if (ai_basic_biz == NULL) {
         PR_ERR("ai biz is null");
@@ -1241,31 +1243,31 @@ VOID tuya_ai_biz_deinit(VOID)
 STATIC OPERATE_RET __ai_pack_session_data(AI_SESSION_CFG_T *cfg, AI_SESSION_NEW_ATTR_T *attr)
 {
     OPERATE_RET rt = OPRT_OK;
-    USHORT_T send_ids_len = cfg->send_num * SIZEOF(USHORT_T);
-    USHORT_T recv_ids_len = cfg->recv_num * SIZEOF(USHORT_T);
-    UINT_T data_len = SIZEOF(send_ids_len) + send_ids_len + SIZEOF(recv_ids_len) + recv_ids_len;
-    CHAR_T *data = OS_MALLOC(data_len);
+    uint16_t send_ids_len = cfg->send_num * SIZEOF(uint16_t);
+    uint16_t recv_ids_len = cfg->recv_num * SIZEOF(uint16_t);
+    uint32_t data_len = SIZEOF(send_ids_len) + send_ids_len + SIZEOF(recv_ids_len) + recv_ids_len;
+    char *data = OS_MALLOC(data_len);
     TUYA_CHECK_NULL_RETURN(data, OPRT_MALLOC_FAILED);
     memset(data, 0, data_len);
 
-    UINT_T offset = 0, idx = 0;
-    USHORT_T id = 0;
+    uint32_t offset = 0, idx = 0;
+    uint16_t id = 0;
     AI_PROTO_D("send_ids_len:%d, recv_ids_len:%d", send_ids_len, recv_ids_len);
     send_ids_len = UNI_HTONS(send_ids_len);
     memcpy(data + offset, &send_ids_len, SIZEOF(send_ids_len));
     offset += SIZEOF(send_ids_len);
     for (idx = 0; idx < cfg->send_num; idx++) {
         id = UNI_HTONS(cfg->send[idx].id);
-        memcpy(data + offset, &id, SIZEOF(USHORT_T));
-        offset += SIZEOF(USHORT_T);
+        memcpy(data + offset, &id, SIZEOF(uint16_t));
+        offset += SIZEOF(uint16_t);
     }
     recv_ids_len = UNI_HTONS(recv_ids_len);
     memcpy(data + offset, &recv_ids_len, SIZEOF(recv_ids_len));
     offset += SIZEOF(recv_ids_len);
     for (idx = 0; idx < cfg->recv_num; idx++) {
         id = UNI_HTONS(cfg->recv[idx].id);
-        memcpy(data + offset, &id, SIZEOF(USHORT_T));
-        offset += SIZEOF(USHORT_T);
+        memcpy(data + offset, &id, SIZEOF(uint16_t));
+        offset += SIZEOF(uint16_t);
     }
 
     rt = tuya_ai_basic_session_new(attr, data, data_len);
@@ -1276,7 +1278,7 @@ STATIC OPERATE_RET __ai_pack_session_data(AI_SESSION_CFG_T *cfg, AI_SESSION_NEW_
     return rt;
 }
 
-OPERATE_RET tuya_ai_biz_crt_session(UINT_T bizCode, UINT64_T bizTag, AI_SESSION_CFG_T *cfg, BYTE_T *attr, UINT_T attr_len, CHAR_T *token, AI_SESSION_ID id)
+OPERATE_RET tuya_ai_biz_crt_session(uint32_t bizCode, uint64_t bizTag, AI_SESSION_CFG_T *cfg, uint8_t *attr, uint32_t attr_len, char *token, AI_SESSION_ID id)
 {
     OPERATE_RET rt = OPRT_OK;
     if (ai_basic_biz == NULL) {
@@ -1306,7 +1308,7 @@ OPERATE_RET tuya_ai_biz_crt_session(UINT_T bizCode, UINT64_T bizTag, AI_SESSION_
     }
 
     tal_mutex_lock(ai_basic_biz->mutex);
-    UINT_T idx = 0;
+    uint32_t idx = 0;
     for (idx = 0; idx < AI_SESSION_MAX_NUM; idx++) {
         if (ai_basic_biz->session[idx].id[0] == 0) {
             memcpy(&ai_basic_biz->session[idx].cfg, cfg, SIZEOF(AI_SESSION_CFG_T));
@@ -1333,11 +1335,11 @@ OPERATE_RET tuya_ai_biz_del_session(AI_SESSION_ID id, AI_STATUS_CODE code)
     return __ai_biz_session_destory(id, code, TRUE);
 }
 
-STATIC UINT_T s_ai_resv_send_id[AI_BIZ_MAX_NUM] = {101, 103, 105, 107, 109};
-INT_T tuya_ai_biz_get_send_id(VOID)
+STATIC uint32_t s_ai_resv_send_id[AI_BIZ_MAX_NUM] = {101, 103, 105, 107, 109};
+int tuya_ai_biz_get_send_id(VOID)
 {
-    STATIC INT_T odd_number = 1;
-    INT_T id = odd_number;
+    STATIC int odd_number = 1;
+    int id = odd_number;
     odd_number += 2;
     if (odd_number == s_ai_resv_send_id[0]) {
         odd_number += 10;
@@ -1345,15 +1347,15 @@ INT_T tuya_ai_biz_get_send_id(VOID)
     return id;
 }
 
-INT_T tuya_ai_biz_get_recv_id(VOID)
+int tuya_ai_biz_get_recv_id(VOID)
 {
-    STATIC INT_T even_number = 2;
-    INT_T id = even_number;
+    STATIC int even_number = 2;
+    int id = even_number;
     even_number += 2;
     return id;
 }
 
-INT_T tuya_ai_biz_get_reuse_send_id(AI_PACKET_PT type)
+int tuya_ai_biz_get_reuse_send_id(AI_PACKET_PT type)
 {
     if (type < AI_PT_VIDEO || type > AI_PT_TEXT) {
         PR_ERR("type error:%d", type);
@@ -1364,7 +1366,7 @@ INT_T tuya_ai_biz_get_reuse_send_id(AI_PACKET_PT type)
 
 AI_SESSION_CFG_T* tuya_ai_biz_get_session_cfg(AI_SESSION_ID id)
 {
-    UINT_T idx = 0;
+    uint32_t idx = 0;
     AI_SESSION_CFG_T *cfg = NULL;
     if (ai_basic_biz) {
         tal_mutex_lock(ai_basic_biz->mutex);
@@ -1385,32 +1387,32 @@ AI_SESSION_CFG_T* tuya_ai_biz_get_session_cfg(AI_SESSION_ID id)
     return cfg;
 }
 
-OPERATE_RET tuya_ai_parse_video_attr(CHAR_T *de_buf, UINT_T attr_len, AI_VIDEO_ATTR_T *video)
+OPERATE_RET tuya_ai_parse_video_attr(char *de_buf, uint32_t attr_len, AI_VIDEO_ATTR_T *video)
 {
     return __ai_parse_video_attr(de_buf, attr_len, video);
 }
 
-OPERATE_RET tuya_ai_parse_audio_attr(CHAR_T *de_buf, UINT_T attr_len, AI_AUDIO_ATTR_T *audio)
+OPERATE_RET tuya_ai_parse_audio_attr(char *de_buf, uint32_t attr_len, AI_AUDIO_ATTR_T *audio)
 {
     return __ai_parse_audio_attr(de_buf, attr_len, audio);
 }
 
-OPERATE_RET tuya_ai_parse_image_attr(CHAR_T *de_buf, UINT_T attr_len, AI_IMAGE_ATTR_T *image)
+OPERATE_RET tuya_ai_parse_image_attr(char *de_buf, uint32_t attr_len, AI_IMAGE_ATTR_T *image)
 {
     return __ai_parse_image_attr(de_buf, attr_len, image);
 }
 
-OPERATE_RET tuya_ai_parse_file_attr(CHAR_T *de_buf, UINT_T attr_len, AI_FILE_ATTR_T *file)
+OPERATE_RET tuya_ai_parse_file_attr(char *de_buf, uint32_t attr_len, AI_FILE_ATTR_T *file)
 {
     return __ai_parse_file_attr(de_buf, attr_len, file);
 }
 
-OPERATE_RET tuya_ai_parse_text_attr(CHAR_T *de_buf, UINT_T attr_len, AI_TEXT_ATTR_T *text)
+OPERATE_RET tuya_ai_parse_text_attr(char *de_buf, uint32_t attr_len, AI_TEXT_ATTR_T *text)
 {
     return __ai_parse_text_attr(de_buf, attr_len, text);
 }
 
-OPERATE_RET tuya_ai_parse_event_attr(CHAR_T *de_buf, UINT_T attr_len, AI_EVENT_ATTR_T *event)
+OPERATE_RET tuya_ai_parse_event_attr(char *de_buf, uint32_t attr_len, AI_EVENT_ATTR_T *event)
 {
     return __ai_parse_event_attr(de_buf, attr_len, event);
 }

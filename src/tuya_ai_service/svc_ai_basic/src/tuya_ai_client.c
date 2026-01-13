@@ -52,8 +52,8 @@
 #define AI_IDLE_CHECK_TIME    (30 * 60 * 1000) // 30 minutes
 
 typedef struct {
-    UINT_T min;
-    UINT_T max;
+    uint32_t min;
+    uint32_t max;
 } AI_RECONN_TIME_T;
 
 typedef enum {
@@ -69,15 +69,15 @@ typedef enum {
 } AI_CLIENT_STATE_E;
 
 typedef struct {
-    UINT_T reconn_cnt;
+    uint32_t reconn_cnt;
     AI_RECONN_TIME_T reconn[AI_RECONN_TIME_NUM];
     THREAD_HANDLE thread;
     TIMER_ID tid;
     AI_CLIENT_STATE_E state;
-    UINT_T heartbeat_interval;
+    uint32_t heartbeat_interval;
     DELAYED_WORK_HANDLE alive_work;
     TIMER_ID alive_timeout_timer;
-    BYTE_T heartbeat_lost_cnt;
+    uint8_t heartbeat_lost_cnt;
     AI_BASIC_DATA_HANDLE cb;
     BOOL_T terminate;
     TIME_T start_time;
@@ -88,7 +88,7 @@ typedef struct {
 
 STATIC AI_BASIC_CLIENT_T *ai_basic_client = NULL;
 
-STATIC UINT_T __ai_get_random_value(UINT_T min, UINT_T max)
+STATIC uint32_t __ai_get_random_value(uint32_t min, uint32_t max)
 {
     return min + uni_random() % (max - min + 1);
 }
@@ -158,7 +158,7 @@ STATIC OPERATE_RET __ai_auth_resp(VOID)
     return rt;
 }
 
-STATIC VOID __ai_conn_refresh(TIMER_ID timerID, PVOID_T pTimerArg)
+STATIC VOID __ai_conn_refresh(TIMER_ID timerID, void * pTimerArg)
 {
     tuya_ai_basic_refresh_req();
     return;
@@ -177,8 +177,8 @@ STATIC OPERATE_RET __ai_conn_close(VOID)
 STATIC VOID __ai_client_handle_err(OPERATE_RET rt)
 {
     if (ai_basic_client->state == AI_STATE_SETUP) {
-        UINT_T sleep_random = 0;
-        UINT_T size = AI_RECONN_TIME_NUM - 1;
+        uint32_t sleep_random = 0;
+        uint32_t size = AI_RECONN_TIME_NUM - 1;
         sleep_random = __ai_get_random_value(ai_basic_client->reconn[ai_basic_client->reconn_cnt].min, ai_basic_client->reconn[ai_basic_client->reconn_cnt].max);
         PR_NOTICE("connect to cloud failed, sleep %d s", sleep_random);
         tal_system_sleep(sleep_random * 1000);
@@ -207,8 +207,8 @@ STATIC VOID __ai_stop_alive_time()
 
 STATIC VOID __ai_start_expire_tid()
 {
-    UINT64_T expire = tuya_ai_mq_ser_cfg_get()->expire;
-    UINT64_T current = tal_time_get_posix();
+    uint64_t expire = tuya_ai_mq_ser_cfg_get()->expire;
+    uint64_t current = tal_time_get_posix();
     if (expire <= current) {
         PR_ERR("expire time is invalid, expire:%llu, current:%llu", expire, current);
         return;
@@ -218,7 +218,7 @@ STATIC VOID __ai_start_expire_tid()
     PR_NOTICE("connect refresh success,expire:%llu current:%llu next %d s", expire, current, expire - current - 10);
 }
 
-STATIC VOID __ai_handle_refresh_resp(CHAR_T *data, UINT_T len)
+STATIC VOID __ai_handle_refresh_resp(char *data, uint32_t len)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_PAYLOAD_HEAD_T *packet = (AI_PAYLOAD_HEAD_T *)data;
@@ -227,10 +227,10 @@ STATIC VOID __ai_handle_refresh_resp(CHAR_T *data, UINT_T len)
         return;
     }
 
-    UINT_T attr_len = 0;
+    uint32_t attr_len = 0;
     memcpy(&attr_len, data + SIZEOF(AI_PAYLOAD_HEAD_T), SIZEOF(attr_len));
     attr_len = UNI_NTOHL(attr_len);
-    UINT_T offset = SIZEOF(AI_PAYLOAD_HEAD_T) + SIZEOF(attr_len);
+    uint32_t offset = SIZEOF(AI_PAYLOAD_HEAD_T) + SIZEOF(attr_len);
     rt = tuya_ai_refresh_resp(data + offset, attr_len, &(tuya_ai_mq_ser_cfg_get()->expire));
     if (OPRT_OK != rt) {
         PR_ERR("refresh resp failed, rt:%d", rt);
@@ -241,7 +241,7 @@ STATIC VOID __ai_handle_refresh_resp(CHAR_T *data, UINT_T len)
     return;
 }
 
-STATIC VOID __ai_handle_conn_close(CHAR_T *data, UINT_T len)
+STATIC VOID __ai_handle_conn_close(char *data, uint32_t len)
 {
     PR_NOTICE("recv conn close by server");
     AI_PAYLOAD_HEAD_T *packet = (AI_PAYLOAD_HEAD_T *)data;
@@ -250,17 +250,17 @@ STATIC VOID __ai_handle_conn_close(CHAR_T *data, UINT_T len)
         return;
     }
 
-    UINT_T attr_len = 0;
+    uint32_t attr_len = 0;
     memcpy(&attr_len, data + SIZEOF(AI_PAYLOAD_HEAD_T), SIZEOF(attr_len));
     attr_len = UNI_NTOHL(attr_len);
-    UINT_T offset = SIZEOF(AI_PAYLOAD_HEAD_T) + SIZEOF(attr_len);
+    uint32_t offset = SIZEOF(AI_PAYLOAD_HEAD_T) + SIZEOF(attr_len);
     tuya_ai_parse_conn_close(data + offset, attr_len);
     ty_publish_event(EVENT_AI_CLIENT_CLOSE, NULL);
     __ai_client_set_state(AI_STATE_IDLE);
     return;
 }
 
-STATIC VOID __ai_handle_pong(CHAR_T *data, UINT_T len)
+STATIC VOID __ai_handle_pong(char *data, uint32_t len)
 {
     tuya_ai_pong(data, len);
     tuya_ai_client_start_ping();
@@ -299,8 +299,8 @@ STATIC VOID __ai_idle_check(TIMER_ID timer_id, VOID_T *data)
             ai_basic_client->recv_biz_pkt = FALSE;
         }
     } else {
-        UINT_T random_value = uni_random_range(6);
-        UINT_T continue_run_time = (12 + random_value) * 60 * 60;
+        uint32_t random_value = uni_random_range(6);
+        uint32_t continue_run_time = (12 + random_value) * 60 * 60;
         if ((now_time - ai_basic_client->start_time) > continue_run_time) {
             PR_NOTICE("ai continue run large than %d hours, start idle check", continue_run_time);
             ai_basic_client->idle_check_enable = TRUE;
@@ -315,8 +315,8 @@ STATIC VOID __ai_idle_check(TIMER_ID timer_id, VOID_T *data)
 STATIC OPERATE_RET __ai_running(VOID)
 {
     OPERATE_RET rt = OPRT_OK;
-    CHAR_T *de_buf = NULL;
-    UINT_T de_len = 0;
+    char *de_buf = NULL;
+    uint32_t de_len = 0;
     AI_FRAG_FLAG frag = AI_PACKET_NO_FRAG;
 
     rt = tuya_ai_basic_pkt_read(&de_buf, &de_len, &frag);
@@ -426,7 +426,7 @@ STATIC VOID __ai_client_free(VOID)
     return;
 }
 
-STATIC VOID __ai_client_thread_cb(PVOID_T args)
+STATIC VOID __ai_client_thread_cb(void* args)
 {
     OPERATE_RET rt = OPRT_OK;
     while (!ai_basic_client->terminate && tal_thread_get_state(ai_basic_client->thread) == THREAD_STATE_RUNNING) {

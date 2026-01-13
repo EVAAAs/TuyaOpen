@@ -46,7 +46,7 @@ typedef OPERATE_RET (*mqc_protocol_handler_cb)(IN ty_cJSON *root_json);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET mqc_app_register_cb(UINT_T mq_pro, mqc_protocol_handler_cb handler);
+OPERATE_RET mqc_app_register_cb(uint32_t mq_pro, mqc_protocol_handler_cb handler);
 
 /**
  * @brief Unregister handler for specific protocol
@@ -56,7 +56,7 @@ OPERATE_RET mqc_app_register_cb(UINT_T mq_pro, mqc_protocol_handler_cb handler);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET mqc_app_unregister_cb(UINT_T mq_pro, mqc_protocol_handler_cb handler);
+OPERATE_RET mqc_app_unregister_cb(uint32_t mq_pro, mqc_protocol_handler_cb handler);
 
 /**
  * @brief Publish protocol data to the default topic
@@ -66,7 +66,7 @@ OPERATE_RET mqc_app_unregister_cb(UINT_T mq_pro, mqc_protocol_handler_cb handler
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET mqc_send_custom_mqtt_msg(IN CONST UINT_T protocol, IN CONST BYTE_T *p_data);
+OPERATE_RET mqc_send_custom_mqtt_msg(IN CONST uint32_t protocol, IN CONST uint8_t *p_data);
 
 /**
  * @brief Get current linakge for mqtt connection

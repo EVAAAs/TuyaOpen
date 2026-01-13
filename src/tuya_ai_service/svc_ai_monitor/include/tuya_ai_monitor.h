@@ -46,12 +46,12 @@ typedef enum {
  * @brief AI monitor server configuration
  */
 typedef struct {
-    UINT_T port;                    // TCP server port
-    UINT_T max_clients;             // maximum client connections
-    UINT_T recv_buf_size;           // receive buffer size
-    UINT_T send_buf_size;           // send buffer size
-    UINT_T heartbeat_interval;      // heartbeat interval in seconds
-    UINT_T heartbeat_timeout;       // heartbeat timeout in seconds
+    uint32_t port;                    // TCP server port
+    uint32_t max_clients;             // maximum client connections
+    uint32_t recv_buf_size;           // receive buffer size
+    uint32_t send_buf_size;           // send buffer size
+    uint32_t heartbeat_interval;      // heartbeat interval in seconds
+    uint32_t heartbeat_timeout;       // heartbeat timeout in seconds
     BOOL_T enable_broadcast;        // enable broadcast to all clients
 } ai_monitor_config_t;
 
@@ -101,7 +101,7 @@ BOOL_T tuya_ai_monitor_is_running(VOID);
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_monitor_broadcast(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, CHAR_T *data);
+OPERATE_RET tuya_ai_monitor_broadcast(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char *data);
 
 /**
  * @brief broadcast text data to all connected clients
@@ -111,7 +111,7 @@ OPERATE_RET tuya_ai_monitor_broadcast(USHORT_T id, AI_BIZ_ATTR_INFO_T *attr, AI_
  *
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_monitor_broadcast_text(CHAR_T *data, UINT_T len);
+OPERATE_RET tuya_ai_monitor_broadcast_text(char *data, uint32_t len);
 
 /**
  * @brief broadcast log data to all connected clients
@@ -121,7 +121,7 @@ OPERATE_RET tuya_ai_monitor_broadcast_text(CHAR_T *data, UINT_T len);
  * 
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_monitor_broadcast_log(CHAR_T *data, UINT_T len);
+OPERATE_RET tuya_ai_monitor_broadcast_log(char *data, uint32_t len);
 
 /**
  * @brief broadcast audio data to all connected clients
@@ -133,13 +133,13 @@ OPERATE_RET tuya_ai_monitor_broadcast_log(CHAR_T *data, UINT_T len);
  * 
  * @return OPRT_OK on success. Others on error, please refer to tuya_error_code.h
  */
-OPERATE_RET tuya_ai_monitor_broadcast_audio(USHORT_T data_id, AI_STREAM_TYPE stype, AI_AUDIO_CODEC_TYPE codec_type, CHAR_T *data, UINT_T len);
+OPERATE_RET tuya_ai_monitor_broadcast_audio(uint16_t data_id, AI_STREAM_TYPE stype, AI_AUDIO_CODEC_TYPE codec_type, char *data, uint32_t len);
 
-OPERATE_RET tuya_ai_monitor_broadcast_audio_mic(AI_STREAM_TYPE stype, CHAR_T *data, UINT_T len);
+OPERATE_RET tuya_ai_monitor_broadcast_audio_mic(AI_STREAM_TYPE stype, char *data, uint32_t len);
 
-OPERATE_RET tuya_ai_monitor_broadcast_audio_ref(AI_STREAM_TYPE stype, CHAR_T *data, UINT_T len);
+OPERATE_RET tuya_ai_monitor_broadcast_audio_ref(AI_STREAM_TYPE stype, char *data, uint32_t len);
 
-OPERATE_RET tuya_ai_monitor_broadcast_audio_aec(AI_STREAM_TYPE stype, CHAR_T *data, UINT_T len);
+OPERATE_RET tuya_ai_monitor_broadcast_audio_aec(AI_STREAM_TYPE stype, char *data, uint32_t len);
 
 /**
  * @brief dump server status information

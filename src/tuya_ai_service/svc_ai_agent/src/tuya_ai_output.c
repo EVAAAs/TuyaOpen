@@ -66,7 +66,7 @@ typedef struct {
     TUYA_RINGBUFF_T ringbuf;
     MUTEX_HANDLE mutex;
     char *output_buf;
-    UINT32_T offset;
+    uint32_t offset;
     bool terminate;
 } AUDIO_PLAYER_CTX_T;
 STATIC AUDIO_PLAYER_CTX_T ai_output_ctx;
@@ -104,7 +104,7 @@ STATIC void __ai_output_thread(void* arg)
     AI_OUTPUT_STATUS_E cur_state = AI_OUTPUT_STOPPED;
     AI_OUTPUT_STATUS_E last_state = AI_OUTPUT_STOPPED;
     ai_output_ctx.offset = 0;
-    UINT_T last_offset = 0;
+    uint32_t last_offset = 0;
     TIME_T time_now = 0, time_last = 0;
 
     while (!ai_output_ctx.terminate && tal_thread_get_state(ai_output_ctx.thread) == THREAD_STATE_RUNNING) {
@@ -190,6 +190,8 @@ STATIC void __ai_output_thread(void* arg)
             tal_system_sleep(1);
         }
     }
+
+    PR_NOTICE("ai output thread exiting...");
     __ai_output_free();
 }
 
@@ -335,7 +337,7 @@ OPERATE_RET tuya_ai_output_text(char *scode, AI_TEXT_TYPE_E type, cJSON *root, b
     return OPRT_OK;
 }
 
-OPERATE_RET tuya_ai_output_media(char *scode, AI_PACKET_PT type, char *data, UINT_T len, UINT_T total_len)
+OPERATE_RET tuya_ai_output_media(char *scode, AI_PACKET_PT type, char *data, uint32_t len, uint32_t total_len)
 {
     LIST_HEAD *pos;
 
@@ -380,10 +382,10 @@ OPERATE_RET tuya_ai_output_stop(bool force)
     return rt;
 }
 
-OPERATE_RET tuya_ai_output_write(AI_PACKET_PT type, UINT8_T *data, UINT_T len)
+OPERATE_RET tuya_ai_output_write(AI_PACKET_PT type, uint8_t *data, uint32_t len)
 {
-    INT_T rt = 0;
-    INT_T cnt = 0;
+    int rt = 0;
+    int cnt = 0;
 
     if (ai_output_ctx.status != AI_OUTPUT_PLAYING) {
         return OPRT_OK;

@@ -21,7 +21,7 @@
 ***********************typedef define***********************
 ***********************************************************/
 typedef struct {
-    UINT_T protocol;
+    uint32_t protocol;
     mqc_protocol_handler_cb handler;
 } mqc_protocol_entry_t;
 
@@ -59,7 +59,7 @@ void __mqc_app_handler(tuya_protocol_event_t *event)
     return;
 }
 
-OPERATE_RET mqc_app_register_cb(UINT_T mq_pro, mqc_protocol_handler_cb handler)
+OPERATE_RET mqc_app_register_cb(uint32_t mq_pro, mqc_protocol_handler_cb handler)
 {
     PR_DEBUG("register mq protocol:%u", mq_pro);
 
@@ -79,16 +79,16 @@ OPERATE_RET mqc_app_register_cb(UINT_T mq_pro, mqc_protocol_handler_cb handler)
     return OPRT_OK;
 }
 
-OPERATE_RET mqc_app_unregister_cb(UINT_T mq_pro, mqc_protocol_handler_cb handler)
+OPERATE_RET mqc_app_unregister_cb(uint32_t mq_pro, mqc_protocol_handler_cb handler)
 {
     PR_DEBUG("unregister mq protocol:%u", mq_pro);
 
-    for (UINT_T i = 0; i < g_mqc_protocol_count; i++) {
+    for (uint32_t i = 0; i < g_mqc_protocol_count; i++) {
         if (g_mqc_protocol_table[i].protocol == mq_pro && g_mqc_protocol_table[i].handler == handler) {
             tuya_mqtt_protocol_unregister(&tuya_iot_client_get()->mqctx, (uint16_t)mq_pro, __mqc_app_handler);
 
             /* Shift remaining entries */
-            for (UINT_T j = i; j < g_mqc_protocol_count - 1; j++) {
+            for (uint32_t j = i; j < g_mqc_protocol_count - 1; j++) {
                 g_mqc_protocol_table[j].protocol = g_mqc_protocol_table[j + 1].protocol;
                 g_mqc_protocol_table[j].handler = g_mqc_protocol_table[j + 1].handler;
             }
@@ -100,7 +100,7 @@ OPERATE_RET mqc_app_unregister_cb(UINT_T mq_pro, mqc_protocol_handler_cb handler
     return OPRT_OK;
 }
 
-OPERATE_RET mqc_send_custom_mqtt_msg(IN CONST UINT_T protocol, IN CONST BYTE_T *p_data)
+OPERATE_RET mqc_send_custom_mqtt_msg(IN CONST uint32_t protocol, IN CONST uint8_t *p_data)
 {
     tuya_iot_client_t *client = tuya_iot_client_get();
     tuya_mqtt_protocol_data_publish(&client->mqctx, protocol, p_data, strlen((const char *)p_data));
