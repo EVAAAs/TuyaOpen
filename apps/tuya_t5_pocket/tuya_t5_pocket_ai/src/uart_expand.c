@@ -518,7 +518,10 @@ OPERATE_RET uart_expand_init(void)
     // Start unified UART worker thread
     sg_worker_running = TRUE;
     sg_current_mode = UART_MODE_RFID_SCAN;
-    THREAD_CFG_T thrd_param_worker = {2048, 4, "uart_worker_thread"};
+    THREAD_CFG_T thrd_param_worker = {0};
+    thrd_param_worker.stackDepth = 1024 * 2;
+    thrd_param_worker.priority = THREAD_PRIO_1;
+    thrd_param_worker.thrdname = "uart_worker_thread";
     rt = tal_thread_create_and_start(&uart_worker_thread, NULL, NULL, __uart_worker_thread, NULL, &thrd_param_worker);
     if (rt != OPRT_OK) {
         PR_ERR("Failed to create UART worker thread: %d", rt);
@@ -531,7 +534,10 @@ OPERATE_RET uart_expand_init(void)
 
     // Start printer scan thread (always running in background)
     printer_scan_running = TRUE;
-    THREAD_CFG_T thrd_param_printer = {4096, 4, "printer_scan_thread"};
+    THREAD_CFG_T thrd_param_printer = {0};
+    thrd_param_printer.stackDepth = 1024 * 4;
+    thrd_param_printer.priority = THREAD_PRIO_1;
+    thrd_param_printer.thrdname = "printer_scan_thread";
     rt =
         tal_thread_create_and_start(&printer_scan_thread, NULL, NULL, __printer_scan_thread, NULL, &thrd_param_printer);
     if (rt != OPRT_OK) {

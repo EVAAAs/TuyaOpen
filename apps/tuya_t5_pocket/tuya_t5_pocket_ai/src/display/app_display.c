@@ -154,11 +154,10 @@ OPERATE_RET app_display_init(void)
     PR_DEBUG("app_display_init success");
 
     TUYA_CALL_ERR_RETURN(tal_queue_create_init(&sg_queue_hdl, sizeof(DISPLAY_MSG_T), 8));
-    THREAD_CFG_T cfg = {
-        .thrdname = "pet_ui",
-        .priority = THREAD_PRIO_1,
-        .stackDepth = 1024 * 4,
-    };
+    THREAD_CFG_T cfg = {0};
+    cfg.stackDepth = 1024 * 4;
+    cfg.priority = THREAD_PRIO_1;
+    cfg.thrdname = "pet_ui";
     TUYA_CALL_ERR_RETURN(tal_thread_create_and_start(&sg_thrd_hdl, NULL, NULL, __disp_pet_task, NULL, &cfg));
     PR_DEBUG("app_display_init success");
 
