@@ -105,7 +105,7 @@ static OPERATE_RET __tdd_audio_open(TDD_AUDIO_HANDLE_T handle, TDL_AUDIO_MIC_CB 
 
     TUYA_CALL_ERR_RETURN(tkl_ai_init(&config, 0));
     TUYA_CALL_ERR_RETURN(tkl_ai_start(0, 0));
-    TUYA_CALL_ERR_RETURN(tkl_ai_set_vol(TKL_AUDIO_TYPE_BOARD, 0, 80));
+    // TUYA_CALL_ERR_RETURN(tkl_ai_set_vol(TKL_AUDIO_TYPE_BOARD, 0, 80));
 
     uint8_t volume = hdl->play_volume;
     if(volume) {
