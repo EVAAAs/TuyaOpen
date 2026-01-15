@@ -22,7 +22,22 @@ extern "C" {
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
-
+#define EMOJI_NEUTRAL      "NEUTRAL"
+#define EMOJI_SAD          "SAD"
+#define EMOJI_ANGRY        "ANGRY"
+#define EMOJI_SURPRISE     "SURPRISE"
+#define EMOJI_CONFUSED     "CONFUSED"
+#define EMOJI_THINKING     "THINKING"
+#define EMOJI_HAPPY        "HAPPY"
+#define EMOJI_TOUCH        "TOUCH"
+#define EMOJI_FEARFUL      "FEARFUL"
+#define EMOJI_DISAPPOINTED "DISAPPOINTED"
+#define EMOJI_ANNOYED      "ANNOYED"
+#define EMOJI_SLEEP        "SLEEP"
+#define EMOJI_WAKEUP       "WAKEUP"
+#define EMOJI_LEFT         "LEFT"
+#define EMOJI_RIGHT        "RIGHT"
+#define EMOJI_WINK         "WINK"
 
 /***********************************************************
 ***********************typedef define***********************

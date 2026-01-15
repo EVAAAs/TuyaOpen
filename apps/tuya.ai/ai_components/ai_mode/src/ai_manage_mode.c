@@ -329,7 +329,9 @@ AI_CHAT_MODE_E ai_mode_switch_next(void)
         return 0;
     }
 
-    nxt_mode = sg_curr_mode_ctrl->mode;
+    if(sg_curr_mode_ctrl) {
+        nxt_mode = sg_curr_mode_ctrl->mode;
+    }
     
     rt = ai_mode_switch(nxt_mode_ctrl->mode);
     if(rt != OPRT_OK) {

@@ -137,12 +137,12 @@ static OPERATE_RET __set_mode(const MCP_PROPERTY_LIST_T *properties, MCP_RETURN_
     }
 
     // Implement actual volume setting logic here
-    ai_mode_switch(mode);
+    OPERATE_RET rt = ai_mode_switch(mode);
 
-    PR_DEBUG("set mode to %d", mode);
+    PR_DEBUG("set mode to %d rt:%d", mode, rt);
 
     // Set return value
-    ai_mcp_return_value_set_bool(ret_val, TRUE);
+    ai_mcp_return_value_set_bool(ret_val, (rt == OPRT_OK) ? TRUE : FALSE);
 
     return OPRT_OK;
 }

@@ -16,6 +16,7 @@ extern "C" {
 
 #define VERSION "版本 "
 #define INITIALIZING "正在初始化..."
+#define PROVISIONING "配网中..."
 #define REGISTERING_NETWORK "等待网络..."
 #define CONNECT_SERVER "连接服务器..."
 #define STANDBY "待命"
@@ -23,6 +24,8 @@ extern "C" {
 #define CONNECTING "连接中..."
 #define CONNECTED_TO "已连接 "
 #define LISTENING "聆听中..."
+#define UPLOADING "上传中..."
+#define THINKING "思考中..."
 #define SPEAKING "说话中..."
 #define HOLD_TALK "长按"
 #define TRIG_TALK "按键"

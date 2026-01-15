@@ -34,11 +34,7 @@
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
-#if defined(BUTTON_NAME)
-#define AI_CHAT_BUTTON_NAME    BUTTON_NAME
-#else
 #define AI_CHAT_BUTTON_NAME    "ai_chat_button"
-#endif
 
 #define TUYA_AI_CHAT_PAR       "ty_ai_chat_par"
 
@@ -56,6 +52,7 @@ static AI_USER_EVENT_NOTIFY   sg_evt_notify_cb = NULL;
 static THREAD_HANDLE          sg_ai_chat_mode_task = NULL;
 static AI_CHAT_MODE_E         sg_ai_default_mode = AI_CHAT_MODE_HOLD;
 static int                    sg_ai_default_vol = 70;
+static bool                   sg_ai_agent_inited = false;
 
 #if defined(ENABLE_BUTTON) && (ENABLE_BUTTON == 1)
 static TDL_BUTTON_HANDLE sg_button_hdl = NULL;
@@ -207,6 +204,10 @@ static int __ai_audio_output(uint8_t *data, uint16_t datalen)
     uint64_t   pts = 0;
     uint64_t   timestamp = 0;
 
+    if(false == sg_ai_agent_inited) {
+        return OPRT_OK;
+    }
+
 #if defined(ENABLE_AUDIO_AEC) && (ENABLE_AUDIO_AEC == 1)
     timestamp = pts = tal_system_get_millisecond();
     TUYA_CALL_ERR_LOG(tuya_ai_audio_input(timestamp, pts, data, datalen, datalen));
@@ -325,17 +326,10 @@ static int __ai_mqtt_connected_evt(void *data)
 
     ai_mode_init(mode);
 
+    sg_ai_agent_inited = true;
+
     return rt;
 }
-
-#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
-static void __ai_video_display_flush(TDL_CAMERA_FRAME_T *frame)
-{
-    #if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
-    ai_ui_camera_flush(frame->data, frame->width, frame->height);
-    #endif
-}
-#endif
 
 static OPERATE_RET __ai_chat_mode_register(void)
 {
@@ -436,22 +430,9 @@ OPERATE_RET ai_chat_init(AI_CHAT_MODE_CFG_T *cfg)
 #if defined(ENABLE_BUTTON) && (ENABLE_BUTTON == 1)
     TUYA_CALL_ERR_LOG(__ai_chat_mode_open_button());
 #endif
-
-#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
-    AI_VEDIO_CFG_T ai_video_cfg = {
-        .disp_flush_cb = __ai_video_display_flush,
-    };
-
-    TUYA_CALL_ERR_LOG(ai_video_init(&ai_video_cfg));
-#endif
-
-#if defined(ENABLE_COMP_AI_MCP) && (ENABLE_COMP_AI_MCP == 1)
-    TUYA_CALL_ERR_RETURN(ai_mcp_init());
-#endif
-
     PR_DEBUG("ai chat mode init mode %d success", mode);
 
-    return rt;
+    return OPRT_OK;
 }
 
 /**
