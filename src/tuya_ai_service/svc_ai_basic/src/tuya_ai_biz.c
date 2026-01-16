@@ -682,12 +682,10 @@ OPERATE_RET __ai_parse_file_attr(char *de_buf, uint32_t attr_len, AI_FILE_ATTR_T
             PR_ERR("unknow attr type:%d", attr.type);
         }
     }
-
-    // if (file->base.file_name == NULL) {
-    //     PR_ERR("file name is null");
-    //     return OPRT_INVALID_PARM;
-    // }
-
+    if (file->base.file_name[0] == '\0') {
+        PR_ERR("file name is null");
+        return OPRT_INVALID_PARM;
+    }
     return rt;
 }
 

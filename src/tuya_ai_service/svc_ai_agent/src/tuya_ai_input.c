@@ -245,7 +245,7 @@ OPERATE_RET tuya_ai_file_input(uint8_t *data, uint32_t len, uint32_t total_len)
 VOID tuya_ai_input_start(bool force)
 {
     OPERATE_RET rt = OPRT_OK;
-    if (!tuya_ai_client_is_ready()) {
+    if (!tuya_ai_agent_is_ready()) {
         return;
     }
 
@@ -275,7 +275,7 @@ VOID tuya_ai_input_stop(VOID)
 {
     OPERATE_RET rt = OPRT_OK;
     uint32_t cnt = 0;
-    if (!tuya_ai_client_is_ready()) {
+    if (!tuya_ai_agent_is_ready()) {
         return;
     }
     AI_INPUT_STATE_E state = AI_INPUT_STOPPING;
@@ -332,7 +332,7 @@ STATIC VOID __ai_input_free(VOID)
     PR_DEBUG("ai input deinit");
 }
 
-STATIC VOID __ai_input_thread(VOID *arg)
+STATIC VOID __ai_input_thread(VOID* arg)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_INPUT_STATE_E queue_state = AI_INPUT_IDLE;
@@ -347,7 +347,7 @@ STATIC VOID __ai_input_thread(VOID *arg)
         case AI_INPUT_START: {
             tuya_ai_agent_event(AI_EVENT_CHAT_BREAK, 0);
             tuya_ai_output_stop(TRUE);
-            if (tuya_ai_client_is_ready()) {
+            if (tuya_ai_agent_is_ready()) {
                 ai_input_ctx.state = AI_INPUT_PROC;
                 rt = tuya_ai_agent_start();
                 if (OPRT_OK != rt) {
@@ -362,7 +362,7 @@ STATIC VOID __ai_input_thread(VOID *arg)
         }
         break;
         case AI_INPUT_START_LAZY: {
-            if (tuya_ai_client_is_ready()) {
+            if (tuya_ai_agent_is_ready()) {
                 ai_input_ctx.state = AI_INPUT_PROC;
                 rt = tuya_ai_agent_start();
                 if (OPRT_OK != rt) {
@@ -422,23 +422,20 @@ STATIC VOID __ai_input_thread(VOID *arg)
             tal_system_sleep(10);
         }
     }
-    PR_NOTICE("ai input thread exiting...");
     __ai_input_free();
 }
 
 OPERATE_RET tuya_ai_input_init(VOID)
 {
     OPERATE_RET rt = OPRT_OK;
+    if (ai_input_ctx.input_buf) {
+        return OPRT_OK;
+    }
     memset(&ai_input_ctx, 0, SIZEOF(ai_input_ctx));
-
     TUYA_CALL_ERR_RETURN(tal_mutex_create_init(&ai_input_ctx.mutex));
     TUYA_CALL_ERR_GOTO(tal_queue_create_init(&ai_input_ctx.queue, SIZEOF(AI_INPUT_STATE_E), 3), EXIT);
     TUYA_CALL_ERR_GOTO(tal_sw_timer_create(__alert_timeout_cb, NULL, &ai_input_ctx.alert.timer), EXIT);
-#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
-    ai_input_ctx.input_buf = tal_psram_malloc(AI_INPUT_BUF_SIZE);
-#else
     ai_input_ctx.input_buf = Malloc(AI_INPUT_BUF_SIZE);
-#endif
     TUYA_CHECK_NULL_GOTO(ai_input_ctx.input_buf, EXIT);
 #if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
     TUYA_CALL_ERR_GOTO(tuya_ring_buff_create(AI_INPUT_RINGBUF_SIZE, OVERFLOW_PSRAM_STOP_TYPE, &ai_input_ctx.ringbuf),
@@ -474,7 +471,7 @@ OPERATE_RET tuya_ai_input_alert(AI_CLOUD_ALERT_TYPE_E type, AI_ALERT_FB_CB cb)
     PR_DEBUG("[cloud] alert type: %d", type);
 
     // get network status
-    if (tuya_ai_client_is_ready() == FALSE) {
+    if (!tuya_ai_agent_is_ready()) {
         PR_ERR("network is not ready");
         return OPRT_COM_ERROR;
     }

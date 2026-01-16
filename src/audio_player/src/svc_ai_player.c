@@ -217,7 +217,8 @@ static OPERATE_RET __cmd_player_service_deinit(void)
     return OPRT_OK;
 }
 
-static OPERATE_RET __handle_player_streaming_source(AI_PLAYER_T *player)
+
+STATIC OPERATE_RET __handle_player_streaming_source(AI_PLAYER_T *player)
 {
     OPERATE_RET rt = OPRT_OK;
     bool is_eof = false;
@@ -227,7 +228,6 @@ static OPERATE_RET __handle_player_streaming_source(AI_PLAYER_T *player)
     // 1. Read data from datasink (skip if decoder has pending output)
     if (!player->has_pending_output) {
         uint32_t out_len = 0;
-
         rt = ai_player_datasink_read(player->sink, player->framebuf + player->offset, AI_PLAYER_FRAMEBUF_SIZE - player->offset, &out_len);
         if(OPRT_OK == rt) {
             player->offset += out_len;
@@ -261,7 +261,8 @@ static OPERATE_RET __handle_player_streaming_source(AI_PLAYER_T *player)
     DECODER_OUTPUT_T output = {0};
     memset(&output, 0, SIZEOF(DECODER_OUTPUT_T));
     rt = ai_player_decoder_process(player->decoder, player->framebuf, player->offset, player->decode_buf, AI_PLAYER_DECODEBUF_SIZE, &output);
-    //lag based on decoder return value
+
+    // Update player's pending output flag based on decoder return value
     player->has_pending_output = (rt == OPRT_BUFFER_NOT_ENOUGH);
 
     if(rt > 0) { // buf is not completely consumed
@@ -301,7 +302,6 @@ static OPERATE_RET __handle_player_streaming_source(AI_PLAYER_T *player)
             return rt;
         }
 #else
-
         PR_ERR("ai player %s resample not support!", s_player_mode_str[player->mode]);
         return OPRT_NOT_SUPPORTED;
 #endif
@@ -408,11 +408,6 @@ static OPERATE_RET __handle_player_streaming(void)
 {
     OPERATE_RET rt = OPRT_OK;
     AI_PLAYER_T *active_player = s_ai_player_ctx.active_player;
-
-    // Check if active player is valid
-    if (!active_player) {
-        return OPRT_OK;
-    }
 
 #if defined(AI_PLAYER_SUPPORT_MIX_MODE) && (AI_PLAYER_SUPPORT_MIX_MODE == 1)
     // Handle mixing if needed
@@ -531,9 +526,6 @@ static void __ai_player_thread_cb(void* args)
 
         __switch_player_mode();
     }
-
-        PR_NOTICE("ai player thread exit");
-
 
     __cmd_player_service_deinit();
 }

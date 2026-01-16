@@ -27,8 +27,8 @@
 #include "tuya_ai_protocol.h"
 #include "tuya_ai_mqtt.h"
 
-#define EVENT_AI_CLIENT_RUN   "ai.client.run"
-#define EVENT_AI_CLIENT_CLOSE "ai.client.close"
+#define EVENT_AI_CLIENT_RUN      "ai.client.run"
+#define EVENT_AI_CLIENT_CLOSE    "ai.client.close"
 
 /**
  * @brief data handle cb

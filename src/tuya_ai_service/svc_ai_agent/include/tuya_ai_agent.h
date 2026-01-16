@@ -28,6 +28,10 @@
 #include "tuya_ai_event.h"
 #include "tuya_ai_input.h"
 #include "tuya_ai_output.h"
+#if defined(ENABLE_JOYINSIDE) && (ENABLE_JOYINSIDE == 1)
+#include "joyinside_client.h"
+#include "joyinside_biz.h"
+#endif
 
 #define AI_AGENT_SCODE_DEFAULT ""
 #define AI_AGENT_SCODE_ALERT "device_alert"
@@ -63,6 +67,7 @@ typedef struct {
     char sid[AI_UUID_V4_LEN + 1];
     char eid[AI_UUID_V4_LEN + 1];
     AI_AGENT_ID_T send[AI_BIZ_MAX_NUM];
+    char token[AI_AGENT_TOKEN_LEN];
     BOOL_T is_active;
 } AI_AGENT_SESSION_T;
 
@@ -76,6 +81,9 @@ typedef struct {
     BOOL_T enable_crt_session_ext; // enable crt session external
     BOOL_T enable_internal_scode; // enable internal solution code
     BOOL_T enable_mcp; // enable mcp tools
+#if defined(ENABLE_JOYINSIDE) && (ENABLE_JOYINSIDE == 1)
+    JD_CHAT_CFG_S *jd_cfg; // joyinside chat config
+#endif
 } AI_AGENT_CFG_T;
 
 /**
@@ -200,6 +208,15 @@ VOID tuya_ai_agent_send_cb_set(AI_INPUT_SEND_T *in_send);
 BOOL_T tuya_ai_agent_is_internal_scode(VOID);
 
 /**
+ * @brief control internal solution code
+ *
+ * @param[in] flag TRUE: enable internal solution code; FALSE: disable internal solution code
+ *
+ * @return VOID
+ */
+void tuya_ai_agent_internal_scode_ctrl(BOOL_T flag);
+
+/**
  * @brief get session by solution code
  *
  * @param[in] scode solution code
@@ -242,4 +259,17 @@ OPERATE_RET tuya_ai_agent_mcp_set_cb(TY_AI_MCP_CB cb, VOID *user_data);
  */
 OPERATE_RET tuya_ai_agent_mcp_response(char *message);
 
+/**
+ * @brief get event callback
+ *
+ * @return event callback
+ */
+AI_EVENT_CB tuya_ai_agent_get_evt_cb(void);
+
+/**
+ * @brief is ai agent ready
+ *
+ * @return TRUE is ready, FALSE is not ready
+ */
+BOOL_T tuya_ai_agent_is_ready(void);
 #endif // __TUYA_AI_AGENT_H__

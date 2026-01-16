@@ -76,6 +76,7 @@ void tuya_ai_output_deinit(void)
     ai_output_ctx.terminate = TRUE;
 }
 
+#if (AI_OUTPUT_RINGBUF_SIZE > 0)
 STATIC void __ai_output_free(void)
 {
     if (ai_output_ctx.thread) {
@@ -190,24 +191,24 @@ STATIC void __ai_output_thread(void* arg)
             tal_system_sleep(1);
         }
     }
-
-    PR_NOTICE("ai output thread exiting...");
     __ai_output_free();
 }
+#endif
 
 OPERATE_RET tuya_ai_output_init(AI_OUTPUT_CBS_T *cbs)
 {
     OPERATE_RET rt = OPRT_OK;
+    if (ai_output_ctx.mutex) {
+        return OPRT_OK;
+    }
     memset(&ai_output_ctx, 0, SIZEOF(ai_output_ctx));
-    memcpy(&ai_output_ctx.cbs, cbs, SIZEOF(ai_output_ctx.cbs));
     TUYA_CALL_ERR_RETURN(tal_mutex_create_init(&ai_output_ctx.mutex));
-#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
-    ai_output_ctx.output_buf = tal_psram_malloc(AI_OUTPUT_BUF_SIZE);
-#else
-    ai_output_ctx.output_buf = Malloc(AI_OUTPUT_BUF_SIZE);
-#endif
-    TUYA_CHECK_NULL_GOTO(ai_output_ctx.output_buf, EXIT);
+    memcpy(&ai_output_ctx.cbs, cbs, SIZEOF(ai_output_ctx.cbs));
     INIT_LIST_HEAD(&ai_output_ctx.ext_cbs);
+
+#if (AI_OUTPUT_RINGBUF_SIZE > 0)
+    ai_output_ctx.output_buf = Malloc(AI_OUTPUT_BUF_SIZE);
+    TUYA_CHECK_NULL_GOTO(ai_output_ctx.output_buf, EXIT);
 #if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
     TUYA_CALL_ERR_GOTO(tuya_ring_buff_create(AI_OUTPUT_RINGBUF_SIZE, OVERFLOW_PSRAM_STOP_TYPE, &ai_output_ctx.ringbuf), EXIT);
 #else
@@ -231,6 +232,9 @@ OPERATE_RET tuya_ai_output_init(AI_OUTPUT_CBS_T *cbs)
 
 EXIT:
     __ai_output_free();
+#else
+    PR_DEBUG("ai output init success");
+#endif
     return rt;
 }
 
@@ -265,9 +269,13 @@ OPERATE_RET tuya_ai_output_start(void)
     }
 
     tal_mutex_lock(ai_output_ctx.mutex);
-    ai_output_ctx.offset = 0;
     ai_output_ctx.status = AI_OUTPUT_PLAYING;
+
+#if (AI_OUTPUT_RINGBUF_SIZE > 0)
+    ai_output_ctx.offset = 0;
     tuya_ring_buff_reset(ai_output_ctx.ringbuf);
+#endif
+
     tuya_ai_output_event(AI_EVENT_START, AI_PT_AUDIO, tuya_ai_agent_get_eid());
     tal_mutex_unlock(ai_output_ctx.mutex);
 
@@ -369,6 +377,7 @@ OPERATE_RET tuya_ai_output_stop(bool force)
     }
 
     tal_mutex_lock(ai_output_ctx.mutex);
+#if (AI_OUTPUT_RINGBUF_SIZE > 0)
     if (force) {
         ai_output_ctx.status = AI_OUTPUT_IDLE;
         ai_output_ctx.offset = 0;
@@ -377,20 +386,23 @@ OPERATE_RET tuya_ai_output_stop(bool force)
     } else {
         ai_output_ctx.status = AI_OUTPUT_STOPPING;
     }
+#else
+    ai_output_ctx.status = AI_OUTPUT_STOPPED;
+    tuya_ai_output_event(AI_EVENT_END, AI_PT_AUDIO, tuya_ai_agent_get_eid());
+#endif
     tal_mutex_unlock(ai_output_ctx.mutex);
-
     return rt;
 }
 
 OPERATE_RET tuya_ai_output_write(AI_PACKET_PT type, uint8_t *data, uint32_t len)
 {
-    int rt = 0;
-    int cnt = 0;
-
     if (ai_output_ctx.status != AI_OUTPUT_PLAYING) {
         return OPRT_OK;
     }
 
+    OPERATE_RET rt = OPRT_OK;
+#if (AI_OUTPUT_RINGBUF_SIZE > 0)
+    INT_T cnt = 0;
     tal_mutex_lock(ai_output_ctx.mutex);
     rt = tuya_ring_buff_write(ai_output_ctx.ringbuf, data, len);
     tal_mutex_unlock(ai_output_ctx.mutex);
@@ -411,8 +423,11 @@ OPERATE_RET tuya_ai_output_write(AI_PACKET_PT type, uint8_t *data, uint32_t len)
             break;
         }
     }
-
     return OPRT_OK;
+#else
+    rt = tuya_ai_output_media(NULL, type, (CHAR_T *)data, len, len);
+    return rt;
+#endif
 }
 
 bool tuya_ai_output_is_playing(void)

@@ -41,7 +41,9 @@
 #elif defined(ENABLE_TUYA_CODEC_OPUS) && (ENABLE_TUYA_CODEC_OPUS == 1)
 #include "tuya_ai_encoder_opus.h"
 #endif
-#if defined(ENABLE_TUYA_CODEC_SPEEX) && (ENABLE_TUYA_CODEC_SPEEX == 1)
+#if defined(ENABLE_TUYA_CODEC_SPEEX_IPC) && (ENABLE_TUYA_CODEC_SPEEX_IPC == 1)
+#include "tuya_ai_encoder_speex_ipc.h"
+#elif defined(ENABLE_TUYA_CODEC_SPEEX) && (ENABLE_TUYA_CODEC_SPEEX == 1)
 #include "tuya_ai_encoder_speex.h"
 #endif
 #include "tuya_ai_protocol.h"
@@ -64,6 +66,7 @@ typedef struct {
     BOOL_T enable_internal_scode; // enable internal solution code
     BOOL_T enable_serv_vad; // enable server vad
     BOOL_T enable_mcp; // enable mcp tools
+    BOOL_T enable_joyinside; // enable joyinside cloud
     TY_AI_MCP_CB mcp_cb;
     VOID *mcp_user_data;
 } AI_AGENT_CTX_T;
@@ -410,7 +413,7 @@ STATIC OPERATE_RET __ai_file_recv_cb(AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_
 STATIC OPERATE_RET __ai_parse_asr(char *scode, ty_cJSON *root, BOOL_T eof)
 {
     ty_cJSON *node = ty_cJSON_GetObjectItem(root, "text");
-    PR_TRACE("ASR text: %s", ty_cJSON_GetStringValue(node));
+    PR_DEBUG("ASR text: %s", ty_cJSON_GetStringValue(node));
     if (eof && (!node || !node->valuestring || strlen(node->valuestring) == 0)) {
         tuya_ai_output_alert(AT_PLEASE_AGAIN);
     }
@@ -640,7 +643,7 @@ STATIC uint32_t __ai_agent_find_free_sid(VOID)
     return AI_SESSION_MAX_NUM;
 }
 
-STATIC VOID __ai_agent_set_sid(AI_AGENT_SESSION_T *session, char *scode, AI_SESSION_ID id, AI_SESSION_CFG_T *cfg)
+STATIC VOID __ai_agent_set_sid(AI_AGENT_SESSION_T *session, char *scode, AI_SESSION_ID id, AI_SESSION_CFG_T *cfg, char *token)
 {
     if (!scode) {
         return;
@@ -650,6 +653,7 @@ STATIC VOID __ai_agent_set_sid(AI_AGENT_SESSION_T *session, char *scode, AI_SESS
     memset(session->scode, 0, SIZEOF(session->scode));
     strncpy(session->scode, scode, SIZEOF(session->scode) - 1);
     memcpy(session->sid, id, strlen(id));
+    memcpy(session->token, token, strlen(token));
     session->is_active = TRUE;
     for (jdx = 0; jdx < cfg->send_num; jdx++) {
         session->send[jdx].id = cfg->send[jdx].id;
@@ -739,6 +743,11 @@ AI_BIZ_RECV_CB tuya_ai_agent_get_recv_cb(AI_PACKET_PT type)
     return NULL;
 }
 
+AI_EVENT_CB tuya_ai_agent_get_evt_cb(void)
+{
+    return __ai_event_cb;
+}
+
 OPERATE_RET tuya_ai_agent_crt_session(char *scode, uint32_t bizCode, uint64_t bizTag, uint8_t *attr, uint32_t attr_len)
 {
     OPERATE_RET rt = OPRT_OK;
@@ -820,7 +829,11 @@ OPERATE_RET tuya_ai_agent_crt_session(char *scode, uint32_t bizCode, uint64_t bi
         ty_cJSON_AddNumberToObject(item, "sampleRate", ai_agent_ctx.tts_cfg.sample_rate ? ai_agent_ctx.tts_cfg.sample_rate : 16000);
         ty_cJSON_AddNumberToObject(item, "bitDepth", 16);
         ty_cJSON_AddNumberToObject(item, "channels", 1);
-        ty_cJSON_AddNumberToObject(item, "bitRate", ai_agent_ctx.tts_cfg.bit_rate ? ai_agent_ctx.tts_cfg.bit_rate : 160000);
+        if (ai_agent_ctx.tts_cfg.format && strcmp(ai_agent_ctx.tts_cfg.format, "opus") == 0) {
+            ty_cJSON_AddNumberToObject(item, "bitRate", ai_agent_ctx.tts_cfg.bit_rate ? ai_agent_ctx.tts_cfg.bit_rate : 16000);
+        } else {
+            ty_cJSON_AddNumberToObject(item, "bitRate", ai_agent_ctx.tts_cfg.bit_rate ? ai_agent_ctx.tts_cfg.bit_rate : 64000);
+        }
         ty_cJSON_AddItemToArray(tts, item);
         // pack mcp tools attributes: {"supportCustomMCP":true}
         if (ai_agent_ctx.enable_mcp) {
@@ -864,7 +877,11 @@ OPERATE_RET tuya_ai_agent_crt_session(char *scode, uint32_t bizCode, uint64_t bi
         //bitDepth
         ty_cJSON_AddStringToObject(supportItem, "bitDepth", "16");
         //bitRate
-        ty_cJSON_AddNumberToObject(supportItem, "bitRate", ai_agent_ctx.tts_cfg.bit_rate == 0 ? 160000 : (ai_agent_ctx.tts_cfg.bit_rate));
+        if (ai_agent_ctx.tts_cfg.format && strcmp(ai_agent_ctx.tts_cfg.format, "opus") == 0) {
+            ty_cJSON_AddNumberToObject(supportItem, "bitRate", ai_agent_ctx.tts_cfg.bit_rate == 0 ? 16000 : (ai_agent_ctx.tts_cfg.bit_rate));
+        } else {
+            ty_cJSON_AddNumberToObject(supportItem, "bitRate", ai_agent_ctx.tts_cfg.bit_rate == 0 ? 64000 : (ai_agent_ctx.tts_cfg.bit_rate));
+        }
         //format
         ty_cJSON_AddStringToObject(supportItem, "format", (ai_agent_ctx.tts_cfg.format ? ai_agent_ctx.tts_cfg.format : "mp3"));
         //sampleRate
@@ -895,7 +912,7 @@ OPERATE_RET tuya_ai_agent_crt_session(char *scode, uint32_t bizCode, uint64_t bi
         tuya_ai_output_alert(AT_NETWORK_FAIL);
     } else {
         PR_DEBUG("create session success, %s", sid);
-        __ai_agent_set_sid(session, scode, sid, &session_cfg);
+        __ai_agent_set_sid(session, scode, sid, &session_cfg, agent.token);
         memcpy(ai_agent_ctx.scode, scode, strlen(scode));
     }
     if (attr == NULL) {
@@ -991,7 +1008,9 @@ STATIC VOID __ai_agent_reg_encoder(VOID)
 #elif defined(ENABLE_TUYA_CODEC_OPUS) && (ENABLE_TUYA_CODEC_OPUS == 1)
     tuya_ai_register_encoder(&g_tuya_ai_encoder_opus);
 #endif
-#if defined(ENABLE_TUYA_CODEC_SPEEX) && (ENABLE_TUYA_CODEC_SPEEX == 1)
+#if defined(ENABLE_TUYA_CODEC_SPEEX_IPC) && (ENABLE_TUYA_CODEC_SPEEX_IPC == 1)
+    tuya_ai_register_encoder(&g_tuya_ai_encoder_speex_ipc);
+#elif defined(ENABLE_TUYA_CODEC_SPEEX) && (ENABLE_TUYA_CODEC_SPEEX == 1)
     tuya_ai_register_encoder(&g_tuya_ai_encoder_speex);
 #endif
 }
@@ -1003,7 +1022,9 @@ STATIC VOID __ai_agent_unreg_encoder(VOID)
 #elif defined(ENABLE_TUYA_CODEC_OPUS) && (ENABLE_TUYA_CODEC_OPUS == 1)
     tuya_ai_unregister_encoder(&g_tuya_ai_encoder_opus);
 #endif
-#if defined(ENABLE_TUYA_CODEC_SPEEX) && (ENABLE_TUYA_CODEC_SPEEX == 1)
+#if defined(ENABLE_TUYA_CODEC_SPEEX_IPC) && (ENABLE_TUYA_CODEC_SPEEX_IPC == 1)
+    tuya_ai_unregister_encoder(&g_tuya_ai_encoder_speex_ipc);
+#elif defined(ENABLE_TUYA_CODEC_SPEEX) && (ENABLE_TUYA_CODEC_SPEEX == 1)
     tuya_ai_unregister_encoder(&g_tuya_ai_encoder_speex);
 #endif
 }
@@ -1023,19 +1044,29 @@ OPERATE_RET tuya_ai_agent_init(AI_AGENT_CFG_T *cfg)
 
     TUYA_CHECK_NULL_RETURN(cfg, OPRT_INVALID_PARM);
     memset(&ai_agent_ctx, 0, SIZEOF(ai_agent_ctx));
-    memcpy(ai_agent_ctx.scode, cfg->scode, strlen(cfg->scode));
-    memcpy(&ai_agent_ctx.up_attr, &cfg->attr, SIZEOF(ai_agent_ctx.up_attr));
-    memcpy(ai_agent_ctx.biz_get, cfg->biz_get, AI_BIZ_MAX_NUM * SIZEOF(AI_INPUT_SEND_T));
-    memcpy(&ai_agent_ctx.tts_cfg, &cfg->tts_cfg, SIZEOF(ai_agent_ctx.tts_cfg));
+
+#if defined(ENABLE_JOYINSIDE) && (ENABLE_JOYINSIDE == 1)
+    if (cfg->jd_cfg) {
+        ai_agent_ctx.enable_joyinside = TRUE;
+        TUYA_CALL_ERR_GOTO(joyinside_client_init(cfg->jd_cfg), EXIT);
+    } else {
+#endif
+        memcpy(ai_agent_ctx.scode, cfg->scode, strlen(cfg->scode));
+        memcpy(&ai_agent_ctx.up_attr, &cfg->attr, SIZEOF(ai_agent_ctx.up_attr));
+        memcpy(ai_agent_ctx.biz_get, cfg->biz_get, AI_BIZ_MAX_NUM * SIZEOF(AI_INPUT_SEND_T));
+        memcpy(&ai_agent_ctx.tts_cfg, &cfg->tts_cfg, SIZEOF(ai_agent_ctx.tts_cfg));
+        ai_agent_ctx.enable_crt_session_ext = cfg->enable_crt_session_ext;
+        ai_agent_ctx.enable_internal_scode = cfg->enable_internal_scode;
+        ai_agent_ctx.enable_serv_vad = TRUE;
+        TUYA_CALL_ERR_GOTO(tuya_ai_client_init(__ai_agent_mq_handle), EXIT);
+        ty_subscribe_event(EVENT_AI_SESSION_CLOSE, "ai.agent", __ai_session_closed_evt, SUBSCRIBE_TYPE_NORMAL);
+#if defined(ENABLE_JOYINSIDE) && (ENABLE_JOYINSIDE == 1)
+    }
+#endif
     ai_agent_ctx.codec_enable = cfg->codec_enable;
-    ai_agent_ctx.enable_crt_session_ext = cfg->enable_crt_session_ext;
-    ai_agent_ctx.enable_internal_scode = cfg->enable_internal_scode;
-    ai_agent_ctx.enable_serv_vad = TRUE;
     __ai_agent_reg_encoder();
     __ai_agent_set_audio_encoder(&(cfg->attr.audio));
-    TUYA_CALL_ERR_GOTO(tuya_ai_client_init(__ai_agent_mq_handle), EXIT);
     ty_subscribe_event(EVENT_AI_CLIENT_RUN, "ai.agent", __ai_client_run_evt, SUBSCRIBE_TYPE_NORMAL);
-    ty_subscribe_event(EVENT_AI_SESSION_CLOSE, "ai.agent", __ai_session_closed_evt, SUBSCRIBE_TYPE_NORMAL);
     ty_subscribe_event(EVENT_DEVOS_STATE_CHANGE, "ai.agent", __ai_devos_state_evt, SUBSCRIBE_TYPE_NORMAL);
     TUYA_CALL_ERR_GOTO(tuya_ai_input_init(), EXIT);
     TUYA_CALL_ERR_GOTO(tuya_ai_output_init(&cfg->output), EXIT);
@@ -1049,11 +1080,17 @@ EXIT:
 
 VOID tuya_ai_agent_deinit(VOID)
 {
-    tuya_ai_client_deinit();
+    if (ai_agent_ctx.enable_joyinside) {
+#if defined(ENABLE_JOYINSIDE) && (ENABLE_JOYINSIDE == 1)
+        joyinside_client_deinit();
+#endif
+    } else {
+        tuya_ai_client_deinit();
+        ty_unsubscribe_event(EVENT_AI_SESSION_CLOSE, "ai.agent", __ai_session_closed_evt);
+    }
     tuya_ai_input_deinit();
     tuya_ai_output_deinit();
     ty_unsubscribe_event(EVENT_AI_CLIENT_RUN, "ai.agent", __ai_client_run_evt);
-    ty_unsubscribe_event(EVENT_AI_SESSION_CLOSE, "ai.agent", __ai_session_closed_evt);
     ty_unsubscribe_event(EVENT_DEVOS_STATE_CHANGE, "ai.agent", __ai_devos_state_evt);
     __ai_agent_destroy_encoder();
     __ai_agent_unreg_encoder();
@@ -1097,23 +1134,31 @@ STATIC VOID __ai_agent_set_first_pkt(AI_PACKET_PT type, BOOL_T flag, AI_AGENT_SE
     return;
 }
 
-BOOL_T tuya_ai_agent_is_internal_scode(VOID)
+BOOL_T tuya_ai_agent_is_internal_scode(void)
 {
     return ai_agent_ctx.enable_internal_scode;
+}
+
+void tuya_ai_agent_internal_scode_ctrl(BOOL_T flag)
+{
+    ai_agent_ctx.enable_internal_scode = flag;
 }
 
 OPERATE_RET tuya_ai_agent_start(VOID)
 {
     OPERATE_RET rt = OPRT_OK;
-
-    if (!ai_agent_ctx.enable_crt_session_ext) {
-        rt = tuya_ai_agent_crt_session(ai_agent_ctx.scode, 0, 0, NULL, 0);
-        if (rt != OPRT_OK) {
-            PR_ERR("create ai agent session failed");
-            return rt;
+    if (ai_agent_ctx.enable_joyinside) {
+        return rt;
+    } else {
+        if (!ai_agent_ctx.enable_crt_session_ext) {
+            rt = tuya_ai_agent_crt_session(ai_agent_ctx.scode, 0, 0, NULL, 0);
+            if (rt != OPRT_OK) {
+                PR_ERR("create ai agent session failed");
+                return rt;
+            }
         }
+        return tuya_ai_agent_event(AI_EVENT_START, 0);
     }
-    return tuya_ai_agent_event(AI_EVENT_START, 0);
 }
 
 STATIC BOOL_T __ai_agent_is_need_stream_flag(AI_PACKET_PT ptype, uint32_t len, uint32_t total_len)
@@ -1126,23 +1171,27 @@ STATIC BOOL_T __ai_agent_is_need_stream_flag(AI_PACKET_PT ptype, uint32_t len, u
 
 OPERATE_RET tuya_ai_agent_end(VOID)
 {
-    uint16_t idx = 0;
-    AI_AGENT_SESSION_T *session = __ai_agent_get_active_session();
-    if (!session) {
-        return OPRT_COM_ERROR;
-    }
-    for (idx = 0; idx < AI_BIZ_MAX_NUM; idx++) {
-        AI_PACKET_PT type = session->send[idx].type;
-        if (__ai_agent_is_first_pkt(type, session)) {
-            tuya_ai_agent_upload_stream(type, NULL, NULL, 0, 0);
-#if defined(AI_VERSION) && (0x01 == AI_VERSION)
-            tuya_ai_agent_event(AI_EVENT_PAYLOADS_END, type);
-#endif
-            __ai_agent_set_first_pkt(type, FALSE, session);
+    if (ai_agent_ctx.enable_joyinside) {
+        tuya_ai_agent_event(AI_EVENT_END, 0);
+    } else {
+        USHORT_T idx = 0;
+        AI_AGENT_SESSION_T *session = __ai_agent_get_active_session();
+        if (!session) {
+            return OPRT_COM_ERROR;
         }
-    }
+        for (idx = 0; idx < AI_BIZ_MAX_NUM; idx++) {
+            AI_PACKET_PT type = session->send[idx].type;
+            if (__ai_agent_is_first_pkt(type, session)) {
+                tuya_ai_agent_upload_stream(type, NULL, NULL, 0, 0);
+    #if defined(AI_VERSION) && (0x01 == AI_VERSION)
+                tuya_ai_agent_event(AI_EVENT_PAYLOADS_END, type);
+    #endif
+                __ai_agent_set_first_pkt(type, FALSE, session);
+            }
+        }
 
-    tuya_ai_agent_event(AI_EVENT_END, 0);
+        tuya_ai_agent_event(AI_EVENT_END, 0);
+    }
     return OPRT_OK;
 }
 
@@ -1169,58 +1218,70 @@ VOID tuya_ai_agent_set_tts_cfg(AI_AGENT_TTS_CFG_T *cfg)
 
 STATIC OPERATE_RET __ai_upload_stream(AI_PACKET_PT ptype, AI_BIZ_HD_T *biz, char *data, uint32_t len, uint32_t total_len)
 {
-    AI_AGENT_SESSION_T *session = __ai_agent_get_active_session();
-    if (!session) {
-        return OPRT_COM_ERROR;
-    }
-    AI_BIZ_ATTR_INFO_T attr;
-    memset(&attr, 0, SIZEOF(attr));
-    AI_STREAM_TYPE stype = AI_STREAM_ONE;
-    if (__ai_agent_is_need_stream_flag(ptype, len, total_len)) {
-        if (!__ai_agent_is_first_pkt(ptype, session)) {
-            stype = AI_STREAM_START;
-            __ai_agent_set_first_pkt(ptype, TRUE, session);
-        } else if (data && (len > 0)) {
-            stype = AI_STREAM_ING;
-        } else {
-            stype = AI_STREAM_END;
+    if (ai_agent_ctx.enable_joyinside) {
+        PR_DEBUG("[ptype %d upload stream] len:%d, total_len:%d", ptype, len, total_len);
+#if defined(ENABLE_JOYINSIDE) && (ENABLE_JOYINSIDE == 1)
+        if (ptype == AI_PT_TEXT) {
+            return joyinside_send_text(data, len);
+        } else if (ptype == AI_PT_AUDIO) {
+            return joyinside_send_audio(data, len);
         }
-    }
+#endif
+    } else {
+        AI_AGENT_SESSION_T *session = __ai_agent_get_active_session();
+        if (!session) {
+            return OPRT_COM_ERROR;
+        }
+        AI_BIZ_ATTR_INFO_T attr;
+        memset(&attr, 0, SIZEOF(attr));
+        AI_STREAM_TYPE stype = AI_STREAM_ONE;
+        if (__ai_agent_is_need_stream_flag(ptype, len, total_len)) {
+            if (!__ai_agent_is_first_pkt(ptype, session)) {
+                stype = AI_STREAM_START;
+                __ai_agent_set_first_pkt(ptype, TRUE, session);
+            } else if (data && (len > 0)) {
+                stype = AI_STREAM_ING;
+            } else {
+                stype = AI_STREAM_END;
+            }
+        }
 
-    if ((AI_STREAM_START == stype) || (AI_STREAM_ONE == stype)) {
-        attr.flag = AI_HAS_ATTR;
-        attr.type = ptype;
-        if (AI_PT_VIDEO == ptype) {
-            memcpy(&attr.value.video.base, &ai_agent_ctx.up_attr.video, SIZEOF(attr.value.video.base));
-        } else if (AI_PT_AUDIO == ptype) {
-            memcpy(&attr.value.audio.base, &ai_agent_ctx.up_attr.audio, SIZEOF(attr.value.audio.base));
-        } else if (AI_PT_IMAGE == ptype) {
-            memcpy(&attr.value.image.base, &ai_agent_ctx.up_attr.image, SIZEOF(attr.value.image.base));
-        } else if (AI_PT_FILE == ptype) {
-            memcpy(&attr.value.file.base, &ai_agent_ctx.up_attr.file, SIZEOF(attr.value.file.base));
+        if ((AI_STREAM_START == stype) || (AI_STREAM_ONE == stype)) {
+            attr.flag = AI_HAS_ATTR;
+            attr.type = ptype;
+            if (AI_PT_VIDEO == ptype) {
+                memcpy(&attr.value.video.base, &ai_agent_ctx.up_attr.video, SIZEOF(attr.value.video.base));
+            } else if (AI_PT_AUDIO == ptype) {
+                memcpy(&attr.value.audio.base, &ai_agent_ctx.up_attr.audio, SIZEOF(attr.value.audio.base));
+            } else if (AI_PT_IMAGE == ptype) {
+                memcpy(&attr.value.image.base, &ai_agent_ctx.up_attr.image, SIZEOF(attr.value.image.base));
+            } else if (AI_PT_FILE == ptype) {
+                memcpy(&attr.value.file.base, &ai_agent_ctx.up_attr.file, SIZEOF(attr.value.file.base));
+            }
         }
-    }
 
-    AI_BIZ_HEAD_INFO_T head;
-    memset(&head, 0, SIZEOF(head));
-    head.stream_flag = stype;
-    head.total_len = total_len;
-    head.len = len;
-    if (biz) {
-        if (AI_PT_VIDEO == ptype) {
-            memcpy(&head.value.video, &(biz->video), SIZEOF(head.value.video));
-        } else if (AI_PT_AUDIO == ptype) {
-            memcpy(&head.value.audio, &(biz->audio), SIZEOF(head.value.audio));
-        } else if (AI_PT_IMAGE == ptype) {
-            memcpy(&head.value.image, &(biz->image), SIZEOF(head.value.image));
+        AI_BIZ_HEAD_INFO_T head;
+        memset(&head, 0, SIZEOF(head));
+        head.stream_flag = stype;
+        head.total_len = total_len;
+        head.len = len;
+        if (biz) {
+            if (AI_PT_VIDEO == ptype) {
+                memcpy(&head.value.video, &(biz->video), SIZEOF(head.value.video));
+            } else if (AI_PT_AUDIO == ptype) {
+                memcpy(&head.value.audio, &(biz->audio), SIZEOF(head.value.audio));
+            } else if (AI_PT_IMAGE == ptype) {
+                memcpy(&head.value.image, &(biz->image), SIZEOF(head.value.image));
+            }
         }
-    }
 
     uint16_t id = __ai_agent_get_send_id(ptype, session);
 
-    PR_DEBUG("[ptype %d upload stream] len:%d flag %d, total_len:%d, id:%d", ptype, len, stype, total_len, id);
+        PR_DEBUG("[ptype %d upload stream] len:%d flag %d, total_len:%d, id:%d", ptype, len, stype, total_len, id);
 
-    return tuya_ai_send_biz_pkt(id, &attr, ptype, &head, data);
+        return tuya_ai_send_biz_pkt(id, &attr, ptype, &head, data);
+    }
+    return OPRT_OK;
 }
 
 STATIC OPERATE_RET __upload_data_cb(AI_AUDIO_CODEC_TYPE codec_type, uint8_t *data, uint32_t len, void *usr_data)
@@ -1343,18 +1404,29 @@ OPERATE_RET tuya_ai_agent_event(AI_EVENT_TYPE etype, AI_PACKET_PT ptype)
 {
     OPERATE_RET rt = OPRT_OK;
 
-    PR_DEBUG("[upload event] type:%d", etype);
-
-    if (AI_EVENT_START == etype) {
-        rt = __ai_event_start();
-    } else if (AI_EVENT_PAYLOADS_END == etype) {
-        rt = __ai_event_payloads_end(ptype);
-    } else if (AI_EVENT_END == etype) {
-        rt = tuya_ai_event_end(__ai_agent_get_sid(), tuya_ai_agent_get_eid(), NULL, 0);
-    } else if (AI_EVENT_ONE_SHOT == etype) {
-        rt = tuya_ai_event_one_shot(__ai_agent_get_sid(), tuya_ai_agent_get_eid(), NULL, 0);
-    } else if (AI_EVENT_CHAT_BREAK == etype) {
-        rt = tuya_ai_event_chat_break(__ai_agent_get_sid(), tuya_ai_agent_get_eid(), NULL, 0);
+    if (ai_agent_ctx.enable_joyinside) {
+#if defined(ENABLE_JOYINSIDE) && (ENABLE_JOYINSIDE == 1)
+        if (AI_EVENT_CHAT_BREAK == etype) {
+            if (tuya_ai_output_is_playing()) {
+                return joyinside_send_event(JD_EVENT_INTERRUPT);
+            }
+        } else if (AI_EVENT_END == etype) {
+            return joyinside_send_event(JD_EVENT_FINISH);
+        }
+#endif
+    } else {
+        PR_DEBUG("[upload event] type:%d", etype);
+        if (AI_EVENT_START == etype) {
+            rt = __ai_event_start();
+        } else if (AI_EVENT_PAYLOADS_END == etype) {
+            rt = __ai_event_payloads_end(ptype);
+        } else if (AI_EVENT_END == etype) {
+            rt = tuya_ai_event_end(__ai_agent_get_sid(), tuya_ai_agent_get_eid(), NULL, 0);
+        } else if (AI_EVENT_ONE_SHOT == etype) {
+            rt = tuya_ai_event_one_shot(__ai_agent_get_sid(), tuya_ai_agent_get_eid(), NULL, 0);
+        } else if (AI_EVENT_CHAT_BREAK == etype) {
+            rt = tuya_ai_event_chat_break(__ai_agent_get_sid(), tuya_ai_agent_get_eid(), NULL, 0);
+        }
     }
 
     return rt;
@@ -1362,6 +1434,9 @@ OPERATE_RET tuya_ai_agent_event(AI_EVENT_TYPE etype, AI_PACKET_PT ptype)
 
 VOID tuya_ai_agent_set_scode(char *scode)
 {
+    if (ai_agent_ctx.enable_joyinside) {
+        return;
+    }
     if (scode) {
         memset(ai_agent_ctx.scode, 0, SIZEOF(ai_agent_ctx.scode));
         strncpy(ai_agent_ctx.scode, scode, SIZEOF(ai_agent_ctx.scode) - 1);
@@ -1434,4 +1509,16 @@ OPERATE_RET tuya_ai_agent_mcp_response(char *message)
         return OPRT_INVALID_PARM;
     }
     return tuya_ai_event_mcp(__ai_agent_get_sid(), tuya_ai_agent_get_eid(), message);
+}
+
+BOOL_T tuya_ai_agent_is_ready(void)
+{
+    if (ai_agent_ctx.enable_joyinside) {
+#if defined(ENABLE_JOYINSIDE) && (ENABLE_JOYINSIDE == 1)
+        return joyinside_client_is_ready();
+#endif
+        return FALSE;
+    } else {
+        return tuya_ai_client_is_ready();
+    }
 }

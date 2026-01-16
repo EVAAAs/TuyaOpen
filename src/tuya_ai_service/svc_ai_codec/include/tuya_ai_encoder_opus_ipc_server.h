@@ -20,6 +20,7 @@ typedef enum {
 typedef enum {
     IPC_AUDIO_ENC_TYPE_UNKNOWN = 0,    // Unknown type
     IPC_AUDIO_ENC_TYPE_OPUS,
+    IPC_AUDIO_ENC_TYPE_SPEEX,
 } IPC_AUDIO_ENC_TYPE_E;
 
 typedef struct {

@@ -438,10 +438,10 @@ STATIC OPERATE_RET __ai_packet_sign(char *buf, uint8_t *signature)
 uint32_t __ai_get_send_attr_len(AI_SEND_PACKET_T *info)
 {
     uint32_t len = 0, idx = 0;
-    if ((info->count != 0)) {
+    if (info->count != 0) {
         len += SIZEOF(len);
         for (idx = 0; idx < info->count; idx++) {
-            if (NULL == info->attrs[idx]) {
+            if (info->attrs[idx] == NULL) {
                 continue;
             }
 
@@ -1680,7 +1680,9 @@ OPERATE_RET tuya_ai_basic_client_hello(AI_SERVER_CFG_INFO_T *cfg)
     AI_SEND_PACKET_T pkt = {0};
     pkt.type = AI_PT_CLIENT_HELLO;
 
+#if defined(AI_VERSION) && (0x02 == AI_VERSION)
     ai_basic_proto->rsa_public_key = mm_strdup(cfg->rsa_public_key);
+#endif
 
     rt = __create_clt_hello_attrs(&pkt, cfg);
     if (OPRT_OK != rt) {
@@ -1731,12 +1733,12 @@ STATIC int __ai_baisc_read_pkt_head(char *recv_buf)
     int recv_len = 0;
 
     while (total_recv_len < need_recv_len) {
-        recv_len = tuya_transporter_read(ai_basic_proto->transporter, (uint8_t *)recv_buf + total_recv_len, need_recv_len - total_recv_len, 1000/*AI_SEND_SOCKET_TIMEOUT*/);
+        recv_len = tuya_transporter_read(ai_basic_proto->transporter, (uint8_t *)recv_buf + total_recv_len, need_recv_len - total_recv_len, AI_SEND_SOCKET_TIMEOUT);
         if (recv_len <= 0) {
             if (total_recv_len == 0) {
                 return recv_len;
             } else {
-                PR_ERR("recv head err, rt:%d, %d", recv_len, need_recv_len);
+                PR_ERR("recv head err, rt:%d, %d, %d", recv_len, need_recv_len, total_recv_len);
                 return OPRT_COM_ERROR;
             }
         }

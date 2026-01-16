@@ -245,7 +245,7 @@ typedef struct {
  * These settings will be applied to consumers when starting playback.
  */
 typedef struct {
-    TKL_AUDIO_SAMPLE_E   sample;      // Audio sample rate
+    TKL_AUDIO_SAMPLE_E sample;      // Audio sample rate
     TKL_AUDIO_DATABITS_E datebits;  // Audio data bits per sample
     TKL_AUDIO_CHANNEL_E channel;    // Audio channel count
 } AI_PLAYER_CFG_T;

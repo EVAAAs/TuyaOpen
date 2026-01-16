@@ -191,7 +191,7 @@ STATIC VOID __ai_client_handle_err(OPERATE_RET rt)
         tal_system_sleep(1000);
         __ai_client_set_state(AI_STATE_SETUP);
     } else if (ai_basic_client->state == AI_STATE_RUNNING) {
-        PR_NOTICE("ai client running error %d, reconnect", rt);
+        PR_NOTICE("ai client running error %d, reconnect %d", rt, tal_net_get_errno());
         __ai_conn_close();
     } else {
         tal_system_sleep(1000);
@@ -318,11 +318,19 @@ STATIC OPERATE_RET __ai_running(VOID)
     char *de_buf = NULL;
     uint32_t de_len = 0;
     AI_FRAG_FLAG frag = AI_PACKET_NO_FRAG;
+    uint32_t cnt = 0;
 
     rt = tuya_ai_basic_pkt_read(&de_buf, &de_len, &frag);
     if (OPRT_RESOURCE_NOT_READY == rt) {
         return OPRT_OK;
     } else if ((OPRT_OK != rt) || (de_buf == NULL)) {
+        if ((rt == -1) && (cnt <= 3)) {
+            if (tuya_svc_netmgr_get_status() == NETWORK_STATUS_MQTT) {
+                cnt++;
+                tal_system_sleep(1000);
+                return OPRT_OK;
+            }
+        }
         AI_PROTO_D("recv and parse data failed, rt:%d", rt);
         return rt;
     }

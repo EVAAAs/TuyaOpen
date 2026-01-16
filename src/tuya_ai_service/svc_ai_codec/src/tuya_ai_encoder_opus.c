@@ -178,9 +178,6 @@ STATIC OPERATE_RET _encoder_opus_encode(AI_ENCODE_HANDLE_T handle, uint8_t *in_b
         SYS_TIME_T end = tal_system_get_millisecond();
         SYS_TIME_T delta = end - start;
         ENC_PR_D("_encoder_opus_encode: start: %llu, end: %llu, delta: %llu(ms), out_bytes=%d", start, end, delta, len);
-        uint32_t watermark = 0;
-        tkl_thread_get_watermark(NULL, &watermark);
-        ENC_PR_D("water mark after encode: %d", watermark);
 #endif
         if (len < 0) {
             return OPRT_COM_ERROR;

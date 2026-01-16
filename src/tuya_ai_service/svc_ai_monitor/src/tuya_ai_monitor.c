@@ -794,6 +794,13 @@ STATIC OPERATE_RET __ai_biz_handler(uint8_t direction, uint16_t id, AI_BIZ_ATTR_
 
 STATIC OPERATE_RET __ai_biz_recv_handler(uint16_t id, AI_BIZ_ATTR_INFO_T *attr, AI_BIZ_HEAD_INFO_T *head, char *data, VOID *usr_data)
 {
+    // use last attr type for stream data if attr is NULL
+    STATIC AI_BIZ_ATTR_INFO_T s_attr_info = {0};
+    if (attr)
+        s_attr_info.type = attr->type;
+    else if (head && head->stream_flag == AI_STREAM_ING)
+        attr = &s_attr_info;
+
     return __ai_biz_handler(AI_MONITOR_DIR_DS, id, attr, head, data, usr_data);
 }
 

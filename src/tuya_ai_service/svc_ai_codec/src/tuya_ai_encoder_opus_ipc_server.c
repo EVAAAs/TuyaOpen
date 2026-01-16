@@ -3,7 +3,18 @@
 #include "tuya_error_code.h"
 #include "tal_system.h"
 
-STATIC TUYA_AI_ENCODER_T *enc = &g_tuya_ai_encoder_opus;
+#if defined(ENABLE_TUYA_CODEC_OPUS) && (ENABLE_TUYA_CODEC_OPUS == 1)
+#include "tuya_ai_encoder_opus.h"
+STATIC TUYA_AI_ENCODER_T *enc_opus = &g_tuya_ai_encoder_opus;
+#else
+STATIC TUYA_AI_ENCODER_T *enc_opus = NULL;
+#endif
+#if defined(ENABLE_TUYA_CODEC_SPEEX) && (ENABLE_TUYA_CODEC_SPEEX == 1)
+#include "tuya_ai_encoder_speex.h"
+STATIC TUYA_AI_ENCODER_T *enc_speex = &g_tuya_ai_encoder_speex;
+#else
+STATIC TUYA_AI_ENCODER_T *enc_speex = NULL;
+#endif
 
 STATIC OPERATE_RET __output_cb(AI_AUDIO_CODEC_TYPE codec_type, uint8_t *data, uint32_t len, void *usr_data)
 {
@@ -26,9 +37,21 @@ STATIC OPERATE_RET __output_cb(AI_AUDIO_CODEC_TYPE codec_type, uint8_t *data, ui
 OPERATE_RET tuya_ai_encoder_opus_server_handle(VOID *para)
 {
     OPERATE_RET rt = OPRT_OK;
+    TUYA_AI_ENCODER_T *enc = NULL;
     IPC_AUDIO_ENC_PARA_T *enc_para = (IPC_AUDIO_ENC_PARA_T *)para;
-    if (enc_para == NULL || enc_para->type != IPC_AUDIO_ENC_TYPE_OPUS) {
+    if (enc_para == NULL) {
         return OPRT_INVALID_PARM; // Invalid parameters
+    }
+
+    if (enc_para->type == IPC_AUDIO_ENC_TYPE_OPUS) {
+        enc = enc_opus;
+    } else if (enc_para->type == IPC_AUDIO_ENC_TYPE_SPEEX) {
+        enc = enc_speex;
+    } else {
+        return OPRT_INVALID_PARM; // Unsupported encoder type
+    }
+    if (enc == NULL) {
+        return OPRT_COM_ERROR; // Encoder not registered
     }
 
     if (IPC_AUDIO_ENC_OPS_CREATE == enc_para->ops) {
