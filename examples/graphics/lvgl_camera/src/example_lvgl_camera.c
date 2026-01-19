@@ -113,8 +113,11 @@ static OPERATE_RET __example_camera_display_init(void)
         sg_display_fb_num = DISPLAY_FRAME_BUFF_NUM;
     }
 
+    width  = sg_display_info.width;
+    height = sg_display_info.height;
+
     for(uint8_t i=0; i<sg_display_fb_num; i++) {
-        TUYA_CALL_ERR_LOG(tdl_disp_fb_manage_add(sg_fb_manage,sg_display_info.fmt, height, width));
+        TUYA_CALL_ERR_LOG(tdl_disp_fb_manage_add(sg_fb_manage,sg_display_info.fmt, width, height));
     }
 
     return OPRT_OK;
