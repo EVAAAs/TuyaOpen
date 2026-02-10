@@ -49,9 +49,9 @@ struct TDL_DISP_FRAME_BUFF_T {
     uint16_t width;
     uint16_t height;
     FRAME_BUFF_FREE_CB free_cb;
+    void  *free_arg;
     uint32_t len;
     uint8_t *frame;
-    void *sys_param;    //reserved for system use, user do not use
 };
 
 typedef struct {
