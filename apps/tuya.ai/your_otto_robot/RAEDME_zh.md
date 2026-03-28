@@ -70,39 +70,40 @@ Otto Robot 是一个开源的人形机器人平台，支持多种功能扩展。
 
 ## 四、TuyaOpen文档开发教程（重要）
 [涂鸦 TuyaOpen 官方文档](https://tuyaopen.ai/zh/docs/about-tuyaopen)
+
 Step 0: 环境搭建 (Environment Setup)
 设备名/目标对象： Ubuntu / Debian 电脑主机
 
 一句话解释： 安装编译底层固件所必需的各种 C/C++ 依赖库、Python 环境和 Ninja 构建工具链。
 
-代码行： sudo apt-get install lcov cmake-curses-gui build-essential ninja-build wget git python3 python3-pip python3-venv libc6-i386 libsystemd-dev
+代码行： `sudo apt-get install lcov cmake-curses-gui build-essential ninja-build wget git python3 python3-pip python3-venv libc6-i386 libsystemd-dev`
 
 设备名/目标对象： 开发电脑 (全平台)
 
 一句话解释： 从 GitHub 拉取 TuyaOpen 核心源码，然后激活专属的构建命令行工具 tos.py（每次打开新终端都要执行激活）。
 
-代码行： git clone https://github.com/tuya/TuyaOpen.git && cd TuyaOpen && . ./export.sh
+代码行： `git clone https://github.com/tuya/TuyaOpen.git && cd TuyaOpen && . ./export.sh`
 
 Step 1: 项目编译 (Project Compilation)
 设备名/目标对象： 所有涂鸦支持的开发板（如 T5, ESP32 等）
 
 一句话解释： 在你的项目工程目录下，通过交互式菜单选中你的硬件型号，然后将源码编译为可执行的二进制固件包。
 
-代码行： tos.py config （选完硬件后执行） tos.py build
+代码行： `tos.py config` （选完硬件后执行） `tos.py build`
 
 Step 2: 固件烧录 (Firmware Flashing)
 设备名/目标对象： 用 USB 连接到电脑的物理开发板
 
 一句话解释： 将刚才编译好的固件一键刷入开发板的闪存中，覆盖掉旧的数据（可自动识别或手动指定串口）。
 
-代码行： tos.py flash （手动指定端口则为 tos.py flash --port /dev/ttyUSB0）
+代码行： `tos.py flash` （手动指定端口则为 `tos.py flash --port /dev/ttyUSB0`）
 
 Step 3: 设备授权 (Device Authorization)
 设备名/目标对象： 待接入云端的 AI/IoT 设备
 
 一句话解释： 将涂鸦开发者平台上申请的设备“身份证”（PID、UUID、AuthKey）写入代码，让设备拥有合法身份接入涂鸦云智能体。
 
-代码行： 修改项目 tuya_config.h 文件中的宏定义 TUYA_PRODUCT_ID、TUYA_OPENSDK_UUID、TUYA_OPENSDK_AUTHKEY。
+代码行： 修改项目 tuya_config.h 文件中的宏定义 `TUYA_PRODUCT_ID、TUYA_OPENSDK_UUID、TUYA_OPENSDK_AUTHKEY`。
 
 Step 4: 设备手机配网 (Device Smartphone Pairing)
 设备名/目标对象： 智能手机 & 处于配网模式的开发板
@@ -116,13 +117,13 @@ Step 4: 设备手机配网 (Device Smartphone Pairing)
 
 一句话解释： 使用高波特率串口连接开发板，实时抓取 AI 语音交互、云端通信或系统报错的底层日志。
 
-代码行： tos.py monitor --port <串口号> --baud 460800
+代码行： `tos.py monitor --port <串口号> --baud 460800`
 
 设备名/目标对象： T2 / ESP32 / BK7231N 等常规芯片
 
 一句话解释： 使用标准波特率串口监听设备常规的运行状态和网络连接日志。
 
-代码行： tos.py monitor --port <串口号> --baud 115200
+代码行： `tos.py monitor --port <串口号> --baud 115200`
 
 ## 五、代码下载修改编译
 ### 1. 代码下载
