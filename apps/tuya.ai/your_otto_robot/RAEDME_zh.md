@@ -29,7 +29,7 @@ Otto Robot 是一个开源的人形机器人平台，支持多种功能扩展。
 ![](https://cdn.nlark.com/yuque/0/2025/png/55332580/1755226645805-e9dad500-6e9b-45b9-8ac0-c9e82881a7b0.png)
 
 2. **舵机**
-    - 型号：SG90 180度舵机（不带手臂是4个，带手臂6个）  
+    - 型号：SG90舵机（不带手臂是4个 180度，带手臂6个 180度，轮子款[ottoRobot_NINJA](https://oshwhub.com/robben.wang/ottorobot_ninja) 2个360度，2个180度）  
     - 购买渠道：淘宝
 
 3. **显示屏**
