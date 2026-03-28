@@ -199,7 +199,7 @@ cd TuyaOpen
 ### 3. 产品ID（PID）& 授权码修改
 - **PID 修改**： 进入cd apps/tuya.ai/your_otto_robot/ 目录
 
-     执行命令：tos.py config menu
+     执行命令：`tos.py config menu`
 
 ![](https://cdn.nlark.com/yuque/0/2025/png/55332580/1755221489825-d4c223ea-22ea-4102-a267-27dd882b64f0.png)
 
