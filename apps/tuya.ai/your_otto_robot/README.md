@@ -29,7 +29,7 @@ The following are the hardware materials required to make an Otto Robot:
 ![](https://cdn.nlark.com/yuque/0/2025/png/55332580/1755226645805-e9dad500-6e9b-45b9-8ac0-c9e82881a7b0.png)
 
 2. **Servo Motors**
-    - Model: SG90 180-degree servo motors (4 without arms, 6 with arms)  
+    - Model: SG90 180-degree servo motors (if you dont need arms, buy 4. Otherwise,buy 6 with arms)  
     - Purchase channel: Taobao
 
 3. **Display Screen**
